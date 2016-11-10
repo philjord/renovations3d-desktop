@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="lib" path="lib/iText-2.1.7.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-vectorgraphics-svg-2.1.1b.jar"/>
+	<classpathentry kind="lib" path="lib/jmf.jar"/>
+	<classpathentry kind="lib" path="lib/batik-svgpathparser-1.7.jar"/>
+	<classpathentry kind="lib" path="libtest/abbot.jar"/>
+	<classpathentry kind="lib" path="libtest/jdom-1.0.jar"/>
+	<classpathentry kind="lib" path="libtest/gnu-regexp-1.1.0.jar"/>
+	<classpathentry kind="lib" path="libtest/jdepend-2.9.jar"/>
+	<classpathentry kind="lib" path="libtest/AppleJavaExtensions.jar"/>
+	<classpathentry kind="lib" path="libtest/jnlp.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/java3d-core-and"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils-and"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/vecmath"/>
+	<classpathentry kind="lib" path="/external_jars/external jars/jogamp/jar/gluegen-rt.jar"/>
+	<classpathentry kind="lib" path="/external_jars/external jars/jogamp/jar/jogl-all.jar" sourcepath="C:/Users/phil/.m2/repository/org/jogamp/jogl/jogl-all/2.3.2/jogl-all-2.3.2-sources.jar"/>
+	<classpathentry kind="lib" path="lib/sunflow-0.07.3i.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils2-and"/>
+	<classpathentry kind="output" path="classes"/>
+</classpath>
