@@ -64,7 +64,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -122,8 +121,8 @@ import org.jogamp.java3d.TransformInterpolator;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.View;
 import org.jogamp.java3d.VirtualUniverse;
-import org.jogamp.java3d.exp.swing.JCanvas3D;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.java3d.utils.universe.SimpleUniverse;
 import org.jogamp.java3d.utils.universe.Viewer;
 import org.jogamp.java3d.utils.universe.ViewingPlatform;
@@ -160,6 +159,9 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 
+import desktop.javaawt.image.DesktopBufferedImage;
+import desktop.javaawt.imageio.DesktopImageIO;
+
 /**
  * A component that displays home walls, rooms and furniture with Java 3D. 
  * @author Emmanuel Puybaret
@@ -182,6 +184,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private Collection<Selectable>                   homeObjectsToUpdate;
   private Collection<Selectable>                   lightScopeObjectsToUpdate;
   private Component                                component3D;
+  //PJPJPJPJ
+  private Canvas3D  canvas3D;
   private SimpleUniverse                           onscreenUniverse;
   private Camera                                   camera;
   // Listeners bound to home that updates 3D scene objects
@@ -345,7 +349,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           if (onscreenUniverse == null) {
             onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
-            Canvas3D canvas3D;
+            //PJPJPJPJPJPJ
+           /* Canvas3D canvas3D;
             if (component3D instanceof Canvas3D) {
               canvas3D = (Canvas3D)component3D;
             } else {
@@ -357,7 +362,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 ex2.initCause(ex);
                 throw ex2;
               }
-            }
+            }*/
             // Bind universe to canvas3D
             onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
             component3D.setFocusable(false);
@@ -406,7 +411,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         throw ex2;
       }
     } else {
-      this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(configuration,
+      this.component3D = new JPanel();
+      //PJPJPJPJ
+      canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(configuration,
           new Component3DManager.RenderingObserver() {        
               private Shape3D dummyShape;
          
@@ -432,11 +439,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                       appearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.FASTEST, 1));
                       this.dummyShape = new Shape3D(dummyGeometry, appearance);
                     }
-                    canvas3D.getGraphicsContext3D().draw(this.dummyShape);
+                    //PJPJPJ
+                   // canvas3D.getGraphicsContext3D().draw(this.dummyShape);
                   }
-                  J3DGraphics2D g2D = canvas3D.getGraphics2D();
-                  g2D.drawImage(navigationPanelImage, null, 0, 0);
-                  g2D.flush(true);
+                  //PJPJPJPJ
+                  //J3DGraphics2D g2D = canvas3D.getGraphics2D();
+                  //g2D.drawImage(navigationPanelImage, null, 0, 0);
+                  //g2D.flush(true);
                 }
               }
             });
@@ -460,6 +469,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         
         public void layoutContainer(Container parent) {
           component3D.setBounds(0, 0, Math.max(1, parent.getWidth()), Math.max(1, parent.getHeight()));
+         //PJPJPJPJ
+          canvas3D.getGLWindow().setSize(Math.max(1, parent.getWidth()), Math.max(1, parent.getHeight()));
+          
           if (navigationPanel != null 
               && navigationPanel.isVisible()) {
             // Ensure that navigationPanel is always in top corner             
@@ -469,7 +481,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         }
       });
     
-    canvasPanel.add(this.component3D);    
+    canvasPanel.add(this.component3D);  
+    
+    //PJPJPJPJ
+    canvas3D.addNotify();
+    System.out.println("canvas3D.addNotify();");
+    
     setLayout(new GridLayout());
     add(canvasPanel);
     if (controller != null) {
@@ -495,7 +512,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   /**
    * A <code>JCanvas</code> canvas that displays the navigation panel of a home component 3D upon it.
    */
-  private static class JCanvas3DWithNavigationPanel extends JCanvas3D {
+  //PJPJPJPJ
+/*  private static class JCanvas3DWithNavigationPanel extends JCanvas3D {
     private final HomeComponent3D homeComponent3D;
 
     public JCanvas3DWithNavigationPanel(HomeComponent3D homeComponent3D,
@@ -508,13 +526,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       super.paintComponent(g);
       g.drawImage(this.homeComponent3D.navigationPanelImage, 0, 0, this);
     }
-  }
+  }*/
 
   @Override
   public void setVisible(boolean visible) {
     super.setVisible(visible);
     if (this.component3D != null) {
       this.component3D.setVisible(visible);
+      
+      //PJPJPJPJ do something interesting here
     }
   }
   
@@ -772,6 +792,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private SimpleUniverse createUniverse(boolean displayShadowOnFloor,
                                         boolean listenToHomeUpdates, 
                                         boolean waitForLoading) {
+	  //PJPJPJ
+	  javaawt.image.BufferedImage.installBufferedImageDelegate(DesktopBufferedImage.class);  
+	  javaawt.imageio.ImageIO.installBufferedImageImpl(DesktopImageIO.class);
+	  
+	  
     // Create a universe bound to no canvas 3D
     ViewingPlatform viewingPlatform = new ViewingPlatform();
     // Add an interpolator to view transform to get smooth transition 
@@ -905,7 +930,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns an image of the home viewed by this component at the given size.
    */
   public BufferedImage getOffScreenImage(int width, int height) {
-    List<Selectable> selectedItems = this.home.getSelectedItems();
+	  //PJPJPJPJ
+	  return null;
+  /*  List<Selectable> selectedItems = this.home.getSelectedItems();
     SimpleUniverse offScreenImageUniverse = null;
     try {
       View view;
@@ -932,7 +959,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       if (offScreenImageUniverse != null) {
         offScreenImageUniverse.cleanup();
       } 
-    }
+    }*/
   }
   
   /**
@@ -1603,7 +1630,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns a new background node.  
    */
   private Node createBackgroundNode(boolean listenToHomeUpdates, final boolean waitForLoading) {
-    final Appearance backgroundAppearance = new Appearance();
+    final Appearance backgroundAppearance = new SimpleShaderAppearance();
     ColoringAttributes backgroundColoringAttributes = new ColoringAttributes();
     backgroundAppearance.setColoringAttributes(backgroundColoringAttributes);
     // Allow background color and texture to change
@@ -1706,6 +1733,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     if (colors != null) {
       geometryInfo.setColors(colors);
     }
+    
+    //PJPJPJPJ
+    geometryInfo.convertToIndexedTriangles();
+    
     geometryInfo.indexify();
     geometryInfo.compact();
     Geometry halfSphereGeometry = geometryInfo.getIndexedGeometryArray();
@@ -2615,7 +2646,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       }
     }
     
-    Appearance shadowAppearance = new Appearance();
+    Appearance shadowAppearance = new SimpleShaderAppearance();
     shadowAppearance.setColoringAttributes(new ColoringAttributes(new Color3f(), ColoringAttributes.SHADE_FLAT));
     shadowAppearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.NICEST, 0.7f));
     shadow.setAppearance(shadowAppearance);    

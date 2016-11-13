@@ -21,8 +21,9 @@
 package com.eteks.sweethome3d.junit;
 
 import java.awt.Component;
+import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.image.BufferedImage;
+import javaawt.image.BufferedImage;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.concurrent.BrokenBarrierException;
@@ -154,7 +155,8 @@ public class IconManagerTest extends TestCase {
   private int [] getIconData(Icon icon) {
     BufferedImage image = new BufferedImage(icon.getIconWidth(),
         icon.getIconHeight(), BufferedImage.TYPE_INT_ARGB);
-    icon.paintIcon(null, image.getGraphics(), 0, 0);
+    //PJPJPJPJ
+    icon.paintIcon(null, (Graphics) image.getGraphics().getDelegate(), 0, 0);
     int [] imageData = new int [icon.getIconWidth() * icon.getIconHeight()];
     return image.getRGB(0, 0, icon.getIconWidth(), icon.getIconHeight(), 
         imageData, 0, icon.getIconWidth());

@@ -28,7 +28,6 @@ import java.awt.RenderingHints;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
 
 import javax.swing.UIManager;
 
@@ -45,12 +44,15 @@ import org.jogamp.java3d.TransformGroup;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.Box;
 import org.jogamp.java3d.utils.image.TextureLoader;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Vector3d;
 import org.jogamp.vecmath.Vector4f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.TextStyle;
+
+import javaawt.image.BufferedImage;
 
 /**
  * Root of a label branch.
@@ -192,7 +194,7 @@ public class Label3D extends Object3DBranch {
           transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
           group.addChild(transformGroup);
   
-          Appearance appearance = new Appearance();
+          Appearance appearance = new SimpleShaderAppearance();
           appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
           appearance.setPolygonAttributes(DEFAULT_POLYGON_ATTRIBUTES);
           appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);

@@ -38,6 +38,7 @@ import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
 
@@ -102,7 +103,7 @@ public class Room3D extends Object3DBranch {
     roomShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
     roomShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
 
-    Appearance roomAppearance = new Appearance();
+    Appearance roomAppearance = new SimpleShaderAppearance();
     roomShape.setAppearance(roomAppearance);
     roomAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
     TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
@@ -546,6 +547,9 @@ public class Room3D extends Object3DBranch {
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, textureCoords);
     }
+    
+    //PJPJPJPJ
+    geometryInfo.convertToIndexedTriangles();
     
     // Generate normals
     new NormalGenerator(Math.PI / 8).generateNormals(geometryInfo);

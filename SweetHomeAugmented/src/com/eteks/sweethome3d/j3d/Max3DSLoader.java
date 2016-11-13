@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
@@ -48,8 +47,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-import javax.imageio.ImageIO;
-
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.GeometryArray;
@@ -70,6 +67,8 @@ import org.jogamp.java3d.loaders.ParsingErrorException;
 import org.jogamp.java3d.loaders.Scene;
 import org.jogamp.java3d.loaders.SceneBase;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.image.TextureLoader;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.Quat4d;
@@ -77,6 +76,9 @@ import org.jogamp.vecmath.SingularMatrixException;
 import org.jogamp.vecmath.TexCoord2f;
 import org.jogamp.vecmath.Vector3d;
 import org.jogamp.vecmath.Vector3f;
+
+import javaawt.image.BufferedImage;
+import javaawt.imageio.ImageIO;
 
  
 
@@ -340,7 +342,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   private final static Appearance DEFAULT_APPEARANCE;
   
   static {
-    DEFAULT_APPEARANCE = new Appearance();
+    DEFAULT_APPEARANCE = new SimpleShaderAppearance();
     DEFAULT_APPEARANCE.setMaterial(new Material(
         new Color3f(0.4000f, 0.4000f, 0.4000f), new Color3f(),
         new Color3f(0.7102f, 0.7020f, 0.6531f),
@@ -516,7 +518,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     // Create appearances from 3DS materials
     Map<Material3DS, Appearance> appearances = new HashMap<Max3DSLoader.Material3DS, Appearance>();
     for (Material3DS material : this.materials.values()) {
-      Appearance appearance = new Appearance();
+      Appearance appearance = new SimpleShaderAppearance();
       try {
         appearance.setName(material.getName());
       } catch (NoSuchMethodError ex) {

@@ -1340,7 +1340,8 @@ public class PhotoRenderer {
           imagePath = texture.getUserData().toString();
         } else {
           ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
-          RenderedImage image = imageComponent.getRenderedImage();
+          //PJPJPJPJ
+          RenderedImage image = (RenderedImage) imageComponent.getRenderedImage().getDelegate();
           if (transparency < 1) {
             // Compute a partially transparent image
             BufferedImage transparentImage = new BufferedImage(image.getWidth(), 

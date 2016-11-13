@@ -167,13 +167,15 @@ public class SweetHome3DBootstrap {
     
     String [] applicationPackages = {
         "com.eteks.sweethome3d",
-        "javax.media",
-        "javax.vecmath",
+        //PJPJPJPJPJPJ
+        "org.jogamp.java3d",
+       // "javax.vecmath",
         "com.sun.j3d",
         "com.sun.opengl",
         "com.sun.gluegen.runtime",
         "com.jogamp",
         "jogamp",
+        "jogamp.newt.driver.windows",
         "javax.media.opengl",
         "javax.media.nativewindow",
         "com.sun.media",

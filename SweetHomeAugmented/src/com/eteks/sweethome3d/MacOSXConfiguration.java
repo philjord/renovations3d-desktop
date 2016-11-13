@@ -65,7 +65,7 @@ import javax.swing.event.MenuListener;
 import javax.swing.event.MouseInputAdapter;
 
 import org.jogamp.java3d.Canvas3D;
-import org.jogamp.java3d.exp.swing.JCanvas3D;
+ 
 
 import com.apple.eawt.AppEvent.FullScreenEvent;
 import com.apple.eawt.Application;
@@ -276,7 +276,7 @@ class MacOSXConfiguration {
                       EventQueue.invokeAndWait(new Runnable() {
                           public void run() {
                             canvas3D.set(homeFrame.isShowing()
-                                && isParentOfCanvas3D(homeFrame, Canvas3D.class, JCanvas3D.class));
+                                && isParentOfCanvas3D(homeFrame, Canvas3D.class));//PJPJPJPJPJ, JCanvas3D.class));
                           }
                         });
                     } while (!canvas3D.get());                  

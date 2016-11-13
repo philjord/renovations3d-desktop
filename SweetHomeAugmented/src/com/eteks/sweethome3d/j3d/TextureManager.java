@@ -21,12 +21,12 @@ package com.eteks.sweethome3d.j3d;
 
 import java.awt.Color;
 import java.awt.EventQueue;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import javaawt.Graphics;
+import javaawt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.TexturePaint;
-import java.awt.geom.Rectangle2D;
-import java.awt.image.BufferedImage;
+import javaawt.geom.Rectangle2D;
+import javaawt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
@@ -40,7 +40,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.imageio.ImageIO;
+import javaawt.imageio.ImageIO;
 
 import org.jogamp.java3d.ImageComponent;
 import org.jogamp.java3d.ImageComponent2D;
@@ -106,12 +106,14 @@ public class TextureManager {
   /**
    * Returns a texture image of one pixel of the given <code>color</code>. 
    */
+   
   private Texture getColoredImageTexture(Color color) {
     BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
-    Graphics g = image.getGraphics();
-    g.setColor(color);
-    g.drawLine(0, 0, 0, 0);
-    g.dispose();
+    //PJPJPJPJ why?
+  //  Graphics g = image.getGraphics();
+  //  g.setColor(color);
+  //  g.drawLine(0, 0, 0, 0);
+  //  g.dispose();
     Texture texture = new TextureLoader(image).getTexture();
     texture.setCapability(Texture.ALLOW_IMAGE_READ);
     texture.setCapability(Texture.ALLOW_FORMAT_READ);
@@ -256,6 +258,9 @@ public class TextureManager {
        image = ImageIO.read(contentStream);
       }
       if (angle != 0) {
+    	  
+    	  //PJPJPJPJPJPJ disabled for now
+    	  /*
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         BufferedImage rotatedImage = new BufferedImage((int)Math.round(Math.abs(image.getWidth() * cos) + Math.abs(image.getHeight() * sin)), 
@@ -268,7 +273,7 @@ public class TextureManager {
         float maxDimension = Math.max(rotatedImage.getWidth(), rotatedImage.getHeight());
         g2D.fill(new Rectangle2D.Float(-maxDimension, -maxDimension, 3 * maxDimension, 3 * maxDimension));
         g2D.dispose();
-        image = rotatedImage;
+        image = rotatedImage;*/
       }
       contentStream.close();
       if (image != null) {

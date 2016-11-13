@@ -19,7 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.image.RenderedImage;
+import javaawt.image.RenderedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -51,7 +51,7 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import javax.imageio.ImageIO;
+import javaawt.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
@@ -408,8 +408,8 @@ public class OBJWriter extends FilterWriter {
                 }
               }
               this.appearances.put(comparableAppearance, appearanceName);
-              
-              Texture texture = appearance.getTexture();
+              //PJPJPJPJ
+             /* Texture texture = appearance.getTexture();
               if (texture != null) {
                 File textureFile = this.textures.get(texture);
                 if (textureFile == null) {
@@ -439,7 +439,7 @@ public class OBJWriter extends FilterWriter {
                       + "_" + appearanceName + "." + fileExtension);
                   this.textures.put(texture, textureFile);
                 }
-              }
+              }*/
             } 
             this.out.write("usemtl " + appearanceName + "\n");
           }
@@ -1385,8 +1385,9 @@ public class OBJWriter extends FilterWriter {
           }
         } else {
           ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
+          //PJPJPJPJ
           RenderedImage image = imageComponent.getRenderedImage();
-          ImageIO.write(image, "png", textureEntry.getValue());
+      //    ImageIO.write(image, "png", textureEntry.getValue());
         }
       }
     } finally {

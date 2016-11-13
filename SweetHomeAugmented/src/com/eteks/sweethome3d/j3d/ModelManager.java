@@ -94,6 +94,7 @@ import org.jogamp.java3d.loaders.Loader;
 import org.jogamp.java3d.loaders.ParsingErrorException;
 import org.jogamp.java3d.loaders.Scene;
 import org.jogamp.java3d.loaders.lw3d.Lw3dLoader;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Matrix3f;
 import org.jogamp.vecmath.Point3d;
@@ -869,7 +870,7 @@ public class ModelManager {
         if (shapeName.startsWith(WINDOW_PANE_SHAPE_PREFIX)) {
           Appearance appearance = shape.getAppearance();
           if (appearance == null) {
-            appearance = new Appearance();
+            appearance = new SimpleShaderAppearance();
             shape.setAppearance(appearance);
           }
           if (appearance.getTransparencyAttributes() == null) {

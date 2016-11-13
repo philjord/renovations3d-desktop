@@ -32,7 +32,7 @@ import java.awt.event.HierarchyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.awt.image.BufferedImage;
+import javaawt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -73,12 +73,13 @@ public class Component3DManager {
 
   private Component3DManager() {
     if (!GraphicsEnvironment.isHeadless()) {
-      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();
-      GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-      this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(template);
-      if (this.defaultScreenConfiguration == null) {
-        this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(new GraphicsConfigTemplate3D());
-      }
+    	//PJPJPJPJP
+     // GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();
+     // GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();  
+      //this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(template);
+     // if (this.defaultScreenConfiguration == null) {
+     //   this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(new GraphicsConfigTemplate3D());
+     // }
     } else {
       this.offScreenImageSupported = Boolean.FALSE;
     }
@@ -151,6 +152,10 @@ public class Component3DManager {
    * is equal to <code>true</code>.
    */
   public boolean isOffScreenImageSupported() {
+	  //PJPJPJPJ
+	  if(true)
+	    return false;
+	  
     if (this.offScreenImageSupported == null) {
       if ("false".equalsIgnoreCase(System.getProperty(CHECK_OFF_SCREEN_IMAGE_SUPPORT, "true"))) {
         this.offScreenImageSupported = Boolean.FALSE;
@@ -178,6 +183,7 @@ public class Component3DManager {
       }
     }
     return this.offScreenImageSupported;
+   
   }
 
   /**
@@ -188,40 +194,48 @@ public class Component3DManager {
   private Canvas3D getCanvas3D(GraphicsConfiguration deviceConfiguration,
                                boolean offscreen,
                                final RenderingObserver renderingObserver) {
-    GraphicsConfiguration configuration;
+	 	//PJPJPJPJPJ
+	  /*GraphicsConfiguration configuration;
     if (GraphicsEnvironment.isHeadless()) {
       configuration = null;
     } else if (deviceConfiguration == null
                || deviceConfiguration.getDevice() == this.defaultScreenConfiguration.getDevice()) {
       configuration = this.defaultScreenConfiguration;
     } else {
+   
       GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();      
       configuration = deviceConfiguration.getDevice().getBestConfiguration(template);
       if (configuration == null) {
         configuration = deviceConfiguration.getDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
       }
-    }
-    if (configuration == null) {
-      throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
-    }
+    }*/
+//    if (configuration == null) {
+//      throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
+//    }
     try {
       // Ensure unused canvases are freed
       System.gc();
       
+    
       // Create a Java 3D canvas  
-      final Canvas3D canvas3D;
-      if (renderingObserver != null) {
-        canvas3D = new ObservedCanvas3D(configuration, offscreen, renderingObserver);
-      } else {
-        canvas3D = new Canvas3D(configuration, offscreen);
-      }
+      final Canvas3D canvas3D; 
+      //PJPJPJPJ     
+      if (renderingObserver != null)System.err.println("renderingObserver != null");
+    //  if (renderingObserver != null) {
+    	 
+    //    canvas3D = new ObservedCanvas3D(configuration, offscreen, renderingObserver);
+    //  } else {
+    	  //PJPJPJPJ
+        canvas3D = new Canvas3D();//configuration, offscreen);
+     // }
       
-      if (!offscreen
+    	//PJPJPJPJPJ
+        /*   if (!offscreen
           && OperatingSystem.isLinux() 
           && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
         // Add a listener to the parent window once known that will repaint the canvas in 100 ms
         // when the window is activated / deactivated to avoid keeping an empty canvas 
-        final WindowListener parentActivationListener = new WindowAdapter() {
+         final WindowListener parentActivationListener = new WindowAdapter() {
             private Timer timer;
 
             @Override
@@ -229,7 +243,9 @@ public class Component3DManager {
               if (this.timer == null) {
                 this.timer = new Timer(100, new ActionListener() {
                     public void actionPerformed(ActionEvent ev) {
-                      canvas3D.repaint();
+       
+             canvas3D.repaint();
+                    	
                     }
                   });
                 this.timer.setRepeats(false);
@@ -242,6 +258,7 @@ public class Component3DManager {
               windowActivated(null);
             }
           };
+          
         canvas3D.addHierarchyListener(new HierarchyListener() {
             private Window parentWindow;
             
@@ -257,7 +274,7 @@ public class Component3DManager {
               this.parentWindow = window;
             }
           });
-      }
+      }*/
       
       return canvas3D;
     } catch (IllegalArgumentException ex) {
@@ -425,7 +442,7 @@ public class Component3DManager {
   /**
    * A canvas 3D observed during its rendering.
    */
-  private static class ObservedCanvas3D extends Canvas3D {
+/*  private static class ObservedCanvas3D extends Canvas3D {
     private final RenderingObserver renderingObserver;
     private final boolean           paintDelayed;
     private Timer timer;
@@ -473,5 +490,5 @@ public class Component3DManager {
         super.paint(g);
       }
     }
-  }
+  }*/
 }

@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
-import javax.imageio.ImageIO;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -72,6 +70,7 @@ import org.jogamp.java3d.loaders.SceneBase;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
 import org.jogamp.java3d.utils.image.TextureLoader;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.AxisAngle4f;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3d;
@@ -80,6 +79,9 @@ import org.jogamp.vecmath.Vector3f;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import javaawt.image.BufferedImage;
+import javaawt.imageio.ImageIO;
 
 
 /**
@@ -294,7 +296,7 @@ public class DAELoader extends LoaderBase implements Loader {
         }
       } else if ("effect".equals(name)) {
         this.effectId = attributes.getValue("id");
-        this.effectAppearances.put(this.effectId, new Appearance());
+        this.effectAppearances.put(this.effectId, new SimpleShaderAppearance());
       } else if (this.effectId != null) { 
         if ("profile_COMMON".equals(parent) && "newparam".equals(name)) {
           this.newParamSid = attributes.getValue("sid");

@@ -48,6 +48,7 @@ import org.jogamp.java3d.TransformGroup;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
 import org.jogamp.vecmath.Vector3f;
@@ -126,7 +127,7 @@ public class Wall3D extends Object3DBranch {
     wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
     wallShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
 
-    Appearance wallAppearance = new Appearance();
+    Appearance wallAppearance = new SimpleShaderAppearance();
     wallShape.setAppearance(wallAppearance);
     wallAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
     TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
@@ -846,12 +847,15 @@ public class Wall3D extends Object3DBranch {
       geometryInfo.setTextureCoordinates(0, textureCoords);
     }
     
+    //PJPJPJPJ
+    geometryInfo.convertToIndexedTriangles();
+    
     // Generate normals
     NormalGenerator normalGenerator = new NormalGenerator();
     if (arcCircleCenter == null) {
       normalGenerator.setCreaseAngle(0);
     }
-    normalGenerator.generateNormals(geometryInfo);
+    normalGenerator.generateNormals(geometryInfo);  
     return geometryInfo.getIndexedGeometryArray();
   }
 
@@ -1145,6 +1149,10 @@ public class Wall3D extends Object3DBranch {
               geometryInfo.setTextureCoordinateParams(1, 2);
               geometryInfo.setTextureCoordinates(0, borderTextureCoords.toArray(new TexCoord2f [borderTextureCoords.size()]));
             }
+            
+            //PJPJPJPJ
+            geometryInfo.convertToIndexedTriangles();
+            
             new NormalGenerator(Math.PI / 2).generateNormals(geometryInfo);
             wallGeometries.add(geometryInfo.getIndexedGeometryArray());
           }
@@ -1153,6 +1161,10 @@ public class Wall3D extends Object3DBranch {
             // Generate wall top geometry 
             geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);        
             geometryInfo.setCoordinates(slopingTopCoords.toArray(new Point3f [slopingTopCoords.size()]));
+            
+            //PJPJPJPJ
+            geometryInfo.convertToIndexedTriangles();
+            
             new NormalGenerator().generateNormals(geometryInfo);
             wallTopGeometries.add(geometryInfo.getIndexedGeometryArray());
           }

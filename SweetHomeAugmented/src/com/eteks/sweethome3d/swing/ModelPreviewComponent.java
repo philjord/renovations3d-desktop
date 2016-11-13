@@ -103,7 +103,11 @@ public class ModelPreviewComponent extends JComponent {
   
   private SimpleUniverse          universe;
   private JPanel                  component3DPanel;
+  
   private Component               component3D;
+//PJPJPJPJPJ
+  private Canvas3D               canvas3D;
+  
   private BranchGroup             sceneTree;
   private float                   viewYaw   = (float) Math.PI / 8;
   private float                   viewPitch = -(float) Math.PI / 16;
@@ -263,6 +267,7 @@ public class ModelPreviewComponent extends JComponent {
                                  boolean yawChangeSupported, 
                                  boolean pitchChangeSupported,
                                  boolean scaleChangeSupported) {
+	  //PJPJPJPJPJ
     if (Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
       GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
       gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
@@ -279,7 +284,10 @@ public class ModelPreviewComponent extends JComponent {
         throw ex2;
       }
     } else {
-      this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(graphicsConfiguration,
+    	//PJPJPJPJPJ seperate these 2 into 2
+      this.component3D = new JPanel();
+    		  
+      canvas3D =  Component3DManager.getInstance().getOnscreenCanvas3D(graphicsConfiguration,
           new Component3DManager.RenderingObserver() {
             public void canvas3DPreRendered(Canvas3D canvas3d) {
             }
@@ -299,12 +307,14 @@ public class ModelPreviewComponent extends JComponent {
     this.component3DPanel.add(this.component3D);
     this.component3D.setFocusable(false);      
     addMouseListeners(this.component3D, yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
+    
   }
 
   /**
    * A <code>JCanvas</code> canvas that sends a notification when it's drawn.
    */
-  private static class JCanvas3DWithNotifiedPaint extends JCanvas3D {
+  //PJPJPJPJ
+/*  private static class JCanvas3DWithNotifiedPaint extends JCanvas3D {
     private final ModelPreviewComponent homeComponent3D;
 
     public JCanvas3DWithNotifiedPaint(ModelPreviewComponent component,
@@ -317,7 +327,7 @@ public class ModelPreviewComponent extends JComponent {
       super.paintComponent(g);
       this.homeComponent3D.canvas3DSwapped();
     }
-  }
+  }*/
   
   /**
    * Adds an AWT mouse listener to component that will update view platform transform.  
@@ -413,7 +423,7 @@ public class ModelPreviewComponent extends JComponent {
    * Creates universe bound to the 3D component.
    */
   private void createUniverse() {
-    Canvas3D canvas3D;
+   /* Canvas3D canvas3D;
     if (this.component3D instanceof Canvas3D) {
       canvas3D = (Canvas3D)this.component3D;
     } else {
@@ -425,7 +435,7 @@ public class ModelPreviewComponent extends JComponent {
         ex2.initCause(ex);
         throw ex2;
       }
-    }    
+    } */   
     // Create a universe bound to component 3D
     ViewingPlatform viewingPlatform = new ViewingPlatform();
     Viewer viewer = new Viewer(canvas3D);

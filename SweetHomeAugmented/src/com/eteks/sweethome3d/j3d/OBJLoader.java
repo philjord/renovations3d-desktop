@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -41,8 +40,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.imageio.ImageIO;
-
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.ColoringAttributes;
@@ -63,10 +60,14 @@ import org.jogamp.java3d.loaders.SceneBase;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
 import org.jogamp.java3d.utils.image.TextureLoader;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
 import org.jogamp.vecmath.Vector3f;
+
+import javaawt.image.BufferedImage;
+import javaawt.imageio.ImageIO;
  
  
 
@@ -1658,7 +1659,7 @@ public class OBJLoader extends LoaderBase implements Loader {
       int newmtlToken = tokenizer.nextToken();
       tokenizer.whitespaceChars(' ', ' ');
       if (newmtlToken == StreamTokenizer.TT_WORD) {
-        currentAppearance = new Appearance();
+        currentAppearance = new SimpleShaderAppearance();
         appearances.put(tokenizer.sval, currentAppearance);
         try {
           currentAppearance.setName(tokenizer.sval);

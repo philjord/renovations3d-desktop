@@ -2818,7 +2818,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                       new TextureManager.TextureObserver() {
                         public void textureUpdated(Texture texture) {
                           floorTextureImagesCache.put(floorRotatedTextureKey, 
-                              ((ImageComponent2D)texture.getImage(0)).getImage());
+                              (BufferedImage) ((ImageComponent2D)texture.getImage(0)).getImage().getDelegate());
                           if (!waitForTexture) {
                             repaint();
                           }
@@ -6041,7 +6041,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
                 new TextureManager.TextureObserver() {
                   public void textureUpdated(Texture texture) {
-                    setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage(), pieceTexture.getAngle());
+                    setTexturedIcon(c, (BufferedImage) ((ImageComponent2D)texture.getImage(0)).getImage().getDelegate(), pieceTexture.getAngle());
                   }
                 });
           } else { 
@@ -6209,14 +6209,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       background.setColor(1, 1, 1);
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
-      BufferedImage imageWithWhiteBackgound = canvas3D.getOffScreenBuffer().getImage();
+      BufferedImage imageWithWhiteBackgound = (BufferedImage) canvas3D.getOffScreenBuffer().getImage().getDelegate();
       int [] imageWithWhiteBackgoundPixels = getImagePixels(imageWithWhiteBackgound);
       
       // Render scene with a black background
       background.setColor(0, 0, 0);
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
-      BufferedImage imageWithBlackBackgound = canvas3D.getOffScreenBuffer().getImage();
+      BufferedImage imageWithBlackBackgound = (BufferedImage) canvas3D.getOffScreenBuffer().getImage().getDelegate();
       int [] imageWithBlackBackgoundPixels = getImagePixels(imageWithBlackBackgound);
       
       // Create an image with transparent pixels where model isn't drawn
