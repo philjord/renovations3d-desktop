@@ -19,24 +19,12 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.Graphics;
 import java.awt.GraphicsConfigTemplate;
 import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
-import java.awt.Window;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.HierarchyEvent;
-import java.awt.event.HierarchyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
-import javaawt.image.BufferedImage;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import org.jogamp.java3d.Canvas3D;
@@ -53,6 +41,8 @@ import org.jogamp.java3d.utils.universe.Viewer;
 import org.jogamp.java3d.utils.universe.ViewingPlatform;
 
 import com.eteks.sweethome3d.tools.OperatingSystem;
+
+import javaawt.image.BufferedImage;
 
 /**
  * Manager of <code>Canvas3D</code> instantiations and Java 3D error listeners.
@@ -152,9 +142,6 @@ public class Component3DManager {
    * is equal to <code>true</code>.
    */
   public boolean isOffScreenImageSupported() {
-	  //PJPJPJPJ
-	  if(true)
-	    return false;
 	  
     if (this.offScreenImageSupported == null) {
       if ("false".equalsIgnoreCase(System.getProperty(CHECK_OFF_SCREEN_IMAGE_SUPPORT, "true"))) {
@@ -215,19 +202,17 @@ public class Component3DManager {
     try {
       // Ensure unused canvases are freed
       System.gc();
-      
-    
+        
       // Create a Java 3D canvas  
       final Canvas3D canvas3D; 
       //PJPJPJPJ     
-      if (renderingObserver != null)System.err.println("renderingObserver != null");
-    //  if (renderingObserver != null) {
-    	 
-    //    canvas3D = new ObservedCanvas3D(configuration, offscreen, renderingObserver);
-    //  } else {
+      if (renderingObserver != null) {    	 
+        //canvas3D = new ObservedCanvas3D(configuration, offscreen, renderingObserver);
+        canvas3D = new ObservedCanvas3D(  offscreen, renderingObserver);
+      } else {
     	  //PJPJPJPJ
-        canvas3D = new Canvas3D();//configuration, offscreen);
-     // }
+        canvas3D = new Canvas3D(offscreen);//configuration, offscreen);
+      }
       
     	//PJPJPJPJPJ
         /*   if (!offscreen
@@ -329,7 +314,7 @@ public class Component3DManager {
     screen3D.setSize(width, height);
     screen3D.setPhysicalScreenWidth(2f);
     screen3D.setPhysicalScreenHeight(2f / width * height);
-    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_3BYTE_BGR);
     ImageComponent2D imageComponent2D = new ImageComponent2D(ImageComponent2D.FORMAT_RGB, image);
     imageComponent2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
     offScreenCanvas.setOffScreenBuffer(imageComponent2D);
@@ -381,8 +366,8 @@ public class Component3DManager {
         try {
           // Free off screen buffer and context
           offScreenCanvas.setOffScreenBuffer(null);
-        } catch (NullPointerException ex) {
-          // Java 3D 1.3 may throw an exception
+        } catch (NullPointerException ex) {          
+        	ex.printStackTrace();
         }
       }
       // Reset previous rendering error listener
@@ -442,15 +427,16 @@ public class Component3DManager {
   /**
    * A canvas 3D observed during its rendering.
    */
-/*  private static class ObservedCanvas3D extends Canvas3D {
+  private static class ObservedCanvas3D extends Canvas3D {
     private final RenderingObserver renderingObserver;
     private final boolean           paintDelayed;
     private Timer timer;
 
-    private ObservedCanvas3D(GraphicsConfiguration graphicsConfiguration, 
+    private ObservedCanvas3D(//GraphicsConfiguration graphicsConfiguration, 
                              boolean offScreen,
                              RenderingObserver renderingObserver) {
-      super(graphicsConfiguration, offScreen);
+    	//PJPJPJPJ
+    	super(offScreen);//graphicsConfiguration, offScreen);
       this.renderingObserver = renderingObserver;
       // Under Windows with Java 7 and above, delay the rendering of the canvas 3D when 
       // it's repainted (i.e. it's resized, moved or partially hidden) to avoid it to get grayed
@@ -472,8 +458,8 @@ public class Component3DManager {
     public void postSwap() {
       this.renderingObserver.canvas3DSwapped(this);
     }
-    
-    @Override
+    //PJPJPJPJ no more paint
+ /*   @Override
     public void paint(Graphics g) {
       if (this.paintDelayed) {
         if (this.timer == null) {
@@ -489,6 +475,6 @@ public class Component3DManager {
       } else {
         super.paint(g);
       }
-    }
-  }*/
+    }*/
+  }
 }

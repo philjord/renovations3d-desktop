@@ -109,6 +109,7 @@ import org.jogamp.java3d.Geometry;
 import org.jogamp.java3d.GraphicsConfigTemplate3D;
 import org.jogamp.java3d.Group;
 import org.jogamp.java3d.IllegalRenderingStateException;
+import org.jogamp.java3d.J3DGraphics2D;
 import org.jogamp.java3d.Light;
 import org.jogamp.java3d.Link;
 import org.jogamp.java3d.Node;
@@ -379,6 +380,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (component3D != null) {
             removeAll();
             component3D = null;
+            canvas3D.removeNotify();
+            canvas3D = null;
             navigationPanel = null;
           }
         }
@@ -415,7 +418,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       //PJPJPJPJ
       canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(configuration,
           new Component3DManager.RenderingObserver() {        
-              private Shape3D dummyShape;
+    	//PJPJPJ    
+    	  //private Shape3D dummyShape;
          
               public void canvas3DSwapped(Canvas3D canvas3D) {
               }
@@ -429,7 +433,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 BufferedImage navigationPanelImage = HomeComponent3D.this.navigationPanelImage;
                 // Render navigation panel upon canvas 3D if it exists
                 if (navigationPanelImage != null) {
-                  if (JAVA3D_1_5) {
+                	//PJPJPJ
+                 /* if (JAVA3D_1_5) {
                     // Render trivial transparent shape to reset the possible transformation set on the last rendered texture 
                     // See https://jogamp.org/bugzilla/show_bug.cgi?id=1006#c1
                     if (this.dummyShape == null) {
@@ -439,13 +444,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                       appearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.FASTEST, 1));
                       this.dummyShape = new Shape3D(dummyGeometry, appearance);
                     }
-                    //PJPJPJ
-                   // canvas3D.getGraphicsContext3D().draw(this.dummyShape);
-                  }
-                  //PJPJPJPJ
-                  //J3DGraphics2D g2D = canvas3D.getGraphics2D();
-                  //g2D.drawImage(navigationPanelImage, null, 0, 0);
-                  //g2D.flush(true);
+                    
+                    canvas3D.getGraphicsContext3D().draw(this.dummyShape);
+                  }*/
+
+                	//TODO: this doesn't appear to be drawing?
+                	System.out.println("draw draw draw");
+                	System.out.println("in fact it flashes up briefly? odd");
+                  J3DGraphics2D g2D = canvas3D.getGraphics2D();                  
+                  g2D.drawImage(new DesktopBufferedImage(navigationPanelImage), null, 0, 0);
+                  g2D.flush(true);
                 }
               }
             });
@@ -470,7 +478,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         public void layoutContainer(Container parent) {
           component3D.setBounds(0, 0, Math.max(1, parent.getWidth()), Math.max(1, parent.getHeight()));
          //PJPJPJPJ
-          canvas3D.getGLWindow().setSize(Math.max(1, parent.getWidth()), Math.max(1, parent.getHeight()));
+          canvas3D.setSize(Math.max(1, parent.getWidth()), Math.max(1, parent.getHeight()));
           
           if (navigationPanel != null 
               && navigationPanel.isVisible()) {
@@ -483,9 +491,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     
     canvasPanel.add(this.component3D);  
     
-    //PJPJPJPJ
     canvas3D.addNotify();
-    System.out.println("canvas3D.addNotify();");
     
     setLayout(new GridLayout());
     add(canvasPanel);
@@ -535,6 +541,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       this.component3D.setVisible(visible);
       
       //PJPJPJPJ do something interesting here
+      this.canvas3D.setVisible(visible);
     }
   }
   
