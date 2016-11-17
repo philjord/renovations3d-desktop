@@ -19,7 +19,7 @@
  */
 package com.eteks.sweethome3d.io;
 
-import java.awt.EventQueue;
+import javaawt.EventQueue;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;

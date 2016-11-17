@@ -12,7 +12,6 @@
 	<classpathentry kind="lib" path="libtest/jdepend-2.9.jar"/>
 	<classpathentry kind="lib" path="libtest/AppleJavaExtensions.jar"/>
 	<classpathentry kind="lib" path="libtest/jnlp.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-core-and"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils-and"/>
@@ -21,5 +20,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils2-and"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/awtshim"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/awtshim-desktop"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

@@ -19,7 +19,7 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.awt.geom.Point2D;
+import javaawt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

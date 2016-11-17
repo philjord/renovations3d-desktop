@@ -19,9 +19,8 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.GraphicsConfigTemplate;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
+import javaawt.GraphicsConfigTemplate;
+import javaawt.GraphicsConfiguration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -62,17 +61,17 @@ public class Component3DManager {
   private GraphicsConfiguration  defaultScreenConfiguration;
 
   private Component3DManager() {
-    if (!GraphicsEnvironment.isHeadless()) {
-    	//PJPJPJPJP
+	//PJPJPJPJP
+    //if (!GraphicsEnvironment.isHeadless()) {    	
      // GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();
      // GraphicsDevice defaultScreenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();  
       //this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(template);
      // if (this.defaultScreenConfiguration == null) {
      //   this.defaultScreenConfiguration = defaultScreenDevice.getBestConfiguration(new GraphicsConfigTemplate3D());
      // }
-    } else {
-      this.offScreenImageSupported = Boolean.FALSE;
-    }
+    //} else {
+    //  this.offScreenImageSupported = Boolean.FALSE;
+    //}
   }
 
   /**

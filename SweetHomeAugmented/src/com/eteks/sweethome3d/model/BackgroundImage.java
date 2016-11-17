@@ -19,7 +19,7 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.awt.geom.Point2D;
+import javaawt.geom.Point2D;
 import java.io.Serializable;
 
 /**

@@ -161,6 +161,7 @@ import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.jogamp.newt.event.MouseListener;
 
+import desktop.javaawt.VMEventQueue;
 import desktop.javaawt.image.VMBufferedImage;
 import desktop.javaawt.imageio.VMImageIO;
 
@@ -800,6 +801,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	  //PJPJPJ
 	  javaawt.image.BufferedImage.installBufferedImageDelegate(VMBufferedImage.class);  
 	  javaawt.imageio.ImageIO.installBufferedImageImpl(VMImageIO.class);
+	  javaawt.EventQueue.installBufferedImageImpl(VMEventQueue.class);
 	  
 	  
     // Create a universe bound to no canvas 3D
