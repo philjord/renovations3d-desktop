@@ -160,8 +160,8 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 
-import desktop.javaawt.image.DesktopBufferedImage;
-import desktop.javaawt.imageio.DesktopImageIO;
+import desktop.javaawt.image.VMBufferedImage;
+import desktop.javaawt.imageio.VMImageIO;
 
 /**
  * A component that displays home walls, rooms and furniture with Java 3D. 
@@ -452,7 +452,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                 	System.out.println("draw draw draw");
                 	System.out.println("in fact it flashes up briefly? odd");
                   J3DGraphics2D g2D = canvas3D.getGraphics2D();                  
-                  g2D.drawImage(new DesktopBufferedImage(navigationPanelImage), null, 0, 0);
+                  g2D.drawImage(new VMBufferedImage(navigationPanelImage), null, 0, 0);
                   g2D.flush(true);
                 }
               }
@@ -800,8 +800,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                                         boolean listenToHomeUpdates, 
                                         boolean waitForLoading) {
 	  //PJPJPJ
-	  javaawt.image.BufferedImage.installBufferedImageDelegate(DesktopBufferedImage.class);  
-	  javaawt.imageio.ImageIO.installBufferedImageImpl(DesktopImageIO.class);
+	  javaawt.image.BufferedImage.installBufferedImageDelegate(VMBufferedImage.class);  
+	  javaawt.imageio.ImageIO.installBufferedImageImpl(VMImageIO.class);
 	  
 	  
     // Create a universe bound to no canvas 3D
