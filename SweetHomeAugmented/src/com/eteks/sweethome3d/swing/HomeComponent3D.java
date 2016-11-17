@@ -64,6 +64,7 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -113,7 +114,6 @@ import org.jogamp.java3d.J3DGraphics2D;
 import org.jogamp.java3d.Light;
 import org.jogamp.java3d.Link;
 import org.jogamp.java3d.Node;
-import org.jogamp.java3d.PointArray;
 import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.Transform3D;
@@ -159,6 +159,7 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
+import com.jogamp.newt.event.MouseListener;
 
 import desktop.javaawt.image.VMBufferedImage;
 import desktop.javaawt.imageio.VMImageIO;
@@ -448,9 +449,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
                     canvas3D.getGraphicsContext3D().draw(this.dummyShape);
                   }*/
 
-                	//TODO: this doesn't appear to be drawing?
-                	System.out.println("draw draw draw");
-                	System.out.println("in fact it flashes up briefly? odd");
                   J3DGraphics2D g2D = canvas3D.getGraphics2D();                  
                   g2D.drawImage(new VMBufferedImage(navigationPanelImage), null, 0, 0);
                   g2D.flush(true);
@@ -937,9 +935,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Returns an image of the home viewed by this component at the given size.
    */
   public BufferedImage getOffScreenImage(int width, int height) {
-	  //PJPJPJPJ
-	  return null;
-  /*  List<Selectable> selectedItems = this.home.getSelectedItems();
+    List<Selectable> selectedItems = this.home.getSelectedItems();
     SimpleUniverse offScreenImageUniverse = null;
     try {
       View view;
@@ -959,14 +955,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       // Empty temporarily selection to create the off screen image
       List<Selectable> emptySelection = Collections.emptyList();
       this.home.setSelectedItems(emptySelection);
-      return Component3DManager.getInstance().getOffScreenImage(view, width, height);
+      //PJPJPJ
+      return (BufferedImage) Component3DManager.getInstance().getOffScreenImage(view, width, height).getDelegate();
     } finally {
       // Restore selection
       this.home.setSelectedItems(selectedItems);
       if (offScreenImageUniverse != null) {
         offScreenImageUniverse.cleanup();
       } 
-    }*/
+    }
   }
   
   /**
@@ -1482,6 +1479,202 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           requestFocusInWindow();
         }
       });
+    
+    
+    //PJPJPJPJP///////////////////////////////////////////////////////////////////////////////////////
+    MouseListener mouseListener2 = new MouseListener() {
+        private int        xLastMouseMove;
+        private int        yLastMouseMove;
+        private Component  grabComponent;
+        private Component  previousMouseEventTarget;
+        
+        
+        public void mousePressed(com.jogamp.newt.event.MouseEvent ev) {
+          if (!retargetMouseEventToNavigationPanelChildren(ev)) {
+            if (false){//ev.isPopupTrigger()) {
+              mouseReleased(ev);
+            } else if (isEnabled()) {
+              requestFocusInWindow();
+              this.xLastMouseMove = ev.getX();
+              this.yLastMouseMove = ev.getY();
+            }
+          }
+        }
+  
+         
+        public void mouseReleased(com.jogamp.newt.event.MouseEvent ev) {
+          if (!retargetMouseEventToNavigationPanelChildren(ev)) {
+            if (false){//ev.isPopupTrigger()) {
+              JPopupMenu componentPopupMenu = getComponentPopupMenu();
+              if (componentPopupMenu != null) {
+                componentPopupMenu.show(HomeComponent3D.this, ev.getX(), ev.getY());
+              }
+            }
+          }
+        }
+
+         
+        public void mouseClicked(com.jogamp.newt.event.MouseEvent ev) {
+          retargetMouseEventToNavigationPanelChildren(ev);
+        }
+        
+        
+        public void mouseMoved(com.jogamp.newt.event.MouseEvent ev) {
+          retargetMouseEventToNavigationPanelChildren(ev);
+        }
+        
+         
+        public void mouseDragged(com.jogamp.newt.event.MouseEvent ev) {
+          if (!retargetMouseEventToNavigationPanelChildren(ev)) {
+            if (isEnabled()) {
+              if (ev.isAltDown()) {
+                // Mouse move along Y axis while alt is down changes camera location
+                float delta = 1.25f * (this.yLastMouseMove - ev.getY());
+                // Multiply delta by 5 if shift is down
+                if (ev.isShiftDown()) {
+                  delta *= 5;
+                } 
+                controller.moveCamera(delta);
+              } else {
+                final float ANGLE_FACTOR = 0.005f;
+                // Mouse move along X axis changes camera yaw 
+                float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
+                // Multiply yaw delta by 5 if shift is down
+                if (ev.isShiftDown()) {
+                  yawDelta *= 5;
+                } 
+                controller.rotateCameraYaw(yawDelta);
+                
+                // Mouse move along Y axis changes camera pitch 
+                float pitchDelta = ANGLE_FACTOR * (ev.getY() - this.yLastMouseMove);
+                controller.rotateCameraPitch(pitchDelta);
+              }
+              
+              this.xLastMouseMove = ev.getX();
+              this.yLastMouseMove = ev.getY();
+            }
+          }
+        }
+        public void mouseEntered(com.jogamp.newt.event.MouseEvent ev)
+		{
+			
+		}
+
+		public void mouseExited(com.jogamp.newt.event.MouseEvent ev)
+		{			
+			
+		}
+
+		public void mouseWheelMoved(com.jogamp.newt.event.MouseEvent ev)
+		{
+			 if (isEnabled()) {
+		            // Mouse wheel changes camera location 
+		            float delta = -2.5f * -ev.getRotation()[1];//ev.getWheelRotation();
+		            // Multiply delta by 5 if shift is down
+		            if (ev.isShiftDown()) {
+		              delta *= 5;
+		            } 
+		            controller.moveCamera(delta);
+		          }
+			
+		}
+		
+        /**
+         * Retargets to the first component of navigation panel able to manage the given event 
+         * and returns <code>true</code> if a component consumed the event 
+         * or needs to be repainted (meaning its state changed).
+         * This implementation doesn't cover all the possible cases (mouseEntered and mouseExited
+         * events are managed only during mouseDragged event).
+         */
+        private boolean retargetMouseEventToNavigationPanelChildren(com.jogamp.newt.event.MouseEvent ev) {
+        /*  if (navigationPanel != null 
+              && navigationPanel.isVisible()) {
+            if (this.grabComponent != null
+                && (ev.getID() == MouseEvent.MOUSE_RELEASED
+                    || ev.getID() == MouseEvent.MOUSE_DRAGGED)) {
+              Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getPoint(), this.grabComponent);
+              dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, ev.getID(), point.x, point.y));
+              if (ev.getID() == MouseEvent.MOUSE_RELEASED) {
+                this.grabComponent = null;
+              } else {
+                if (this.previousMouseEventTarget == null
+                    && this.grabComponent.contains(point)) {
+                  dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, MouseEvent.MOUSE_ENTERED, point.x, point.y));
+                  this.previousMouseEventTarget = this.grabComponent;
+                } else if (this.previousMouseEventTarget != null
+                    && !this.grabComponent.contains(point)) { 
+                  dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, MouseEvent.MOUSE_EXITED, point.x, point.y));
+                  this.previousMouseEventTarget = null;
+                }
+              }
+              return true;
+            } else {                
+              Component mouseEventTarget = retargetMouseEvent(navigationPanel, ev);
+              if (mouseEventTarget != null) {
+                this.previousMouseEventTarget = mouseEventTarget;
+                return true;
+              }
+            }
+          }*/
+          return false;
+        }
+        
+        private Component retargetMouseEvent(Component component, com.jogamp.newt.event.MouseEvent ev) {
+        /*  if (component.getBounds().contains(ev.getPoint())) {
+            if (component instanceof Container) {
+              Container container = (Container)component;
+              for (int i = container.getComponentCount() - 1; i >= 0; i--) {
+                Component c = container.getComponent(i);
+                MouseEvent retargetedEvent = deriveEvent(ev, component, ev.getID(), 
+                    ev.getX() - component.getX(), ev.getY() - component.getY());
+                Component mouseEventTarget = retargetMouseEvent(c, retargetedEvent);
+                if (mouseEventTarget != null) {
+                  return mouseEventTarget;
+                }
+              }
+            }
+            int newX = ev.getX() - component.getX();
+            int newY = ev.getY() - component.getY();
+            if (dispatchRetargetedEvent(deriveEvent(ev, component, ev.getID(), newX, newY))) {              
+              if (ev.getID() == MouseEvent.MOUSE_PRESSED) {
+                this.grabComponent = component;
+              }  
+              return component;
+            } 
+          } */
+          return null;
+        }
+        
+        /**
+         * Dispatches the given event to its component and returns <code>true</code> if component needs to be redrawn.
+         */
+        private boolean dispatchRetargetedEvent(com.jogamp.newt.event.MouseEvent ev) {
+         /* ev.getComponent().dispatchEvent(ev);
+          if (!RepaintManager.currentManager(ev.getComponent()).getDirtyRegion((JComponent)ev.getComponent()).isEmpty()) {
+            updateNavigationPanelImage();
+            component3D.repaint();
+            return true;
+          }*/
+          return false;
+        }
+        
+        /**
+         * Returns a new <code>MouseEvent</code> derived from the one given in parameter.
+         */
+        private MouseEvent deriveEvent(MouseEvent ev, Component component, int id, int x, int y) {
+          return new MouseEvent(component, id, ev.getWhen(), 
+              ev.getModifiersEx() | ev.getModifiers(), x, y, 
+              ev.getClickCount(), ev.isPopupTrigger(), ev.getButton());
+        }
+
+		
+      };
+    
+    
+    canvas3D.getGLWindow().addMouseListener( mouseListener2);
+    //canvas3D.getGLWindow().addMouseMotionListener(mouseListener);
+    //canvas3D.getGLWindow().addMouseWheelListener(mouseWheelListener);
+    //PJPJPJPJP///////////////////////////////////////////////////////////////////////////////////////
   }
 
   /**
