@@ -21,5 +21,8 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/awtshim"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/awtshim-desktop"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/java3d-1.6/gluegen-rt.jar"/>
+	<classpathentry kind="lib" path="lib/java3d-1.6/jogl-all.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/awtgeom"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

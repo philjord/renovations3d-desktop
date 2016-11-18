@@ -19,15 +19,13 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.BasicStroke;
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.font.TextLayout;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Rectangle2D;
+import javaawt.BasicStroke;
+import javaawt.Color;
+
+import javaawt.Graphics2D;
+
+import javaawt.geom.AffineTransform;
+import javaawt.geom.Rectangle2D;
 
 import javax.swing.UIManager;
 
@@ -105,33 +103,40 @@ public class Label3D extends Object3DBranch {
           || (color == null && this.color != null)
           || (color != null && !color.equals(this.color))) {
         // If text, style and color changed, recompute label texture  
-        int fontStyle = Font.PLAIN;
-        if (style.isBold()) {
-          fontStyle = Font.BOLD;
-        }
-        if (style.isItalic()) {
-          fontStyle |= Font.ITALIC;
-        }
-        Font defaultFont; 
-        if (style.getFontName() != null) {
-          defaultFont = new Font(style.getFontName(), fontStyle, 1);
-        } else {
-          defaultFont = UIManager.getFont("TextField.font");
-        }
-        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
-        Font font = defaultFont.deriveFont(fontStyle, style.getFontSize() - stroke.getLineWidth());
-  
+    	  //PJPJPJ fonts are a problem but possible
+    	 // TextPaint mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
+         // mTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
+         // mTextPaint.setTextSize(defaultTextSize);
+         // FontMetrics fm  = mTextPaint.getFontMetrics();
+          
+          
+//        int fontStyle = Font.PLAIN;
+//        if (style.isBold()) {
+//          fontStyle = Font.BOLD;
+//        }
+//        if (style.isItalic()) {
+//          fontStyle |= Font.ITALIC;
+//        }
+//        Font defaultFont; 
+//        if (style.getFontName() != null) {
+//          defaultFont = new Font(style.getFontName(), fontStyle, 1);
+//        } else {
+//          defaultFont = UIManager.getFont("TextField.font");
+//        }
+//        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
+//        Font font = defaultFont.deriveFont(fontStyle, style.getFontSize() - stroke.getLineWidth());
+//  
         BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();
-        FontMetrics fontMetrics = g2D.getFontMetrics(font);
-        g2D.dispose();
+//        FontMetrics fontMetrics = g2D.getFontMetrics(font);
+//        g2D.dispose();
         
-        Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-        float textWidth = (float)textBounds.getWidth() + 2 * stroke.getLineWidth();
-        if (style.isItalic()) {
-          textWidth += fontMetrics.getAscent() * 0.2;
-        }
-        float textHeight = (float)textBounds.getHeight() + 2 * stroke.getLineWidth();
+        Rectangle2D textBounds = new Rectangle2D.Float(0,0,50,50);//fontMetrics.getStringBounds(text, g2D);
+        float textWidth = (float)textBounds.getWidth() + 2 * 1;//stroke.getLineWidth();
+//        if (style.isItalic()) {
+//          textWidth += fontMetrics.getAscent() * 0.2;
+//        }
+        float textHeight = (float)textBounds.getHeight() + 2 * 1;//stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
         int width;
         int height;
@@ -151,19 +156,20 @@ public class Label3D extends Object3DBranch {
           // Draw text in an image
           BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);        
           g2D = (Graphics2D)textureImage.getGraphics();
-          g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-          g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-          g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
-          g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
-          if (outlineColor != null) {
-            g2D.setColor(new Color(outlineColor));
-            g2D.setStroke(stroke);
-            TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
-            g2D.draw(textLayout.getOutline(null));
-          }
-          g2D.setFont(font);
-          g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
+          //PJPJPJPJP
+//          g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+//          g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+//          g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+//          g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
+//          g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
+//          if (outlineColor != null) {
+//            g2D.setColor(new Color(outlineColor));
+//            g2D.setStroke(stroke);
+//            TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
+//            g2D.draw(textLayout.getOutline(null));
+//          }
+//          g2D.setFont(font);
+//          g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
           g2D.drawString(text, 0f, 0f);
           g2D.dispose();
   

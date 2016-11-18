@@ -19,7 +19,7 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.awt.geom.Line2D;
+import javaawt.geom.Line2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;

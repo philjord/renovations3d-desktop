@@ -19,12 +19,10 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.Color;
-import java.awt.EventQueue;
+import javaawt.Color;
+import javaawt.EventQueue;
 import javaawt.Graphics;
 import javaawt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.TexturePaint;
 import javaawt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
 import java.io.IOException;
@@ -109,11 +107,10 @@ public class TextureManager {
    
   private Texture getColoredImageTexture(Color color) {
     BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
-    //PJPJPJPJ why?
-  //  Graphics g = image.getGraphics();
-  //  g.setColor(color);
-  //  g.drawLine(0, 0, 0, 0);
-  //  g.dispose();
+    Graphics2D g = (Graphics2D) image.getGraphics();
+    g.setColor(color);
+    g.drawLine(0, 0, 0, 0);
+    g.dispose();
     Texture texture = new TextureLoader(image).getTexture();
     texture.setCapability(Texture.ALLOW_IMAGE_READ);
     texture.setCapability(Texture.ALLOW_FORMAT_READ);
@@ -260,6 +257,7 @@ public class TextureManager {
       if (angle != 0) {
     	  
     	  //PJPJPJPJPJPJ disabled for now
+    	  System.out.println("Load texture with angle " +angle);
     	  /*
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);

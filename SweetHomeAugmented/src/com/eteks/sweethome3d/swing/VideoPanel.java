@@ -1803,7 +1803,8 @@ public class VideoPanel extends JPanel implements DialogView {
     public BufferedImage renderImageAt(Camera frameCamera, boolean last) throws IOException {
       try {
         checkLaunchingThreadIsntInterrupted();
-        this.renderer.render(this.image, frameCamera, null);   
+        //this.renderer.render(this.image, frameCamera, null);   
+        //PJPJPJPJPJ dumped
         checkLaunchingThreadIsntInterrupted();
         return image;
       } catch(InterruptedIOException ex) {

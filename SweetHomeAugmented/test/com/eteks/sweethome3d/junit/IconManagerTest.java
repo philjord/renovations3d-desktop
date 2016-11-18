@@ -23,7 +23,7 @@ package com.eteks.sweethome3d.junit;
 import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Image;
-import javaawt.image.BufferedImage;
+import java.awt.image.BufferedImage;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.concurrent.BrokenBarrierException;

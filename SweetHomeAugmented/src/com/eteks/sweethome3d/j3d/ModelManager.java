@@ -19,13 +19,14 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.EventQueue;
-import java.awt.Shape;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Rectangle2D;
+import javaawt.EventQueue;
+import javaawt.Shape;
+import javaawt.geom.AffineTransform;
+import javaawt.geom.Area;
+import javaawt.geom.GeneralPath;
+import javaawt.geom.Path2D;
+import javaawt.geom.PathIterator;
+import javaawt.geom.Rectangle2D;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -1089,7 +1090,7 @@ public class ModelManager {
                 if (subRoom.getArea() > 0) {
                   if (!subRoom.isClockwise()) {
                     // Ignore clockwise points that match holes
-                    GeneralPath currentPath = new GeneralPath();
+                    Path2D currentPath = new GeneralPath();
                     currentPath.moveTo(pathPoints [0][0], pathPoints [0][1]);
                     for (int i = 1; i < pathPoints.length; i++) {
                       currentPath.lineTo(pathPoints [i][0], pathPoints [i][1]);
@@ -1129,13 +1130,13 @@ public class ModelManager {
       List<float []> vertices = new ArrayList<float[]>(vertexCount); 
       computeVerticesOnFloor(node, vertices, new Transform3D());
       float [][] surroundingPolygon = getSurroundingPolygon(vertices.toArray(new float [vertices.size()][]));
-      GeneralPath generalPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, surroundingPolygon.length);
-      generalPath.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
+      Path2D path2D = new GeneralPath(Path2D.WIND_NON_ZERO, surroundingPolygon.length);
+      path2D.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
       for (int i = 0; i < surroundingPolygon.length; i++) {
-        generalPath.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
+        path2D.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
       }
-      generalPath.closePath();
-      modelAreaOnFloor = new Area(generalPath);
+      path2D.closePath();
+      modelAreaOnFloor = new Area(path2D);
     }
     return modelAreaOnFloor;
   }
@@ -1279,14 +1280,14 @@ public class ModelManager {
       if (geometryArray instanceof IndexedGeometryArray) {
         if (geometryArray instanceof IndexedTriangleArray) {
           IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
-          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
           for (int i = 0, triangleIndex = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
             addIndexedTriangleToPath(triangleArray, i, i + 1, i + 2, vertices, 
                 geometryPath, triangleIndex++, nodeArea);
           }
         } else if (geometryArray instanceof IndexedQuadArray) {
           IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
-          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
           for (int i = 0, quadrilateralIndex = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
             addIndexedQuadrilateralToPath(quadArray, i, i + 1, i + 2, i + 3, vertices, 
                 geometryPath, quadrilateralIndex++, nodeArea); 
@@ -1295,7 +1296,7 @@ public class ModelManager {
           IndexedGeometryStripArray geometryStripArray = (IndexedGeometryStripArray)geometryArray;
           int [] stripIndexCounts = new int [geometryStripArray.getNumStrips()];
           geometryStripArray.getStripIndexCounts(stripIndexCounts);
-          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
           int initialIndex = 0; 
           
           if (geometryStripArray instanceof IndexedTriangleStripArray) {
@@ -1324,14 +1325,14 @@ public class ModelManager {
       } else {
         if (geometryArray instanceof TriangleArray) {
           TriangleArray triangleArray = (TriangleArray)geometryArray;
-          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
           for (int i = 0, triangleIndex = 0; i < vertexCount; i += 3) {
             addTriangleToPath(triangleArray, i, i + 1, i + 2, vertices, 
                 geometryPath, triangleIndex++, nodeArea);
           }
         } else if (geometryArray instanceof QuadArray) {
           QuadArray quadArray = (QuadArray)geometryArray;
-          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
           for (int i = 0, quadrilateralIndex = 0; i < vertexCount; i += 4) {
             addQuadrilateralToPath(quadArray, i, i + 1, i + 2, i + 3, vertices, 
                 geometryPath, quadrilateralIndex++, nodeArea);
@@ -1340,7 +1341,7 @@ public class ModelManager {
           GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
           int [] stripVertexCounts = new int [geometryStripArray.getNumStrips()];
           geometryStripArray.getStripVertexCounts(stripVertexCounts);
-          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
           int initialIndex = 0;
           
           if (geometryStripArray instanceof TriangleStripArray) {
@@ -1381,7 +1382,7 @@ public class ModelManager {
   private void addIndexedTriangleToPath(IndexedGeometryArray geometryArray, 
                                     int vertexIndex1, int vertexIndex2, int vertexIndex3, 
                                     float [] vertices, 
-                                    GeneralPath geometryPath, int triangleIndex, Area nodeArea) {
+                                    Path2D geometryPath, int triangleIndex, Area nodeArea) {
     addTriangleToPath(geometryArray, geometryArray.getCoordinateIndex(vertexIndex1), 
         geometryArray.getCoordinateIndex(vertexIndex2), 
         geometryArray.getCoordinateIndex(vertexIndex3), vertices, geometryPath, triangleIndex, nodeArea);
@@ -1394,7 +1395,7 @@ public class ModelManager {
   private void addIndexedQuadrilateralToPath(IndexedGeometryArray geometryArray, 
                                          int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
                                          float [] vertices, 
-                                         GeneralPath geometryPath, int quadrilateralIndex, Area nodeArea) {
+                                         Path2D geometryPath, int quadrilateralIndex, Area nodeArea) {
     addQuadrilateralToPath(geometryArray, geometryArray.getCoordinateIndex(vertexIndex1), 
         geometryArray.getCoordinateIndex(vertexIndex2), 
         geometryArray.getCoordinateIndex(vertexIndex3), 
@@ -1409,7 +1410,7 @@ public class ModelManager {
   private void addTriangleToPath(GeometryArray geometryArray, 
                              int vertexIndex1, int vertexIndex2, int vertexIndex3, 
                              float [] vertices, 
-                             GeneralPath geometryPath, int triangleIndex, Area nodeArea) {
+                             Path2D geometryPath, int triangleIndex, Area nodeArea) {
     float xVertex1 = vertices [2 * vertexIndex1];
     float yVertex1 = vertices [2 * vertexIndex1 + 1];
     float xVertex2 = vertices [2 * vertexIndex2];
@@ -1437,7 +1438,7 @@ public class ModelManager {
   private void addQuadrilateralToPath(GeometryArray geometryArray, 
                                       int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
                                       float [] vertices, 
-                                      GeneralPath geometryPath, int quadrilateralIndex, Area nodeArea) {
+                                      Path2D geometryPath, int quadrilateralIndex, Area nodeArea) {
     float xVertex1 = vertices [2 * vertexIndex1];
     float yVertex1 = vertices [2 * vertexIndex1 + 1];
     float xVertex2 = vertices [2 * vertexIndex2];
@@ -1679,7 +1680,7 @@ public class ModelManager {
   private Area getMirroredArea(Area area) {
     // As applying a -1 scale transform reverses the holes / non holes interpretation of the points, 
     // we have to create a mirrored shape by parsing points
-    GeneralPath mirrorPath = new GeneralPath();
+    Path2D mirrorPath = new GeneralPath();
     float [] point = new float[6];
     for (PathIterator it = area.getPathIterator(null); !it.isDone(); it.next()) {
       switch (it.currentSegment(point)) {
@@ -1725,16 +1726,18 @@ public class ModelManager {
    */
   private static class SVGPathSupport {
     public static Shape parsePathShape(String svgPathShape) {
-      try {
+    	//PJPJPJP AWTPathProducer is awt bum
+    	System.err.println("AWTPathProducer is awt bum");
+     /* try {
         AWTPathProducer pathProducer = new AWTPathProducer();
         PathParser pathParser = new PathParser();
         pathParser.setPathHandler(pathProducer);
         pathParser.parse(svgPathShape);
         return pathProducer.getShape();
-      } catch (ParseException ex) {
+      } catch (ParseException ex) {*/
         // Fallback to default square shape if shape is incorrect
         return new Rectangle2D.Float(0, 0, 1, 1);
-      }
+      //}
     }
   }
   

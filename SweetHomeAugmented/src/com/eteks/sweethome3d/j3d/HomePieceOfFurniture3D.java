@@ -19,9 +19,9 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.Color;
-import java.awt.Rectangle;
-import java.awt.Shape;
+import javaawt.Color;
+import javaawt.Rectangle;
+import javaawt.Shape;
 import java.lang.ref.WeakReference;
 import java.util.Enumeration;
 import java.util.HashSet;

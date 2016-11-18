@@ -755,6 +755,8 @@ public class PhotoPanel extends JPanel implements DialogView {
       int imageWidth = this.controller.getWidth();
       int imageHeight = this.controller.getHeight();
       if (quality >= 2) {
+//PJPJPJPJPJ dumped
+    /*	  
         // Use photo renderer
         PhotoRenderer photoRenderer = new PhotoRenderer(home, this.object3dFactory, 
             quality == 2 
@@ -780,7 +782,7 @@ public class PhotoPanel extends JPanel implements DialogView {
           });
           photoRenderer.render(image, camera, this.photoComponent);
           photoRenderer.dispose();
-        }
+        }*/
       } else {
         // Compute 3D view offscreen image
         HomeComponent3D homeComponent3D = new HomeComponent3D(
@@ -793,8 +795,8 @@ public class PhotoPanel extends JPanel implements DialogView {
     } catch (IllegalStateException ex) {
       image = getErrorImage();
       throw ex;
-    } catch (IOException ex) {
-      image = getErrorImage();
+ //   } catch (IOException ex) {
+ //     image = getErrorImage();
     } finally {           
       final BufferedImage photoImage = this.photoCreationExecutor != null
           ? image

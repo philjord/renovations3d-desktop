@@ -27,8 +27,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
@@ -152,7 +152,8 @@ public class ModelPreviewComponent extends JComponent {
     if (graphicsEnvironment.getScreenDevices().length == 1) {
       // If only one screen device is available, create 3D component immediately, 
       // otherwise create it once the screen device of the parent is known
-      createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), 
+    	//PJPJPJPJ
+      createComponent3D(null,//graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), 
           yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
     }
 
@@ -234,7 +235,8 @@ public class ModelPreviewComponent extends JComponent {
     addAncestorListener(new AncestorListener() {
         public void ancestorAdded(AncestorEvent ev) {
           if (component3D == null) {
-            createComponent3D(ev.getAncestor().getGraphicsConfiguration(), 
+        	  //PJPJPJPJPJ
+            createComponent3D(null,//ev.getAncestor().getGraphicsConfiguration(), 
                 yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
           }
           if (universe == null) {

@@ -29,8 +29,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
+import javaawt.GraphicsConfiguration;
+import javaawt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -49,10 +49,10 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Rectangle2D;
+import javaawt.geom.Area;
+import javaawt.geom.GeneralPath;
+import javaawt.geom.PathIterator;
+import javaawt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.RGBImageFilter;
@@ -304,7 +304,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     if (graphicsEnvironment.getScreenDevices().length == 1) {
       // If only one screen device is available, create canvas 3D immediately, 
       // otherwise create it once the screen device of the parent is known
-      createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), preferences, controller);
+      createComponent3D(null//graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration()
+    		  , preferences, controller);
     }
 
     // Add an ancestor listener to create canvas 3D and its universe once this component is made visible 
@@ -348,7 +349,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           
           // Create component 3D only once the graphics configuration of its parent is known
           if (component3D == null) {
-            createComponent3D(getGraphicsConfiguration(), preferences, controller);
+            createComponent3D(null, preferences, controller);
           }
           if (onscreenUniverse == null) {
             onscreenUniverse = createUniverse(displayShadowOnFloor, true, false);
@@ -779,7 +780,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           g2D = (Graphics2D)updatedImage.getGraphics();
           Composite oldComposite = g2D.getComposite();
           g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0));
-          g2D.fill(new Rectangle2D.Double(0, 0, imageSize.width, imageSize.height));
+          
+          //PJPJPJPJPJ I got a problem with wanting javaawt bufferedimages all round
+          // but my shim doesn't have anything like enough methods!
+          // maybe a VM REctangle would help?
+//          g2D.fill(new Rectangle2D.Double(0, 0, imageSize.width, imageSize.height));
+System.err.println("g2D.fill(new Rectangle2D.Double is bum");
           g2D.setComposite(oldComposite);
         }
         this.navigationPanel.paintAll(g2D);
@@ -801,7 +807,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	  //PJPJPJ
 	  javaawt.image.BufferedImage.installBufferedImageDelegate(VMBufferedImage.class);  
 	  javaawt.imageio.ImageIO.installBufferedImageImpl(VMImageIO.class);
-	  javaawt.EventQueue.installBufferedImageImpl(VMEventQueue.class);
+	  javaawt.EventQueue.installEventQueueImpl(VMEventQueue.class);
 	  
 	  
     // Create a universe bound to no canvas 3D
@@ -2807,7 +2813,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             level = new Level("Dummy", 0, 0, 0);
           }
           if (level.isViewableAndVisible()) {
-            Area areaOnLevel = areasOnLevel.get(level);
+        	  Area areaOnLevel = areasOnLevel.get(level);
             if (areaOnLevel == null) {
               areaOnLevel = new Area();
               areasOnLevel.put(level, areaOnLevel);

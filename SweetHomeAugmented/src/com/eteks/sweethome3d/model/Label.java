@@ -19,7 +19,7 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.awt.geom.Rectangle2D;
+import javaawt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;

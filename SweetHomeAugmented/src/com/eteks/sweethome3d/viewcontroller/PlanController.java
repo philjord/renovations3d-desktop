@@ -19,15 +19,15 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import java.awt.BasicStroke;
-import java.awt.Shape;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Line2D;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
+import javaawt.BasicStroke;
+import javaawt.Shape;
+import javaawt.geom.AffineTransform;
+import javaawt.geom.Area;
+import javaawt.geom.GeneralPath;
+import javaawt.geom.Line2D;
+import javaawt.geom.PathIterator;
+import javaawt.geom.Point2D;
+import javaawt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;

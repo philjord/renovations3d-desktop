@@ -19,10 +19,10 @@
  */
 package com.eteks.sweethome3d.model;
 
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
+import javaawt.geom.AffineTransform;
+import javaawt.geom.GeneralPath;
+import javaawt.geom.Point2D;
+import javaawt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;

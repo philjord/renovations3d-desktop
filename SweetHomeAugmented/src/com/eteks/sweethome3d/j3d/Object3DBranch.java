@@ -19,11 +19,11 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import java.awt.Shape;
-import java.awt.geom.Area;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.PathIterator;
-import java.awt.geom.Point2D;
+import javaawt.Shape;
+import javaawt.geom.Area;
+import javaawt.geom.GeneralPath;
+import javaawt.geom.PathIterator;
+import javaawt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
