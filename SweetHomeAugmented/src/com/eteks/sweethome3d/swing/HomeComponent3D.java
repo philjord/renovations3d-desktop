@@ -36,8 +36,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
-import java.awt.Point;
-import java.awt.Rectangle;
+import javaawt.Point;
+import javaawt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -52,7 +52,7 @@ import java.awt.event.MouseWheelListener;
 import javaawt.geom.Area;
 import javaawt.geom.GeneralPath;
 import javaawt.geom.PathIterator;
-import javaawt.geom.Rectangle2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.RGBImageFilter;
@@ -759,7 +759,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void updateNavigationPanelImage() {
     if (this.navigationPanel != null 
         && this.navigationPanel.isVisible()) {
-      Rectangle componentBounds = this.navigationPanel.getBounds();
+      java.awt.Rectangle componentBounds = this.navigationPanel.getBounds();
       Rectangle imageSize = new Rectangle(this.component3D.getX(), this.component3D.getY());
       imageSize.add(componentBounds.x + componentBounds.width, 
           componentBounds.y + componentBounds.height);
@@ -779,13 +779,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           // Clear image
           g2D = (Graphics2D)updatedImage.getGraphics();
           Composite oldComposite = g2D.getComposite();
-          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0));
-          
-          //PJPJPJPJPJ I got a problem with wanting javaawt bufferedimages all round
-          // but my shim doesn't have anything like enough methods!
-          // maybe a VM REctangle would help?
-//          g2D.fill(new Rectangle2D.Double(0, 0, imageSize.width, imageSize.height));
-System.err.println("g2D.fill(new Rectangle2D.Double is bum");
+          g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR, 0));          
+          g2D.fill(new Rectangle2D.Double(0, 0, imageSize.width, imageSize.height));
           g2D.setComposite(oldComposite);
         }
         this.navigationPanel.paintAll(g2D);
@@ -1388,7 +1383,7 @@ System.err.println("g2D.fill(new Rectangle2D.Double is bum");
             if (this.grabComponent != null
                 && (ev.getID() == MouseEvent.MOUSE_RELEASED
                     || ev.getID() == MouseEvent.MOUSE_DRAGGED)) {
-              Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getPoint(), this.grabComponent);
+              java.awt.Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getPoint(), this.grabComponent);
               dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, ev.getID(), point.x, point.y));
               if (ev.getID() == MouseEvent.MOUSE_RELEASED) {
                 this.grabComponent = null;

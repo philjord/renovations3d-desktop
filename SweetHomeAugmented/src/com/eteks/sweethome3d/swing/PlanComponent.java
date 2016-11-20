@@ -21,30 +21,30 @@ package com.eteks.sweethome3d.swing;
 
 import java.awt.AWTKeyStroke;
 import java.awt.AlphaComposite;
-import javaawt.BasicStroke;
-import javaawt.Color;
+import java.awt.BasicStroke;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Container;
 import java.awt.Cursor;
-import javaawt.Dimension;
-import javaawt.EventQueue;
+import java.awt.Dimension;
+import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontMetrics;
-import javaawt.Graphics;
-import javaawt.Graphics2D;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.MouseInfo;
-import javaawt.Paint;
-import javaawt.Point;
-import javaawt.Rectangle;
-import javaawt.RenderingHints;
-import javaawt.Shape;
-import javaawt.Stroke;
+import java.awt.Paint;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.TexturePaint;
 import java.awt.Toolkit;
 import java.awt.Window;
@@ -59,17 +59,17 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
-import javaawt.geom.AffineTransform;
-import javaawt.geom.Arc2D;
-import javaawt.geom.Area;
-import javaawt.geom.CubicCurve2D;
-import javaawt.geom.Ellipse2D;
-import javaawt.geom.GeneralPath;
-import javaawt.geom.Line2D;
-import javaawt.geom.PathIterator;
-import javaawt.geom.Point2D;
-import javaawt.geom.Rectangle2D;
-import javaawt.image.BufferedImage;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Arc2D;
+import java.awt.geom.Area;
+import java.awt.geom.CubicCurve2D;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
 import java.awt.image.MemoryImageSource;
 import java.awt.image.RGBImageFilter;
@@ -3645,9 +3645,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float x;
     if (cutOutShape != null
         && !"M0,0 v1 h1 v-1 z".equals(cutOutShape)) {
-      // In case of a complex cut out, compute location and width of the window hole at wall intersection 
-      Shape shape = ModelManager.getInstance().getShape(cutOutShape);
-      Rectangle2D bounds = shape.getBounds2D();
+      // In case of a complex cut out, compute location and width of the window hole at wall intersection
+    	//PJPJPJPJ
+      javaawt.Shape shape = ModelManager.getInstance().getShape(cutOutShape);
+      Rectangle2D bounds = new Rectangle2D.Double(shape.getBounds2D().getX(),shape.getBounds2D().getY(),shape.getBounds2D().getWidth(),shape.getBounds2D().getHeight());
       if (doorOrWindow.isModelMirrored()) {
         x = doorOrWindow.getX() + (float)(0.5 - bounds.getX() - bounds.getWidth()) * width;
       } else {

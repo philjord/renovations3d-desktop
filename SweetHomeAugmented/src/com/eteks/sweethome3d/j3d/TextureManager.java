@@ -23,6 +23,8 @@ import javaawt.Color;
 import javaawt.EventQueue;
 import javaawt.Graphics;
 import javaawt.Graphics2D;
+import javaawt.RenderingHints;
+import javaawt.TexturePaint;
 import javaawt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
 import java.io.IOException;
@@ -255,10 +257,6 @@ public class TextureManager {
        image = ImageIO.read(contentStream);
       }
       if (angle != 0) {
-    	  
-    	  //PJPJPJPJPJPJ disabled for now
-    	  System.out.println("Load texture with angle " +angle);
-    	  /*
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         BufferedImage rotatedImage = new BufferedImage((int)Math.round(Math.abs(image.getWidth() * cos) + Math.abs(image.getHeight() * sin)), 
@@ -271,7 +269,7 @@ public class TextureManager {
         float maxDimension = Math.max(rotatedImage.getWidth(), rotatedImage.getHeight());
         g2D.fill(new Rectangle2D.Float(-maxDimension, -maxDimension, 3 * maxDimension, 3 * maxDimension));
         g2D.dispose();
-        image = rotatedImage;*/
+        image = rotatedImage;
       }
       contentStream.close();
       if (image != null) {

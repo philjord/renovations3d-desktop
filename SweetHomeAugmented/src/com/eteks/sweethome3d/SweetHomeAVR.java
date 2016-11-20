@@ -1,7 +1,6 @@
 /*
- * SweetHome3D.java 1 sept. 2006
  * 
- * Sweet Home 3D, Copyright (c) 2006 Emmanuel PUYBARET / eTeks <info@eteks.com>
+ * Sweet Home AVR, Copyright (c) 2016 Philip Jordan <philjord@ihug.co.nz>
  *  
  * This program is free software; you can redistribute it and/or modify it under
  * the terms of the GNU General Public License as published by the Free Software
@@ -133,7 +132,7 @@ import com.eteks.sweethome3d.viewcontroller.ViewFactory;
  * <a href="http://download.oracle.com/javase/6/docs/technotes/tools/windows/java.html">java</a> option.
  * @author Emmanuel Puybaret
  */
-public class SweetHome3D extends HomeApplication {
+public class SweetHomeAVR extends HomeApplication {
   private static final String     PREFERENCES_FOLDER             = "com.eteks.sweethome3d.preferencesFolder";
   private static final String     APPLICATION_FOLDERS            = "com.eteks.sweethome3d.applicationFolders";
   private static final String     APPLICATION_PLUGINS_SUB_FOLDER = "plugins";
@@ -154,7 +153,7 @@ public class SweetHome3D extends HomeApplication {
    * manager, view factory and plug-in manager handled by this application are
    * lazily instantiated to let subclasses override their creation.
    */
-  protected SweetHome3D() {
+  protected SweetHomeAVR() {
     this.homeFrameControllers = new HashMap<Home, HomeFrameController>();
   }
 
@@ -297,7 +296,7 @@ public class SweetHome3D extends HomeApplication {
       return applicationId;
     } else {
       try {
-        return getUserPreferences().getLocalizedString(SweetHome3D.class, "applicationId");
+        return getUserPreferences().getLocalizedString(SweetHomeAVR.class, "applicationId");
       } catch (IllegalArgumentException ex) {
         return super.getId();
       }
@@ -309,7 +308,7 @@ public class SweetHome3D extends HomeApplication {
    */
   @Override
   public String getName() {
-    return getUserPreferences().getLocalizedString(SweetHome3D.class, "applicationName");
+    return getUserPreferences().getLocalizedString(SweetHomeAVR.class, "applicationName");
   }
 
   /**
@@ -320,7 +319,7 @@ public class SweetHome3D extends HomeApplication {
     if (applicationVersion != null) {
       return applicationVersion;
     } else {
-      return getUserPreferences().getLocalizedString(SweetHome3D.class, "applicationVersion");
+      return getUserPreferences().getLocalizedString(SweetHomeAVR.class, "applicationVersion");
     }
   }
 
@@ -354,7 +353,7 @@ public class SweetHome3D extends HomeApplication {
    *          following a <code>-open</code> option.
    */
   public static void main(final String [] args) {
-    new SweetHome3D().init(args);
+    new SweetHomeAVR().init(args);
   }
 
   /**
@@ -371,7 +370,7 @@ public class SweetHome3D extends HomeApplication {
         System.exit(0);
       } else {
         // Display splash screen
-        SwingTools.showSplashScreenWindow(SweetHome3D.class.getResource("resources/splashScreen.jpg"));
+        SwingTools.showSplashScreenWindow(SweetHomeAVR.class.getResource("resources/splashScreen.jpg"));
         // Create JNLP services required by Sweet Home 3D
         ServiceManager.setServiceManagerStub(new StandaloneServiceManager(getClass()));
       }
@@ -383,7 +382,7 @@ public class SweetHome3D extends HomeApplication {
         // Call run with the arguments it should have received
         EventQueue.invokeLater(new Runnable() {
           public void run() {
-            SweetHome3D.this.start(args);
+            SweetHomeAVR.this.start(args);
           }
         });
       }
@@ -468,15 +467,11 @@ public class SweetHome3D extends HomeApplication {
       // Too bad we can't retrieve homes to recover
       ex.printStackTrace();
     }
-    if (OperatingSystem.isMacOSX()) {
-      // Bind to application menu at last
-      MacOSXConfiguration.bindToApplicationMenu(this);
-    }
 
     // Run everything else in Event Dispatch Thread
     EventQueue.invokeLater(new Runnable() {
       public void run() {
-        SweetHome3D.this.start(args);
+        SweetHomeAVR.this.start(args);
       }
     });
   }
@@ -495,7 +490,7 @@ public class SweetHome3D extends HomeApplication {
   private void initSystemProperties() {
     if (OperatingSystem.isMacOSX()) {
       // Change Mac OS X application menu name
-      String classPackage = SweetHome3D.class.getName();
+      String classPackage = SweetHomeAVR.class.getName();
       classPackage = classPackage.substring(0, classPackage.lastIndexOf("."));
       ResourceBundle resource = ResourceBundle.getBundle(classPackage + "." + "package");
       String applicationName = resource.getString("SweetHome3D.applicationName");
@@ -545,19 +540,9 @@ public class SweetHome3D extends HomeApplication {
             if (ev.getItem().getName() != null 
                 && home.getName() == null
                 && !home.isRecovered()) {
-              if (OperatingSystem.isMacOSXLionOrSuperior()
-                  && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")
-                  && MacOSXConfiguration.isWindowFullScreen(getHomeFrame(home))) {
-                // Delay home disposal to avoid Java 3D fatal error
-                new Timer(3000, new ActionListener() {
-                    public void actionPerformed(ActionEvent ev) {
-                      ((Timer)ev.getSource()).stop();
-                      controller.close();
-                    }
-                  }).start();
-              } else {
+             
                 controller.close();
-              }
+
             }
             removeHomesListener(this);
           } else if (ev.getItem() == home && ev.getType() == CollectionEvent.Type.DELETE) {
@@ -651,8 +636,8 @@ public class SweetHome3D extends HomeApplication {
    */
   private void show3DError() {
     UserPreferences userPreferences = getUserPreferences();
-    String message = userPreferences.getLocalizedString(SweetHome3D.class, "3DError.message");
-    String title = userPreferences.getLocalizedString(SweetHome3D.class, "3DError.title");
+    String message = userPreferences.getLocalizedString(SweetHomeAVR.class, "3DError.message");
+    String title = userPreferences.getLocalizedString(SweetHomeAVR.class, "3DError.title");
     JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), message,
         title, JOptionPane.ERROR_MESSAGE);
   }
@@ -664,10 +649,10 @@ public class SweetHome3D extends HomeApplication {
    */
   private boolean confirmSaveAfter3DError() {
     UserPreferences userPreferences = getUserPreferences();
-    String message = userPreferences.getLocalizedString(SweetHome3D.class, "confirmSaveAfter3DError.message");
-    String title = userPreferences.getLocalizedString(SweetHome3D.class, "confirmSaveAfter3DError.title");
-    String save = userPreferences.getLocalizedString(SweetHome3D.class, "confirmSaveAfter3DError.save");
-    String doNotSave = userPreferences.getLocalizedString(SweetHome3D.class, "confirmSaveAfter3DError.doNotSave");
+    String message = userPreferences.getLocalizedString(SweetHomeAVR.class, "confirmSaveAfter3DError.message");
+    String title = userPreferences.getLocalizedString(SweetHomeAVR.class, "confirmSaveAfter3DError.title");
+    String save = userPreferences.getLocalizedString(SweetHomeAVR.class, "confirmSaveAfter3DError.save");
+    String doNotSave = userPreferences.getLocalizedString(SweetHomeAVR.class, "confirmSaveAfter3DError.doNotSave");
 
     return JOptionPane.showOptionDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(),
         message, title, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new Object [] {save, doNotSave},
@@ -824,10 +809,10 @@ public class SweetHome3D extends HomeApplication {
     private static final String LAST_DIRECTORY         = "lastDirectory#";
     private static final String LAST_DEFAULT_DIRECTORY = "lastDefaultDirectory";
     
-    private final Class<? extends SweetHome3D> mainClass;
+    private final Class<? extends SweetHomeAVR> mainClass;
 
     public FileContentManagerWithRecordedLastDirectories(UserPreferences preferences, 
-                                                         Class<? extends SweetHome3D> mainClass) {
+                                                         Class<? extends SweetHomeAVR> mainClass) {
       super(preferences);
       this.mainClass = mainClass;
     }
@@ -882,9 +867,9 @@ public class SweetHome3D extends HomeApplication {
    * .
    */
   private static class StandaloneServiceManager implements ServiceManagerStub {
-    private final Class<? extends SweetHome3D> mainClass;
+    private final Class<? extends SweetHomeAVR> mainClass;
 
-    public StandaloneServiceManager(Class<? extends SweetHome3D> mainClass) {
+    public StandaloneServiceManager(Class<? extends SweetHomeAVR> mainClass) {
       this.mainClass = mainClass;
     }
 
@@ -975,10 +960,10 @@ public class SweetHome3D extends HomeApplication {
   private static class StandaloneSingleInstanceService implements SingleInstanceService {
     private static final String                SINGLE_INSTANCE_PORT    = "singleInstancePort";
 
-    private final Class<? extends SweetHome3D> mainClass;
+    private final Class<? extends SweetHomeAVR> mainClass;
     private final List<SingleInstanceListener> singleInstanceListeners = new ArrayList<SingleInstanceListener>();
 
-    public StandaloneSingleInstanceService(Class<? extends SweetHome3D> mainClass) {
+    public StandaloneSingleInstanceService(Class<? extends SweetHomeAVR> mainClass) {
       this.mainClass = mainClass;
     }
 
@@ -1059,7 +1044,7 @@ public class SweetHome3D extends HomeApplication {
      * Returns <code>true</code> if single instance server was successfully
      * called.
      */
-    public static boolean callSingleInstanceServer(String [] mainArgs, Class<? extends SweetHome3D> mainClass) {
+    public static boolean callSingleInstanceServer(String [] mainArgs, Class<? extends SweetHomeAVR> mainClass) {
       if (!OperatingSystem.isMacOSX()) {
         // No server under Mac OS X, multiple application launches are managed
         // by com.apple.eawt.ApplicationListener in MacOSXConfiguration class
