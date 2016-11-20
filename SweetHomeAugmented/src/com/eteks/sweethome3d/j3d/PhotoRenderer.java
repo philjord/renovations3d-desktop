@@ -19,7 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-//import java.awt.AlphaComposite;
+//import javaawt.AlphaComposite; //not done yet
 import javaawt.EventQueue;
 import javaawt.Graphics2D;
 import javaawt.geom.Point2D;
