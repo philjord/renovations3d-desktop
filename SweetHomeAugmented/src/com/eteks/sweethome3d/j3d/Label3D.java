@@ -19,16 +19,6 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import javaawt.BasicStroke;
-import javaawt.Color;
-
-import javaawt.Graphics2D;
-
-import javaawt.geom.AffineTransform;
-import javaawt.geom.Rectangle2D;
-
-import javax.swing.UIManager;
-
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.Group;
@@ -50,6 +40,8 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.TextStyle;
 
+import javaawt.Graphics2D;
+import javaawt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
 
 /**

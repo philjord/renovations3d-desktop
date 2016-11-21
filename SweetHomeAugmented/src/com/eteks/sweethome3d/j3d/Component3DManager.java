@@ -19,12 +19,8 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import javaawt.GraphicsConfigTemplate;
-import javaawt.GraphicsConfiguration;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-
-import javax.swing.Timer;
 
 import org.jogamp.java3d.Canvas3D;
 import org.jogamp.java3d.GraphicsConfigTemplate3D;
@@ -41,6 +37,8 @@ import org.jogamp.java3d.utils.universe.ViewingPlatform;
 
 import com.eteks.sweethome3d.tools.OperatingSystem;
 
+import javaawt.GraphicsConfigTemplate;
+import javaawt.GraphicsConfiguration;
 import javaawt.image.BufferedImage;
 
 /**
@@ -429,7 +427,7 @@ public class Component3DManager {
   private static class ObservedCanvas3D extends Canvas3D {
     private final RenderingObserver renderingObserver;
     private final boolean           paintDelayed;
-    private Timer timer;
+    //private Timer timer;
 
     private ObservedCanvas3D(//GraphicsConfiguration graphicsConfiguration, 
                              boolean offScreen,
