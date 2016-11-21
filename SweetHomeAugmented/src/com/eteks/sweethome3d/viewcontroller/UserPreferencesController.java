@@ -523,9 +523,9 @@ public class UserPreferencesController implements Controller {
    * @since 4.0
    */
   public void checkUpdates() {
-    if (this.homeController != null) {
-      this.homeController.checkUpdates(false);
-    }
+  //  if (this.homeController != null) {
+  //    this.homeController.checkUpdates(false);
+  //  }
   }
 
   /**
