@@ -25,11 +25,11 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.List;
 
-import javax.swing.undo.AbstractUndoableEdit;
-import javax.swing.undo.CannotRedoException;
-import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.UndoableEdit;
-import javax.swing.undo.UndoableEditSupport;
+import javaxswing.undo.AbstractUndoableEdit;
+import javaxswing.undo.CannotRedoException;
+import javaxswing.undo.CannotUndoException;
+import javaxswing.undo.UndoableEdit;
+import javaxswing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Baseboard;
 import com.eteks.sweethome3d.model.Home;

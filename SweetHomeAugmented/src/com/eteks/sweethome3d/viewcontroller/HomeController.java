@@ -35,15 +35,15 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
-import javax.swing.event.UndoableEditEvent;
-import javax.swing.event.UndoableEditListener;
-import javax.swing.undo.AbstractUndoableEdit;
-import javax.swing.undo.CannotRedoException;
-import javax.swing.undo.CannotUndoException;
-import javax.swing.undo.CompoundEdit;
-import javax.swing.undo.UndoManager;
-import javax.swing.undo.UndoableEdit;
-import javax.swing.undo.UndoableEditSupport;
+import javaxswing.event.UndoableEditEvent;
+import javaxswing.event.UndoableEditListener;
+import javaxswing.undo.AbstractUndoableEdit;
+import javaxswing.undo.CannotRedoException;
+import javaxswing.undo.CannotUndoException;
+import javaxswing.undo.CompoundEdit;
+import javaxswing.undo.UndoManager;
+import javaxswing.undo.UndoableEdit;
+import javaxswing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.BackgroundImage;
