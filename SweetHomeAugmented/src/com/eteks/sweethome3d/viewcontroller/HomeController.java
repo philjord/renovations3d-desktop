@@ -333,7 +333,7 @@ public class HomeController implements Controller {
    */
   public HomeView getView() {
     if (this.homeView == null) {
-      this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, this);
+      this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, this);      
       enableDefaultActions(this.homeView);
       addListeners();
     }

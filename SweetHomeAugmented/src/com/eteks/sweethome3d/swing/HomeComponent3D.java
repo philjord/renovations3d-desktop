@@ -37,6 +37,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.LayoutManager;
 import javaawt.Rectangle;
+import javaawt.VMEventQueue;
+
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -51,6 +53,9 @@ import java.awt.event.MouseWheelListener;
 import javaawt.geom.Area;
 import javaawt.geom.GeneralPath;
 import javaawt.geom.PathIterator;
+import javaawt.image.VMBufferedImage;
+import javaawt.imageio.VMImageIO;
+
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.FilteredImageSource;
@@ -159,10 +164,6 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.HomeController3D;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.jogamp.newt.event.MouseListener;
-
-import desktop.javaawt.VMEventQueue;
-import desktop.javaawt.image.VMBufferedImage;
-import desktop.javaawt.imageio.VMImageIO;
 
 /**
  * A component that displays home walls, rooms and furniture with Java 3D. 

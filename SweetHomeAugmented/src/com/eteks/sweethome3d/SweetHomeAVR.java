@@ -65,9 +65,9 @@ import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
-import desktop.javaawt.VMEventQueue;
-import desktop.javaawt.image.VMBufferedImage;
-import desktop.javaawt.imageio.VMImageIO;
+import javaawt.VMEventQueue;
+import javaawt.image.VMBufferedImage;
+import javaawt.imageio.VMImageIO;
 
 /**
  * Sweet Home 3D main class. Sweet Home 3D accepts the parameter
@@ -378,7 +378,7 @@ public String getVersion() {
               homeFrameControllers.put(home, controller);
             } catch (IllegalStateException ex) {
               // Check exception by class name to avoid a mandatory bind to Java 3D
-              if ("javax.media.j3d.IllegalRenderingStateException".equals(ex.getClass().getName())) {
+              if ("org.jogamp.java3d.IllegalRenderingStateException".equals(ex.getClass().getName())) {
                 ex.printStackTrace();
                 // In case of a problem in Java 3D, simply exit with a message.
                 exitAfter3DError();
