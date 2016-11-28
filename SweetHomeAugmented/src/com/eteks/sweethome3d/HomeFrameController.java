@@ -71,7 +71,7 @@ public class HomeFrameController implements Controller {
   public HomeController getHomeController() {
     // Create sub controller lazily only once it's needed
     if (this.homeController == null) {
-    	//PJPJPJPj
+    	//PJPJPJPJ, took out plugin manager?
       this.homeController = new HomeController(
           this.home, this.application, this.viewFactory, this.contentManager);
     }
