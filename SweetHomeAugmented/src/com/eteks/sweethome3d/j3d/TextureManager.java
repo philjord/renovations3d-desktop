@@ -288,7 +288,7 @@ public class TextureManager {
     } catch (RuntimeException ex) {
       // Take into account exceptions of Java 3D 1.5 ImageException class
       // in such a way program can run in Java 3D 1.3.1
-      if (ex.getClass().getName().equals("com.sun.j3d.utils.image.ImageException")) {
+      if (ex.getClass().getName().equals("org.jogamp.java3d.utils.image.ImageException")) {
         // Images not supported by TextureLoader
         return this.errorTexture;
       } else {
@@ -345,13 +345,13 @@ public class TextureManager {
    * Sets the attributes and capabilities of a shared <code>texture</code>.
    */
   private void setSharedTextureAttributesAndCapabilities(Texture texture) {
-    if (!texture.isLive()) {
+    if (!texture.isLive() && !texture.isCompiled()) {
       texture.setMinFilter(Texture.NICEST);
       texture.setMagFilter(Texture.NICEST);
       texture.setCapability(Texture.ALLOW_FORMAT_READ);
       texture.setCapability(Texture.ALLOW_IMAGE_READ);
       for (ImageComponent image : texture.getImages()) {
-        if (!image.isLive()) {
+        if (!image.isLive() && !image.isCompiled()) {
           image.setCapability(ImageComponent.ALLOW_FORMAT_READ);
           image.setCapability(ImageComponent.ALLOW_IMAGE_READ);
         }

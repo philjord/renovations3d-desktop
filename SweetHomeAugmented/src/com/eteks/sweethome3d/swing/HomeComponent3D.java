@@ -873,8 +873,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		}
 
 		// Link scene matching home to universe
-		universe.addBranchGraph(createSceneTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
-
+		universe.addBranchGraph(createSceneTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));			
+		
 		return universe;
 	}
 
@@ -2023,7 +2023,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		{
 			root.addChild(light);
 		}
-
+		//PJPJPJ called compile manually
+		//root.outputTraversal();
+		root.compile();
 		return root;
 	}
 
@@ -2042,7 +2044,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
 		Geometry halfSphereGeometry = createHalfSphereGeometry(true);
 		final Shape3D halfSphere = new Shape3D(halfSphereGeometry, backgroundAppearance);
+		halfSphere.setName("halfSphere");
 		BranchGroup backgroundBranch = new BranchGroup();
+		backgroundBranch.setName("backgroundBranch");
 		backgroundBranch.addChild(halfSphere);
 		backgroundBranch.addChild(new Shape3D(createHalfSphereGeometry(false)));
 

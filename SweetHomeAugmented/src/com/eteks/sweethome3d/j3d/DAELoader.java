@@ -947,7 +947,8 @@ public class DAELoader extends LoaderBase implements Loader {
       if (this.geometryNormals == null) {
         new NormalGenerator(Math.PI / 2).generateNormals(geometryInfo);
       }
-      return geometryInfo.getGeometryArray(true, true, false);
+      //PJPJPJ make it nio
+      return geometryInfo.getGeometryArray(true, false, true);
     }
 
     /**

@@ -36,6 +36,7 @@ import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.FloatBuffer;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
@@ -602,6 +603,43 @@ public class OBJWriter extends FilterWriter {
             }
           }
         } else {
+        	//PJPJPJ added support for nio style
+  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+  			{
+  			// Write vertices coordinates
+  	          FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
+  	          for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+  	            Point3f vertex = new Point3f(vertexCoordinates.get(i), vertexCoordinates.get(i + 1), vertexCoordinates.get(i + 2));
+  	            writeVertex(parentTransformations, vertex, index,
+  	                vertexIndexSubstitutes);
+  	          }
+  	          // Write texture coordinates
+  	          if (texCoordGeneration != null) {
+  	            if (textureCoordinatesGenerated) {
+  	              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
+  	                TexCoord2f textureCoordinates = generateTextureCoordinates(
+  	                    vertexCoordinates.get(i), vertexCoordinates.get(i + 1), vertexCoordinates.get(i + 2), planeS, planeT);
+  	                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
+  	              }
+  	            }
+  	          } else if (textureCoordinatesDefined) {
+  	        	FloatBuffer textureCoordinatesArray = (FloatBuffer) geometryArray.getTexCoordRefBuffer(0).getBuffer();
+  	            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
+  	              TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray.get(i), textureCoordinatesArray.get(i + 1));
+  	              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
+  	            }
+  	          }
+  	          // Write normals
+  	          if (normalsDefined) {
+  	        	FloatBuffer normalCoordinates = (FloatBuffer) geometryArray.getNormalRefBuffer().getBuffer();
+  	            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); normalsDefined && index < n; index++, i += 3) {
+  	              Vector3f normal = new Vector3f(normalCoordinates.get(i), normalCoordinates.get(i + 1), normalCoordinates.get(i + 2));
+  	              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
+  	                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
+  	            }
+  	          }
+  			}
+  			else{
           // Write vertices coordinates
           float [] vertexCoordinates = geometryArray.getCoordRefFloat();
           for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
@@ -633,7 +671,7 @@ public class OBJWriter extends FilterWriter {
               normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
                   oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
             }
-          }
+          }}
         }
       } else {
         // Write vertices coordinates

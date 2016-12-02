@@ -38,6 +38,7 @@ import org.jogamp.java3d.CapabilityNotSetException;
 import org.jogamp.java3d.Geometry;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
+import org.jogamp.java3d.IndexedGeometryArray;
 import org.jogamp.java3d.Link;
 import org.jogamp.java3d.Material;
 import org.jogamp.java3d.Node;
@@ -110,6 +111,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 */
 	public HomePieceOfFurniture3D(HomePieceOfFurniture piece, Home home, boolean ignoreDrawingMode, boolean waitModelAndTextureLoadingEnd)
 	{
+		setName(piece.getName());
 		setUserData(piece);
 		this.home = home;
 
@@ -122,13 +124,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
 	}
 
+	final TransformGroup pieceTransformGroup = new TransformGroup();
+	
 	/**
 	 * Creates the piece node with its transform group and add it to the piece branch. 
 	 */
 	private void createPieceOfFurnitureNode(final HomePieceOfFurniture piece, final boolean ignoreDrawingMode,
 			final boolean waitModelAndTextureLoadingEnd)
 	{
-		final TransformGroup pieceTransformGroup = new TransformGroup();
+		
+		pieceTransformGroup.setName("pieceTransformGroup " + piece.getName());
 		// Allow the change of the transformation that sets piece size and position
 		pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
 		pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_READ);
@@ -145,6 +150,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 
 		// While loading model use a temporary node that displays a white box  
 		final BranchGroup waitBranch = new BranchGroup();
+		waitBranch.setName("white loading box");
 		waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
 		waitBranch.addChild(getModelBox(Color.WHITE));
 		// Allow appearance change on all children
@@ -163,7 +169,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 				float[][] modelRotation = piece.getModelRotation();
 				// Add piece model scene to a normalized transform group
 				TransformGroup modelTransformGroup = ModelManager.getInstance().getNormalizedTransformGroup(modelRoot, modelRotation, 1);
-
+				modelTransformGroup.setName("NormalizedTransformGroup");
 				cloneHomeTextures(modelRoot);
 				updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
 			}
@@ -231,7 +237,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		Transform3D pieceTransform = ModelManager.getInstance()
 				.getPieceOFFurnitureNormalizedModelTransformation((HomePieceOfFurniture) getUserData());
 		// Change model transformation      
-		((TransformGroup) getChild(0)).setTransform(pieceTransform);
+		pieceTransformGroup.setTransform(pieceTransform);
 	}
 
 	/**
@@ -341,9 +347,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 */
 	private Node getFilledModelNode()
 	{
-		TransformGroup transformGroup = (TransformGroup) getChild(0);
-		BranchGroup branchGroup = (BranchGroup) transformGroup.getChild(0);
-		return branchGroup.getChild(0);
+		return filledModelNode;
 	}
 
 	/**
@@ -351,16 +355,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 */
 	private Node getOutlineModelNode()
 	{
-		TransformGroup transformGroup = (TransformGroup) getChild(0);
-		BranchGroup branchGroup = (BranchGroup) transformGroup.getChild(0);
-		if (branchGroup.numChildren() > 1)
-		{
-			return branchGroup.getChild(1);
-		}
-		else
-		{
-			return null;
-		}
+		return outlineModelNode;
 	}
 
 	/**
@@ -403,6 +398,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		setCullFace(getFilledModelNode(), piece.isModelMirrored(), piece.isBackFaceShown());
 	}
 
+	
+	private BranchGroup modelBranch;
+	private Node filledModelNode;
+	private Node outlineModelNode;
 	/**
 	 * Updates transform group children with <code>modelMode</code>.
 	 */
@@ -412,21 +411,25 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		normalization.addChild(modelNode);
 		setModelCapabilities(normalization);
 		// Add model node to branch group
-		BranchGroup modelBranch = new BranchGroup();
-		modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-		modelBranch.addChild(normalization);
+		modelBranch = new BranchGroup();
+		modelBranch.setName("modelBranch");
+		//modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+		filledModelNode = normalization;
+		modelBranch.addChild(filledModelNode);
 		if (!ignoreDrawingMode)
 		{
 			// Add outline model node
-			modelBranch.addChild(createOutlineModelNode(normalization));
+			outlineModelNode = createOutlineModelNode(normalization);
+			modelBranch.addChild(outlineModelNode);
 		}
-
-		TransformGroup transformGroup = (TransformGroup) getChild(0);
+		else
+		{
+			outlineModelNode = null;
+		}
+		 
 		// Remove previous nodes    
-		transformGroup.removeAllChildren();
-		// Add model branch to live scene
-		transformGroup.addChild(modelBranch);
-
+		pieceTransformGroup.removeAllChildren();		
+		
 		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
 		if (piece instanceof HomeLight)
 		{
@@ -463,6 +466,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		{
 			this.home.addSelectionListener(new LightSelectionListener(this));
 		}
+
+		//PJPJP add it after playing about
+		// Add model branch to live scene
+		pieceTransformGroup.addChild(modelBranch);
 	}
 
 	/**
@@ -501,7 +508,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	{
 		Material material = new Material();
 		material.setDiffuseColor(new Color3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f));
-		material.setAmbientColor(new Color3f(color.darker().getRed() / 255f, color.darker().getGreen() / 255f, color.darker().getBlue() / 255f));
+		material.setAmbientColor(
+				new Color3f(color.darker().getRed() / 255f, color.darker().getGreen() / 255f, color.darker().getBlue() / 255f));
 
 		Appearance boxAppearance = new SimpleShaderAppearance();
 		boxAppearance.setMaterial(material);
@@ -589,6 +597,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			node.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
 			node.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
 			node.setCapability(Shape3D.ALLOW_BOUNDS_READ);
+			node.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
 		}
 	}
 
@@ -1085,7 +1094,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	private void setGeometryCapabilities(Geometry geometry)
 	{
 		// Sets the geometry capabilities needed to read attributes saved by OBJWriter
-		if (!geometry.isLive() && geometry instanceof GeometryArray)
+		if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)
 		{
 			geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
 			geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
@@ -1093,6 +1102,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
 			geometry.setCapability(GeometryArray.ALLOW_NORMAL_READ);
 			geometry.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
+			if (geometry instanceof IndexedGeometryArray)
+				geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
 		}
 	}
 

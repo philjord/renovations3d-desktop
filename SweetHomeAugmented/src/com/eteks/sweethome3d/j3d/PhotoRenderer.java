@@ -30,6 +30,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -920,7 +921,50 @@ public class PhotoRenderer
 						}
 					}
 					else
-					{
+					{//PJPJPJ added support for nio style
+			  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+			  			{
+			  				// Export vertices coordinates
+							FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
+							for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3)
+							{
+								Point3f vertex = new Point3f(vertexCoordinates.get(i), vertexCoordinates.get(i + 1), vertexCoordinates.get(i + 2));
+								exportVertex(parentTransformations, vertex, index, vertices);
+							}
+							// Export normals
+							if (normals != null)
+							{
+								FloatBuffer normalCoordinates = (FloatBuffer) geometryArray.getNormalRefBuffer().getBuffer();
+								for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3)
+								{
+									Vector3f normal = new Vector3f(normalCoordinates.get(i), normalCoordinates.get(i + 1), normalCoordinates.get(i + 2));
+									exportNormal(parentTransformations, normal, index, normals, backFaceNormalFlip);
+								}
+							}
+							// Export texture coordinates
+							if (texCoordGeneration != null)
+							{
+								if (uvsGenerated)
+								{
+									for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3)
+									{
+										TexCoord2f textureCoordinates = generateTextureCoordinates(vertexCoordinates.get(i),
+												vertexCoordinates.get(i + 1), vertexCoordinates.get(i + 2), planeS, planeT);
+										exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
+									}
+								}
+							}
+							else if (uvs != null)
+							{
+								FloatBuffer textureCoordinatesArray = (FloatBuffer) geometryArray.getTexCoordRefBuffer(0).getBuffer();
+								for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2)
+								{
+									TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray.get(i), textureCoordinatesArray.get(i + 1));
+									exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
+								}
+							}
+			  			}
+			  			else{
 						// Export vertices coordinates
 						float[] vertexCoordinates = geometryArray.getCoordRefFloat();
 						for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3)
@@ -960,6 +1004,7 @@ public class PhotoRenderer
 								exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
 							}
 						}
+					}
 					}
 				}
 				else

@@ -741,7 +741,8 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             geometryInfo.setTextureCoordinates(0, textureCoordinates);
             geometryInfo.setTextureCoordinateIndices(0, coordinateIndices);
           }
-          GeometryArray geometryArray = geometryInfo.getGeometryArray(true, true, false);
+          //PJPJPJ make it nio
+          GeometryArray geometryArray = geometryInfo.getGeometryArray(true, false, true);
           
           if (shape == null || material != firstMaterial) {
             material = firstMaterial;

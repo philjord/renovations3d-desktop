@@ -36,6 +36,7 @@ import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -52,9 +53,6 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.batik.parser.AWTPathProducer;
-import org.apache.batik.parser.ParseException;
-import org.apache.batik.parser.PathParser;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BoundingBox;
 import org.jogamp.java3d.Bounds;
@@ -374,13 +372,27 @@ public class ModelManager {
               updateBounds(vertex, transformation, lower, upper);
             }
           } else {
-            float [] vertexCoordinates = geometryArray.getCoordRefFloat();
-            for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
-              vertex.x = vertexCoordinates [j];
-              vertex.y = vertexCoordinates [j + 1];
-              vertex.z = vertexCoordinates [j + 2];
-              updateBounds(vertex, transformation, lower, upper);
-            }
+        	//PJPJPJ added support for nio style
+  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+  			{
+  		          FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
+  		        for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
+  		            vertex.x = vertexCoordinates.get(j);
+  		            vertex.y = vertexCoordinates.get(j + 1);
+  		            vertex.z = vertexCoordinates.get(j + 2);
+  		            updateBounds(vertex, transformation, lower, upper);
+  		          }
+  			}
+  			else
+  			{
+	            float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+	            for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
+	              vertex.x = vertexCoordinates [j];
+	              vertex.y = vertexCoordinates [j + 1];
+	              vertex.z = vertexCoordinates [j + 2];
+	              updateBounds(vertex, transformation, lower, upper);
+	            }
+  			}
           }
         } else {
           for (int index = 0; index < vertexCount; index++) {
@@ -610,6 +622,7 @@ public class ModelManager {
                   }
                 });
             }
+            
           }
         });
       }
@@ -793,6 +806,9 @@ public class ModelManager {
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLightsShareAndModulateTextures(modelNode, new IdentityHashMap<Texture, Texture>());        
         checkAppearancesName(modelNode);
+        
+
+         
         return modelNode;
       } catch (IllegalArgumentException ex) {
         lastException = ex;
@@ -1246,19 +1262,40 @@ public class ModelManager {
             }
           }
         } else {
-          // Store vertices coordinates
-          float [] vertexCoordinates = geometryArray.getCoordRefFloat();
-          for (int index = 0, i = 0; index < vertices.length; i += 3) {
-            vertex.x = vertexCoordinates [i];
-            vertex.y = vertexCoordinates [i + 1];
-            vertex.z = vertexCoordinates [i + 2];
-            parentTransformations.transform(vertex);
-            vertices [index++] = vertex.x;
-            if (bottom) {
-              vertices [index++] = vertex.z;
-            } else {
-              vertices [index++] = vertex.y;
-            }
+			//PJPJPJ added support for nio style
+			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+			{
+				// Store vertices coordinates
+		          FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
+		          for (int index = 0, i = 0; index < vertices.length; i += 3) {
+		            vertex.x = vertexCoordinates.get(i);
+		            vertex.y = vertexCoordinates.get(i + 1);
+		            vertex.z = vertexCoordinates.get(i + 2);
+		            parentTransformations.transform(vertex);
+		            vertices [index++] = vertex.x;
+		            if (bottom) {
+		              vertices [index++] = vertex.z;
+		            } else {
+		              vertices [index++] = vertex.y;
+		            }
+		          }
+			}
+			else
+			{
+	          // Store vertices coordinates
+	          float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+	          for (int index = 0, i = 0; index < vertices.length; i += 3) {
+	            vertex.x = vertexCoordinates [i];
+	            vertex.y = vertexCoordinates [i + 1];
+	            vertex.z = vertexCoordinates [i + 2];
+	            parentTransformations.transform(vertex);
+	            vertices [index++] = vertex.x;
+	            if (bottom) {
+	              vertices [index++] = vertex.z;
+	            } else {
+	              vertices [index++] = vertex.y;
+	            }
+	          }
           }
         }
       } else {
@@ -1509,15 +1546,30 @@ public class ModelManager {
                   vertices.add(new float [] {vertex.x, vertex.z});
                 }
               } else {
-                // Store vertices coordinates
-                float [] vertexCoordinates = geometryArray.getCoordRefFloat();
-                for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
-                  vertex.x = vertexCoordinates [j];
-                  vertex.y = vertexCoordinates [j + 1];
-                  vertex.z = vertexCoordinates [j + 2];
-                  parentTransformations.transform(vertex);
-                  vertices.add(new float [] {vertex.x, vertex.z});
-                }
+            	//PJPJPJ added support for nio style
+    			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+    			{
+    				FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
+    		        for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
+    		            vertex.x = vertexCoordinates.get(j);
+    		            vertex.y = vertexCoordinates.get(j + 1);
+    		            vertex.z = vertexCoordinates.get(j + 2);
+    		            parentTransformations.transform(vertex);
+  	                  	vertices.add(new float [] {vertex.x, vertex.z});
+    		          }
+    			}
+    			else
+    			{
+	                // Store vertices coordinates
+	                float [] vertexCoordinates = geometryArray.getCoordRefFloat();
+	                for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
+	                  vertex.x = vertexCoordinates [j];
+	                  vertex.y = vertexCoordinates [j + 1];
+	                  vertex.z = vertexCoordinates [j + 2];
+	                  parentTransformations.transform(vertex);
+	                  vertices.add(new float [] {vertex.x, vertex.z});
+	                }
+        		}
               }
             } else {
               // Store vertices coordinates
