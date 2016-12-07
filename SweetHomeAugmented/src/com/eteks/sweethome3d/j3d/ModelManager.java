@@ -40,10 +40,10 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -333,9 +333,9 @@ public class ModelManager {
         parentTransformations.mul(transform);
       }
       // Compute the bounds of all the node children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren();
-      while (enumeration.hasMoreElements ()) {
-        computeBounds((Node)enumeration.nextElement(), bounds, parentTransformations, transformShapeGeometry);
+      Iterator<Node> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasNext ()) {
+        computeBounds(enumeration.next(), bounds, parentTransformations, transformShapeGeometry);
       }
     } else if (node instanceof Link) {
       computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformations, transformShapeGeometry);
@@ -906,9 +906,9 @@ public class ModelManager {
                                                      Map<Texture, Texture> replacedTextures) {
     if (node instanceof Group) {
       // Enumerate children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        turnOffLightsShareAndModulateTextures((Node)enumeration.nextElement(), replacedTextures);
+      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasNext()) {
+        turnOffLightsShareAndModulateTextures(enumeration.next(), replacedTextures);
       }
     } else if (node instanceof Link) {
       turnOffLightsShareAndModulateTextures(((Link)node).getSharedGroup(), replacedTextures);
@@ -1047,9 +1047,9 @@ public class ModelManager {
   private void searchAppearances(Node node, Set<Appearance> appearances) {
     if (node instanceof Group) {
       // Enumerate children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        searchAppearances((Node)enumeration.nextElement(), appearances);
+      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasNext()) {
+        searchAppearances(enumeration.next(), appearances);
       }
     } else if (node instanceof Link) {
       searchAppearances(((Link)node).getSharedGroup(), appearances);
@@ -1164,9 +1164,9 @@ public class ModelManager {
     int count = 0;
     if (node instanceof Group) {
       // Enumerate all children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren();
-      while (enumeration.hasMoreElements()) {
-        count += getVertexCount((Node)enumeration.nextElement());
+      Iterator<Node> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasNext()) {
+        count += getVertexCount(enumeration.next());
       }
     } else if (node instanceof Link) {
       count = getVertexCount(((Link)node).getSharedGroup());
@@ -1204,9 +1204,9 @@ public class ModelManager {
         parentTransformations.mul(transform);
       }
       // Compute all children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        computeBottomOrFrontArea((Node)enumeration.nextElement(), nodeArea, parentTransformations, ignoreTransparentShapes, bottom);
+      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasNext()) {
+        computeBottomOrFrontArea(enumeration.next(), nodeArea, parentTransformations, ignoreTransparentShapes, bottom);
       }
     } else if (node instanceof Link) {
       computeBottomOrFrontArea(((Link)node).getSharedGroup(), nodeArea, parentTransformations, ignoreTransparentShapes, bottom);
@@ -1508,9 +1508,9 @@ public class ModelManager {
         parentTransformations.mul(transform);
       }
       // Compute all children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        computeVerticesOnFloor((Node)enumeration.nextElement(), vertices, parentTransformations);
+      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasNext()) {
+        computeVerticesOnFloor(enumeration.next(), vertices, parentTransformations);
       }
     } else if (node instanceof Link) {
       computeVerticesOnFloor(((Link)node).getSharedGroup(), vertices, parentTransformations);

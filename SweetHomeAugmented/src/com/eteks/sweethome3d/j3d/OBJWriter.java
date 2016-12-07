@@ -343,9 +343,9 @@ public class OBJWriter extends FilterWriter {
         parentTransformations.mul(transform);
       }
       // Write all children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        writeNode((Node)enumeration.nextElement(), nodeName, parentTransformations);
+      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasNext()) {
+        writeNode((Node)enumeration.next(), nodeName, parentTransformations);
       }
     } else if (node instanceof Link) {
       writeNode(((Link)node).getSharedGroup(), nodeName, parentTransformations);

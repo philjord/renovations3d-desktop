@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -843,9 +844,9 @@ public class ModelPreviewComponent extends JComponent {
   private void cloneTextures(Node node, Map<Texture, Texture> replacedTextures) {
     if (node instanceof Group) {
       // Enumerate children
-      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasMoreElements()) {
-        cloneTextures((Node)enumeration.nextElement(), replacedTextures);
+      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasNext()) {
+        cloneTextures((Node)enumeration.next(), replacedTextures);
       }
     } else if (node instanceof Link) {
       cloneTextures(((Link)node).getSharedGroup(), replacedTextures);

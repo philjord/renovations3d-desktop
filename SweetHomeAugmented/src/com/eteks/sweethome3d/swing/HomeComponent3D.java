@@ -73,6 +73,7 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -985,9 +986,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 			// Replace textures by clones because Java 3D doesn't accept all the time 
 			// to share textures between offscreen and onscreen environments 
 			Map<Texture, Texture> replacedTextures = new HashMap<Texture, Texture>();
-			for (Enumeration it = this.offscreenUniverse.getLocale().getAllBranchGraphs(); it.hasMoreElements();)
+			for (Iterator<BranchGroup> it = this.offscreenUniverse.getLocale().getAllBranchGraphs(); it.hasNext();)
 			{
-				cloneTexture((Node) it.nextElement(), replacedTextures);
+				cloneTexture((Node) it.next(), replacedTextures);
 			}
 		}
 	}
@@ -1009,9 +1010,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 				// Replace textures by clones because Java 3D doesn't accept all the time 
 				// to share textures between offscreen and onscreen environments 
 				Map<Texture, Texture> replacedTextures = new HashMap<Texture, Texture>();
-				for (Enumeration it = offScreenImageUniverse.getLocale().getAllBranchGraphs(); it.hasMoreElements();)
+				for (Iterator<BranchGroup> it = offScreenImageUniverse.getLocale().getAllBranchGraphs(); it.hasNext();)
 				{
-					cloneTexture((Node) it.nextElement(), replacedTextures);
+					cloneTexture((Node) it.next(), replacedTextures);
 				}
 			}
 			else
@@ -1044,10 +1045,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		if (node instanceof Group)
 		{
 			// Enumerate children
-			Enumeration<?> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasMoreElements())
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
 			{
-				cloneTexture((Node) enumeration.nextElement(), replacedTextures);
+				cloneTexture((Node) enumeration.next(), replacedTextures);
 			}
 		}
 		else if (node instanceof Link)

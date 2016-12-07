@@ -25,6 +25,7 @@ import javaawt.Shape;
 import java.lang.ref.WeakReference;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -189,10 +190,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 				if (node instanceof Group)
 				{
 					// Enumerate children
-					Enumeration<?> enumeration = ((Group) node).getAllChildren();
-					while (enumeration.hasMoreElements())
+					Iterator<Node> enumeration = ((Group) node).getAllChildren();
+					while (enumeration.hasNext())
 					{
-						cloneHomeTextures((Node) enumeration.nextElement());
+						cloneHomeTextures((Node) enumeration.next());
 					}
 				}
 				else if (node instanceof Link)
@@ -533,10 +534,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	{
 		if (node instanceof Group)
 		{
-			Enumeration<?> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasMoreElements())
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
 			{
-				setOutlineAppearance((Node) enumeration.nextElement());
+				setOutlineAppearance((Node) enumeration.next());
 			}
 		}
 		else if (node instanceof Link)
@@ -570,10 +571,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			{
 				node.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
 			}
-			Enumeration<?> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasMoreElements())
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
 			{
-				setModelCapabilities((Node) enumeration.nextElement());
+				setModelCapabilities((Node) enumeration.next());
 			}
 		}
 		else if (node instanceof Link)
@@ -589,10 +590,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			{
 				setAppearanceCapabilities(appearance);
 			}
-			Enumeration<?> enumeration = shape.getAllGeometries();
-			while (enumeration.hasMoreElements())
+			Iterator<Geometry> enumeration = shape.getAllGeometries();
+			while (enumeration.hasNext())
 			{
-				setGeometryCapabilities((Geometry) enumeration.nextElement());
+				setGeometryCapabilities((Geometry) enumeration.next());
 			}
 			node.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
 			node.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
@@ -611,10 +612,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		if (node instanceof Group)
 		{
 			// Set material and texture of all children
-			Enumeration<?> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasMoreElements())
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
 			{
-				setColorAndTexture((Node) enumeration.nextElement(), color, texture, shininess, materials, waitTextureLoadingEnd, pieceSize,
+				setColorAndTexture((Node) enumeration.next(), color, texture, shininess, materials, waitTextureLoadingEnd, pieceSize,
 						modelBounds, modifiedAppearances);
 			}
 		}
@@ -875,10 +876,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		if (node instanceof Group)
 		{
 			// Set visibility of all children
-			Enumeration<?> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasMoreElements())
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
 			{
-				setVisible((Node) enumeration.nextElement(), visible, materials);
+				setVisible((Node) enumeration.next(), visible, materials);
 			}
 		}
 		else if (node instanceof Link)
@@ -953,10 +954,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		if (node instanceof Group)
 		{
 			// Set cull face of all children
-			Enumeration<?> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasMoreElements())
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
 			{
-				setCullFace((Node) enumeration.nextElement(), mirrored, backFaceShown);
+				setCullFace((Node) enumeration.next(), mirrored, backFaceShown);
 			}
 		}
 		else if (node instanceof Link)
@@ -1012,10 +1013,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		if (node instanceof Group)
 		{
 			// Set back face normal flip of all children
-			Enumeration<?> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasMoreElements())
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
 			{
-				setBackFaceNormalFlip((Node) enumeration.nextElement(), backFaceNormalFlip);
+				setBackFaceNormalFlip((Node) enumeration.next(), backFaceNormalFlip);
 			}
 		}
 		else if (node instanceof Link)

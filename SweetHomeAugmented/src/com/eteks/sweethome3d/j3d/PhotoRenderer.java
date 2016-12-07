@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -693,10 +694,10 @@ public class PhotoRenderer
 				parentTransformations.mul(transform);
 			}
 			// Export all children
-			Enumeration<?> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasMoreElements())
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
 			{
-				exportNode((Node) enumeration.nextElement(), ignoreTransparency, silk, nodeNames, parentTransformations);
+				exportNode((Node) enumeration.next(), ignoreTransparency, silk, nodeNames, parentTransformations);
 			}
 		}
 		else if (node instanceof Link)

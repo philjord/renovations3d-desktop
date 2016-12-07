@@ -6241,9 +6241,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures) {
       if (node instanceof Group) {
         // Enumerate children
-        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
-        while (enumeration.hasMoreElements()) {
-          cloneTexture((Node)enumeration.nextElement(), replacedTextures);
+        Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
+        while (enumeration.hasNext()) {
+          cloneTexture((Node)enumeration.next(), replacedTextures);
         }
       } else if (node instanceof Link) {
         cloneTexture(((Link)node).getSharedGroup(), replacedTextures);

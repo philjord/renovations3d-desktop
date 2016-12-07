@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -474,9 +475,9 @@ public class DAELoader extends LoaderBase implements Loader {
               
               private void updateShapeAppearance(Node node, Appearance appearance) {
                 if (node instanceof Group) {
-                  Enumeration<?> enumeration = ((Group)node).getAllChildren();
-                  while (enumeration.hasMoreElements ()) {
-                    updateShapeAppearance((Node)enumeration.nextElement(), appearance);
+                  Iterator<Node> enumeration = ((Group)node).getAllChildren();
+                  while (enumeration.hasNext ()) {
+                    updateShapeAppearance(enumeration.next(), appearance);
                   }
                 } else if (node instanceof Link) {
                   updateShapeAppearance(((Link)node).getSharedGroup(), appearance);
@@ -1116,9 +1117,9 @@ public class DAELoader extends LoaderBase implements Loader {
           parentTransformations.mul(transform);
         }
         // Compute the bounds of all the node children
-        Enumeration<?> enumeration = ((Group)node).getAllChildren();
-        while (enumeration.hasMoreElements ()) {
-          computeBounds((Node)enumeration.nextElement(), bounds, parentTransformations);
+        Iterator<Node> enumeration = ((Group)node).getAllChildren();
+        while (enumeration.hasNext ()) {
+          computeBounds(enumeration.next(), bounds, parentTransformations);
         }
       } else if (node instanceof Link) {
         computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformations);
