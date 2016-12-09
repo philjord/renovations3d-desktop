@@ -193,7 +193,7 @@ public class Wall3D extends Object3DBranch {
       wallOutlineShapes [i] = wallSideGroups [i].numChildren() > 1 
           ? (Shape3D)wallSideGroups [i].getChild(1)
           : null;
-      currentGeometriesCounts [i] = wallFilledShapes [i].numGeometries();
+      currentGeometriesCounts [i] = wallFilledShapes [i].numGeometries();     
     }
     if (wall.getLevel() == null || wall.getLevel().isViewableAndVisible()) {
       List [] wallGeometries = {new ArrayList<Geometry>(), 
@@ -214,15 +214,15 @@ public class Wall3D extends Object3DBranch {
             baseboard, baseboardTexture, waitDoorOrWindowModelsLoadingEnd);
       }
       for (int i = 0; i < wallSideGroups.length; i++) {
-        /*for (Geometry wallGeometry : (List<Geometry>)wallGeometries [i]) {
+       /* for (Geometry wallGeometry : (List<Geometry>)wallGeometries [i]) {
           if (wallGeometry != null) {
             wallFilledShapes [i].addGeometry(wallGeometry);
             if (wallOutlineShapes [i] != null) {
               wallOutlineShapes [i].addGeometry(wallGeometry);
             }
           }
-        }*/       
-
+        }     */
+    	
 		//PJPJPJPJ
 		// Now put all geometries into one large geometry array for better rendering performance
 		if (wallGeometries[i].size() > 0)
@@ -237,12 +237,17 @@ public class Wall3D extends Object3DBranch {
 		}
       }
     }
-    for (int i = 0; i < wallSideGroups.length; i++) {
+    for (int i = 0; i < wallSideGroups.length; i++) { 
       for (int j = currentGeometriesCounts [i] - 1; j >= 0; j--) {
-        wallFilledShapes [i].removeGeometry(j);
-        if (wallOutlineShapes [i] != null) {
-          wallOutlineShapes [i].removeGeometry(j);
-        }
+				// odd race condition
+				if (wallFilledShapes[i].getGeometry(j) != null)
+				{
+					wallFilledShapes[i].removeGeometry(j);
+					if (wallOutlineShapes[i] != null)
+					{
+						wallOutlineShapes[i].removeGeometry(j);
+					}
+				}
       }
     }
   }
