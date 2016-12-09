@@ -585,8 +585,7 @@ public class OBJLoader extends LoaderBase implements Loader
 				}
 
 				//PJPJPJ make it byref  nio
-				geometryArray = geometryInfo.getGeometryArray(true, false, true);
-				// geometryArray = geometryInfo.getIndexedGeometryArray(true,true, false, true,true);
+				geometryArray = geometryInfo.getIndexedGeometryArray(true, true, false, true, true);
 			}
 			else
 			{ // Line
