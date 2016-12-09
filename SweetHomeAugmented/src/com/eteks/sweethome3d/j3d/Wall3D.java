@@ -38,6 +38,7 @@ import java.util.WeakHashMap;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.Geometry;
+import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
 import org.jogamp.java3d.Node;
 import org.jogamp.java3d.RenderingAttributes;
@@ -47,6 +48,7 @@ import org.jogamp.java3d.Transform3D;
 import org.jogamp.java3d.TransformGroup;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.GeometryMerger;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Point3f;
@@ -212,14 +214,27 @@ public class Wall3D extends Object3DBranch {
             baseboard, baseboardTexture, waitDoorOrWindowModelsLoadingEnd);
       }
       for (int i = 0; i < wallSideGroups.length; i++) {
-        for (Geometry wallGeometry : (List<Geometry>)wallGeometries [i]) {
+        /*for (Geometry wallGeometry : (List<Geometry>)wallGeometries [i]) {
           if (wallGeometry != null) {
             wallFilledShapes [i].addGeometry(wallGeometry);
             if (wallOutlineShapes [i] != null) {
               wallOutlineShapes [i].addGeometry(wallGeometry);
             }
           }
-        }
+        }*/       
+
+		//PJPJPJPJ
+		// Now put all geometries into one large geometry array for better rendering performance
+		if (wallGeometries[i].size() > 0)
+		{
+			GeometryInfo gi = GeometryMerger.mergeGeometryArray(((List<GeometryArray>) wallGeometries[i]));
+			Geometry wallGeometry = gi.getIndexedGeometryArray(true, true, false, true, true);
+			wallFilledShapes[i].addGeometry(wallGeometry);
+			if (wallOutlineShapes[i] != null)
+			{
+				wallOutlineShapes[i].addGeometry(wallGeometry);
+			}
+		}
       }
     }
     for (int i = 0; i < wallSideGroups.length; i++) {

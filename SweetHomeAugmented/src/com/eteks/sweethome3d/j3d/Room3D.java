@@ -31,12 +31,14 @@ import java.util.List;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.Geometry;
+import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Node;
 import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.GeometryMerger;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Point3f;
@@ -142,9 +144,17 @@ public class Room3D extends Object3DBranch {
     int currentGeometriesCount = roomShape.numGeometries();
     Room room = (Room)getUserData();
     if (room.getLevel() == null || room.getLevel().isViewableAndVisible()) {
-      for (Geometry roomGeometry : createRoomGeometries(roomPart, texture)) {
+      /*for (Geometry roomGeometry : createRoomGeometries(roomPart, texture)) {
         roomShape.addGeometry(roomGeometry);
-      }
+    	}*/
+        	//PJPJPJPJ
+    		// Now put all geometries into one large geometry array for better rendering performance	
+			Geometry[] gs = createRoomGeometries(roomPart, texture);
+			if (gs.length > 0)
+			{
+				GeometryInfo gi = GeometryMerger.mergeGeometryArray(gs);
+				roomShape.addGeometry(gi.getIndexedGeometryArray(true, true, false, true, true));
+			}
     }
     for (int i = currentGeometriesCount - 1; i >= 0; i--) {
       roomShape.removeGeometry(i);
@@ -465,7 +475,7 @@ public class Room3D extends Object3DBranch {
     
     // Generate normals
     new NormalGenerator().generateNormals(geometryInfo);
-    return geometryInfo.getIndexedGeometryArray();
+    return geometryInfo.getIndexedGeometryArray(true,true,false,true,true);
   }
 
   /**
@@ -553,7 +563,7 @@ public class Room3D extends Object3DBranch {
     
     // Generate normals
     new NormalGenerator(Math.PI / 8).generateNormals(geometryInfo);
-    return geometryInfo.getIndexedGeometryArray();
+    return geometryInfo.getIndexedGeometryArray(true,true,false,true,true);
   }
 
   private void removeStaircasesFromArea(List<HomePieceOfFurniture> visibleStaircases, Area area) {

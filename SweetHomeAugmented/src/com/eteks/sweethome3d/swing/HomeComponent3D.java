@@ -2024,9 +2024,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		{
 			root.addChild(light);
 		}
-		//PJPJPJ called compile manually
-		//root.outputTraversal();
-		root.compile();
 		return root;
 	}
 
@@ -2988,6 +2985,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	private Node addObject(Group group, Selectable homeObject, int index, boolean listenToHomeUpdates, boolean waitForLoading)
 	{
 		Object3DBranch object3D = createObject3D(homeObject, waitForLoading);
+		
+	
 		if (listenToHomeUpdates)
 		{
 			this.homeObjects.put(homeObject, object3D);

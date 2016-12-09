@@ -89,7 +89,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			PolygonAttributes.CULL_NONE, 0, false);
 	private static final PolygonAttributes NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = new PolygonAttributes(
 			PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, true);
-	private static final Bounds DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), 1E7);
+	private static final Bounds DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), Double.POSITIVE_INFINITY);
 
 	private final Home home;
 
