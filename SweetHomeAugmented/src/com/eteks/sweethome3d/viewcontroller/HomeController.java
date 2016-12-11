@@ -104,7 +104,7 @@ public class HomeController implements Controller {
   private static HelpController       helpController;  // Only one help controller
   private int                         saveUndoLevel;
   private boolean                     notUndoableModifications;
-  private View                        focusedView;
+  private VCView                        focusedView;
 
   private static final Content REPAIRED_IMAGE_CONTENT = new ResourceURLContent(HomeController.class, "resources/repairedImage.png");
   private static final Content REPAIRED_ICON_CONTENT = new ResourceURLContent(HomeController.class, "resources/repairedIcon.png");
@@ -1454,7 +1454,7 @@ public class HomeController implements Controller {
    * Adds items to home, moves them of (dx, dy) 
    * and posts a drop operation to undo support.
    */
-  public void drop(final List<? extends Selectable> items, View destinationView, float dx, float dy) {
+  public void drop(final List<? extends Selectable> items, VCView destinationView, float dx, float dy) {
     addPastedItems(items, dx, dy, destinationView == getPlanController().getView(), "undoDropName");
   }
 
@@ -1738,7 +1738,7 @@ public class HomeController implements Controller {
   /**
    * Updates actions when focused view changed.
    */
-  public void focusedViewChanged(View focusedView) {
+  public void focusedViewChanged(VCView focusedView) {
     this.focusedView = focusedView;
     enableActionsBoundToSelection();
     enablePasteAction();
@@ -2781,7 +2781,7 @@ public class HomeController implements Controller {
   /**
    * Detaches the given <code>view</code> from home view.
    */
-  public void detachView(View view) {
+  public void detachView(VCView view) {
     if (view != null) {
       getView().detachView(view);
       this.notUndoableModifications = true;
@@ -2792,7 +2792,7 @@ public class HomeController implements Controller {
   /**
    * Attaches the given <code>view</code> to home view.
    */
-  public void attachView(View view) {
+  public void attachView(VCView view) {
     if (view != null) {
       getView().attachView(view);
       this.notUndoableModifications = true;

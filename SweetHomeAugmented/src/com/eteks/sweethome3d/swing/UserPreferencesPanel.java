@@ -68,7 +68,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * User preferences panel.
@@ -1041,7 +1041,7 @@ public class UserPreferencesPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a dialog box. 
    */
-  public void displayView(View parentView) {
+  public void displayView(VCView parentView) {
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
             this, this.dialogTitle, this.languageComboBox) == JOptionPane.OK_OPTION
         && this.controller != null) {

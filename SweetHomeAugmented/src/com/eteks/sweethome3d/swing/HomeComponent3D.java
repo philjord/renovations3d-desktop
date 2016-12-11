@@ -170,7 +170,7 @@ import com.jogamp.newt.event.MouseListener;
  * A component that displays home walls, rooms and furniture with Java 3D. 
  * @author Emmanuel Puybaret
  */
-public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d.viewcontroller.View, Printable
+public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d.viewcontroller.VCView, Printable
 {
 	private enum ActionType
 	{

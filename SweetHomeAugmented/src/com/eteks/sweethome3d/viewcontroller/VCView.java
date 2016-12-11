@@ -1,5 +1,5 @@
 /*
- * ThreadedTaskView.java 28 oct 2008
+ * View.java 28 oct. 2008
  *
  * Sweet Home 3D, Copyright (c) 2008 Emmanuel PUYBARET / eTeks <info@eteks.com>
  *
@@ -20,19 +20,8 @@
 package com.eteks.sweethome3d.viewcontroller;
 
 /**
- * A view of a threaded task.
+ * An MVC view created and controlled by a controller.
  * @author Emmanuel Puybaret
  */
-public interface ThreadedTaskView extends VCView {
-  /**
-   * Executes <code>runnable</code> asynchronously in the toolkit event thread.
-   */
-  public abstract void invokeLater(Runnable runnable);
-
-  /**
-   * Sets the running status of the threaded task. 
-   * If <code>taskRunning</code> is <code>true</code>, a waiting dialog will be shown.
-   */
-  public abstract void setTaskRunning(boolean taskRunning,
-                                      VCView executingView);
+public interface VCView {
 }

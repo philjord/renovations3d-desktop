@@ -51,7 +51,7 @@ public interface ContentManager {
    * Returns the content location chosen by user with an open content dialog.
    * @return the chosen content location or <code>null</code> if user canceled its choice.
    */
-  public abstract String showOpenDialog(View parentView,
+  public abstract String showOpenDialog(VCView parentView,
                                         String dialogTitle,
                                         ContentType contentType);
 
@@ -61,7 +61,7 @@ public interface ContentManager {
    * if the user wants to overwrite it before return. 
    * @return the chosen content location or <code>null</code> if user canceled its choice.
    */
-  public abstract String showSaveDialog(View parentView,
+  public abstract String showSaveDialog(VCView parentView,
                                         String dialogTitle,
                                         ContentType contentType,
                                         String location);

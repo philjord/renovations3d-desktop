@@ -23,7 +23,7 @@ package com.eteks.sweethome3d.viewcontroller;
  * A view that edits the texture of its controller.
  * @author Emmanuel Puybaret
  */
-public interface TextureChoiceView extends View {
+public interface TextureChoiceView extends VCView {
   /**
    * Displays a dialog that let user choose whether he wants to delete 
    * the selected texture from catalog or not.

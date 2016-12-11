@@ -64,7 +64,7 @@ public class FurnitureController implements Controller {
   private final ViewFactory         viewFactory;
   private final ContentManager      contentManager;
   private final UndoableEditSupport undoSupport;
-  private View                      furnitureView;
+  private VCView                      furnitureView;
   private HomePieceOfFurniture      leadSelectedPieceOfFurniture;
 
   /**
@@ -99,7 +99,7 @@ public class FurnitureController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public View getView() {
+  public VCView getView() {
     // Create view lazily only once it's needed
     if (this.furnitureView == null) {
       this.furnitureView = this.viewFactory.createFurnitureView(this.home, this.preferences, this);

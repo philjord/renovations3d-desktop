@@ -54,7 +54,7 @@ import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * A printable component used to print or preview the furniture, the plan 
@@ -342,7 +342,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
       }
     }
     
-    View furnitureView = this.controller.getFurnitureController().getView();
+    VCView furnitureView = this.controller.getFurnitureController().getView();
     if (furnitureView != null 
         && (homePrint == null || homePrint.isFurniturePrinted())) {
       FurnitureTable furnitureTable = null;
@@ -388,7 +388,7 @@ public class HomePrintableComponent extends JComponent implements Printable {
         this.planPageCount++;
       }
     }
-    View view3D = this.controller.getHomeController3D().getView();
+    VCView view3D = this.controller.getHomeController3D().getView();
     if (pageExists == NO_SUCH_PAGE
         && view3D != null
         && (homePrint == null || homePrint.isView3DPrinted())) {

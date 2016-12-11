@@ -1646,14 +1646,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the horizontal ruler of the plan view. 
    */
-  public View getHorizontalRulerView() {
+  public VCView getHorizontalRulerView() {
     return getView().getHorizontalRuler();
   }
   
   /**
    * Returns the vertical ruler of the plan view. 
    */
-  public View getVerticalRulerView() {
+  public VCView getVerticalRulerView() {
     return getView().getVerticalRuler();
   }
   

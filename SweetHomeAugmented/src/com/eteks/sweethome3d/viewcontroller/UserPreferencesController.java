@@ -104,7 +104,7 @@ public class UserPreferencesController implements Controller {
   /**
    * Displays the view controlled by this controller.
    */
-  public void displayView(View parentView) {
+  public void displayView(VCView parentView) {
     getView().displayView(parentView);
   }
 

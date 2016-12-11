@@ -47,7 +47,7 @@ public class BaseboardChoiceController implements Controller {
   private final ContentManager        contentManager;
   private TextureChoiceController     textureController;
   private final PropertyChangeSupport propertyChangeSupport;
-  private View                        view;
+  private VCView                        view;
 
   private Boolean   visible;
   private Float     thickness;
@@ -90,7 +90,7 @@ public class BaseboardChoiceController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public View getView() {
+  public VCView getView() {
     // Create view lazily only once it's needed
     if (this.view == null) {
       this.view = this.viewFactory.createBaseboardChoiceView(this.preferences, this); 

@@ -50,7 +50,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.PrintPreviewController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * Home print preview editing panel.
@@ -237,7 +237,7 @@ public class PrintPreviewPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a modal resizable dialog box. 
    */
-  public void displayView(View parentView) {
+  public void displayView(VCView parentView) {
     String dialogTitle = preferences.getLocalizedString(PrintPreviewPanel.class, "printPreview.title");
     JOptionPane optionPane = new JOptionPane(this, 
         JOptionPane.PLAIN_MESSAGE, JOptionPane.DEFAULT_OPTION); 

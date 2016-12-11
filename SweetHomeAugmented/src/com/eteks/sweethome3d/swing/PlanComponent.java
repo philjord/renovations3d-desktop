@@ -204,7 +204,7 @@ import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
  
 
 /**
@@ -5618,7 +5618,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the component used as an horizontal ruler for this plan.
    */
-  public View getHorizontalRuler() {
+  public VCView getHorizontalRuler() {
     if (this.horizontalRuler == null) {
       this.horizontalRuler = new PlanRulerComponent(SwingConstants.HORIZONTAL);
     } 
@@ -5628,7 +5628,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * Returns the component used as a vertical ruler for this plan.
    */
-  public View getVerticalRuler() {
+  public VCView getVerticalRuler() {
     if (this.verticalRuler == null) {
       this.verticalRuler = new PlanRulerComponent(SwingConstants.VERTICAL);
     } 
@@ -5638,7 +5638,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   /**
    * A component displaying the plan horizontal or vertical ruler associated to this plan.
    */
-  public class PlanRulerComponent extends JComponent implements View {
+  public class PlanRulerComponent extends JComponent implements VCView {
     private int   orientation;
     private Point mouseLocation;
 

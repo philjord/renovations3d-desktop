@@ -41,7 +41,7 @@ public abstract class AbstractPhotoController implements Controller {
   public enum Property {ASPECT_RATIO, WIDTH, HEIGHT, QUALITY, VIEW_3D_ASPECT_RATIO, CEILING_LIGHT_COLOR}
   
   private final Home                  home;
-  private final View                  view3D;
+  private final VCView                  view3D;
   private final ContentManager        contentManager;
   private final PropertyChangeSupport propertyChangeSupport;
   
@@ -54,7 +54,7 @@ public abstract class AbstractPhotoController implements Controller {
 
   public AbstractPhotoController(Home home,
                                  UserPreferences preferences,
-                                 View view3D,
+                                 VCView view3D,
                                  ContentManager contentManager) {
     this.home = home;
     this.view3D = view3D;
@@ -298,7 +298,7 @@ public abstract class AbstractPhotoController implements Controller {
   /**
    * Returns the 3D view used to compute aspect ratio bound to it.
    */
-  public View get3DView() {
+  public VCView get3DView() {
     return this.view3D;
   }
 

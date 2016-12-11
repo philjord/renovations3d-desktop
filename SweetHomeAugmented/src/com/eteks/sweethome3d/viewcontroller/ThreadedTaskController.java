@@ -75,7 +75,7 @@ public class ThreadedTaskController implements Controller {
    * Executes in a separated thread the task given in constructor. This task shouldn't
    * modify any model objects shared with other threads. 
    */
-  public void executeTask(final View executingView) {
+  public void executeTask(final VCView executingView) {
     if (tasksExecutor == null) {
       tasksExecutor = Executors.newSingleThreadExecutor();
     }

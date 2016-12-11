@@ -75,13 +75,13 @@ import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * A tree displaying furniture catalog by category.
  * @author Emmanuel Puybaret
  */
-public class FurnitureCatalogTree extends JTree implements View {
+public class FurnitureCatalogTree extends JTree implements VCView {
   private final UserPreferences preferences;
   private TreeSelectionListener treeSelectionListener;
   private CatalogItemToolTip    toolTip;

@@ -49,7 +49,7 @@ import javax.swing.border.BevelBorder;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 import com.eteks.sweethome3d.viewcontroller.WizardController;
 
 /**
@@ -190,7 +190,7 @@ public class WizardPane extends JOptionPane implements DialogView {
       messagePanel.remove(previousStepView);
     }
     // Add new step view
-    View stepView = controller.getStepView();
+    VCView stepView = controller.getStepView();
     if (stepView  != null) {
       messagePanel.add((JComponent)stepView, BorderLayout.CENTER);
     } 
@@ -274,7 +274,7 @@ public class WizardPane extends JOptionPane implements DialogView {
   /**
    * Displays this wizard view in a modal dialog.
    */
-  public void displayView(View parentView) {
+  public void displayView(VCView parentView) {
     this.dialog = createDialog(SwingUtilities.getRootPane((JComponent)parentView), 
         this.controller.getTitle() != null 
             ? this.controller.getTitle() 

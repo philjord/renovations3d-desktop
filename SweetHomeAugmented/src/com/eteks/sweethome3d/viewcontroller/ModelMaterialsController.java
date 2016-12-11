@@ -40,7 +40,7 @@ public class ModelMaterialsController implements Controller {
   private final ViewFactory           viewFactory;
   private final ContentManager        contentManager;  
   private final PropertyChangeSupport propertyChangeSupport;
-  private View                        materialsChoiceView;
+  private VCView                        materialsChoiceView;
 
   private TextureChoiceController     textureController;
 
@@ -66,7 +66,7 @@ public class ModelMaterialsController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public View getView() {
+  public VCView getView() {
     // Create view lazily only once it's needed
     if (this.materialsChoiceView == null) {
       this.materialsChoiceView = this.viewFactory.createModelMaterialsView(this.preferences, this);

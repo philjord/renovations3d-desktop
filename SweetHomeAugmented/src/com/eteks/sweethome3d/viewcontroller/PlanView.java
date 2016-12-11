@@ -29,7 +29,7 @@ import com.eteks.sweethome3d.model.TextStyle;
  * The view that displays the plan of a home.
  * @author Emmanuel Puybaret
  */
-public interface PlanView extends View {
+public interface PlanView extends VCView {
   /**
    * The cursor types available in plan view.
    */
@@ -168,12 +168,12 @@ public interface PlanView extends View {
   /**
    * Returns the component used as an horizontal ruler for this plan.
    */
-  public abstract View getHorizontalRuler();
+  public abstract VCView getHorizontalRuler();
 
   /**
    * Returns the component used as a vertical ruler for this plan.
    */
-  public abstract View getVerticalRuler();
+  public abstract VCView getVerticalRuler();
 
   /**
    * Returns <code>true</code> if this plan accepts to import dragged items at the given coordinates.

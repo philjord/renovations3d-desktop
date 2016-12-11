@@ -95,7 +95,7 @@ import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.PhotosController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * A panel to edit photos created at home points of view. 
@@ -466,7 +466,7 @@ public class PhotosPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a non modal dialog.
    */
-  public void displayView(View parentView) {
+  public void displayView(VCView parentView) {
     if (currentPhotosPanel == this) {
       SwingUtilities.getWindowAncestor(PhotosPanel.this).toFront();
     } else {

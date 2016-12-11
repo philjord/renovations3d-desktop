@@ -79,7 +79,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanController.EditableProperty;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * A panel for multiple levels plans where users can select the displayed level.
@@ -647,14 +647,14 @@ public class MultipleLevelsPlanPanel extends JPanel implements PlanView, Printab
   /**
    * Returns the component used as an horizontal ruler for the plan displayed by this component.
    */
-  public View getHorizontalRuler() {
+  public VCView getHorizontalRuler() {
     return this.planComponent.getHorizontalRuler();
   }
 
   /**
    * Returns the component used as a vertical ruler for the plan displayed by this component.
    */
-  public View getVerticalRuler() {
+  public VCView getVerticalRuler() {
     return this.planComponent.getVerticalRuler();
   }
 

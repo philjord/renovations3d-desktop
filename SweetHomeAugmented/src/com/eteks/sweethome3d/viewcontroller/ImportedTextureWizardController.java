@@ -49,7 +49,7 @@ public class ImportedTextureWizardController extends WizardController
 
   private final ImportedTextureWizardStepState textureImageStepState;
   private final ImportedTextureWizardStepState textureAttributesStepState;
-  private View                                 stepsView;
+  private VCView                                 stepsView;
 
   private Step              step;
   private Content           image;
@@ -157,7 +157,7 @@ public class ImportedTextureWizardController extends WizardController
   /**
    * Returns the unique wizard view used for all steps.
    */
-  protected View getStepsView() {
+  protected VCView getStepsView() {
     // Create view lazily only once it's needed
     if (this.stepsView == null) {
       this.stepsView = this.viewFactory.createImportedTextureWizardStepsView(this.texture, this.textureName, 
@@ -314,7 +314,7 @@ public class ImportedTextureWizardController extends WizardController
     }
     
     @Override
-    public View getView() {
+    public VCView getView() {
       return getStepsView();
     }    
     

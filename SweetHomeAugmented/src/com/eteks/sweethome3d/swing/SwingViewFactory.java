@@ -61,7 +61,7 @@ import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskView;
 import com.eteks.sweethome3d.viewcontroller.UserPreferencesController;
 import com.eteks.sweethome3d.viewcontroller.VideoController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 import com.eteks.sweethome3d.viewcontroller.WallController;
 import com.eteks.sweethome3d.viewcontroller.WizardController;
@@ -78,7 +78,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays furniture <code>catalog</code>.
    */
-  public View createFurnitureCatalogView(FurnitureCatalog catalog,
+  public VCView createFurnitureCatalogView(FurnitureCatalog catalog,
                                          UserPreferences preferences,
                                          FurnitureCatalogController furnitureCatalogController) {
     if (preferences == null || preferences.isFurnitureCatalogViewedInTree()) {
@@ -91,7 +91,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new table that displays <code>home</code> furniture.
    */
-  public View createFurnitureView(Home home, UserPreferences preferences,
+  public VCView createFurnitureView(Home home, UserPreferences preferences,
                                   FurnitureController furnitureController) {
     return new FurnitureTable(home, preferences, furnitureController);
   }
@@ -107,7 +107,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays <code>home</code> in 3D.
    */
-  public View createView3D(Home home, UserPreferences preferences,
+  public VCView createView3D(Home home, UserPreferences preferences,
                            HomeController3D homeController3D) {
     try {
       if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
@@ -139,7 +139,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps user to choose a background image. 
    */
-  public View createBackgroundImageWizardStepsView(BackgroundImage backgroundImage,
+  public VCView createBackgroundImageWizardStepsView(BackgroundImage backgroundImage,
                       UserPreferences preferences, 
                       BackgroundImageWizardController backgroundImageWizardController) {
     return new BackgroundImageWizardStepsPanel(backgroundImage, preferences,  
@@ -161,7 +161,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps the user to import a texture. 
    */
-  public View createImportedTextureWizardStepsView(
+  public VCView createImportedTextureWizardStepsView(
                       CatalogTexture texture, String textureName,
                       UserPreferences preferences,
                       ImportedTextureWizardController importedTextureWizardController) {
@@ -269,7 +269,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits the baseboard of its controller.  
    */
-  public View createBaseboardChoiceView(UserPreferences preferences,
+  public VCView createBaseboardChoiceView(UserPreferences preferences,
                                         BaseboardChoiceController baseboardChoiceController) {
     return new BaseboardChoiceComponent(preferences, baseboardChoiceController);
   }
@@ -277,7 +277,7 @@ public class SwingViewFactory implements ViewFactory {
   /**
    * Returns a new view that edits the materials of its controller.  
    */
-  public View createModelMaterialsView(UserPreferences preferences,
+  public VCView createModelMaterialsView(UserPreferences preferences,
                                         ModelMaterialsController controller) {
     return new ModelMaterialsComponent(preferences, controller);
   }

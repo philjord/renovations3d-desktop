@@ -139,7 +139,7 @@ import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.VideoController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * A panel used for video creation. 
@@ -981,7 +981,7 @@ public class VideoPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a non modal dialog.
    */
-  public void displayView(View parentView) {
+  public void displayView(VCView parentView) {
     if (currentVideoPanel == this) {
       SwingUtilities.getWindowAncestor(VideoPanel.this).toFront();
     } else {

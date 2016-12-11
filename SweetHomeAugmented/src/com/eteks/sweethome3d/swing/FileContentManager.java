@@ -68,7 +68,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.URLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * Content manager for files with Swing file choosers.
@@ -550,7 +550,7 @@ public class FileContentManager implements ContentManager {
    * Returns the file path chosen by user with an open file dialog.
    * @return the file path or <code>null</code> if user canceled its choice.
    */
-  public String showOpenDialog(View        parentView,
+  public String showOpenDialog(VCView        parentView,
                                String      dialogTitle,
                                ContentType contentType) {
     // Use native file dialog under Mac OS X
@@ -568,7 +568,7 @@ public class FileContentManager implements ContentManager {
    * he wants to overwrite this existing file. 
    * @return the chosen file path or <code>null</code> if user canceled its choice.
    */
-  public String showSaveDialog(View        parentView,
+  public String showSaveDialog(VCView        parentView,
                                String      dialogTitle,
                                ContentType contentType,
                                String      path) {
@@ -623,7 +623,7 @@ public class FileContentManager implements ContentManager {
   /**
    * Displays an AWT open file dialog.
    */
-  private String showFileDialog(View               parentView,
+  private String showFileDialog(VCView               parentView,
                                 String             dialogTitle,
                                 final ContentType  contentType,
                                 String             path, 
@@ -710,7 +710,7 @@ public class FileContentManager implements ContentManager {
   /**
    * Displays a Swing open file chooser.
    */
-  private String showFileChooser(View          parentView,
+  private String showFileChooser(VCView          parentView,
                                  String        dialogTitle,
                                  ContentType   contentType,
                                  String        path,
@@ -796,7 +796,7 @@ public class FileContentManager implements ContentManager {
    * file <code>path</code> or not.
    * @return <code>true</code> if user confirmed to overwrite.
    */
-  protected boolean confirmOverwrite(View parentView, String path) {
+  protected boolean confirmOverwrite(VCView parentView, String path) {
     // Retrieve displayed text in buttons and message
     String message = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.message", path);
     String title = this.preferences.getLocalizedString(FileContentManager.class, "confirmOverwrite.title");

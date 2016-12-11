@@ -64,7 +64,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.CompassController;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * Compass editing panel.
@@ -477,7 +477,7 @@ public class CompassPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(View parentView) {
+  public void displayView(VCView parentView) {
     JFormattedTextField northDirectionTextField = 
         ((JSpinner.DefaultEditor)this.northDirectionSpinner.getEditor()).getTextField();
     if (SwingTools.showConfirmDialog((JComponent)parentView, 

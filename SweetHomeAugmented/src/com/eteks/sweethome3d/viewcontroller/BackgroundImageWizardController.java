@@ -56,7 +56,7 @@ public class BackgroundImageWizardController extends WizardController
   private final BackgroundImageWizardStepState imageChoiceStepState;
   private final BackgroundImageWizardStepState imageScaleStepState;
   private final BackgroundImageWizardStepState imageOriginStepState;
-  private View                                 stepsView;
+  private VCView                                 stepsView;
   
   private Step    step;
   private Content image;
@@ -211,7 +211,7 @@ public class BackgroundImageWizardController extends WizardController
   /**
    * Returns the unique wizard view used for all steps.
    */
-  protected View getStepsView() {
+  protected VCView getStepsView() {
     // Create view lazily only once it's needed
     if (this.stepsView == null) {
       BackgroundImage image = this.home.getSelectedLevel() != null
@@ -369,7 +369,7 @@ public class BackgroundImageWizardController extends WizardController
     }
     
     @Override
-    public View getView() {
+    public VCView getView() {
       return getStepsView();
     }    
     

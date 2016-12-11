@@ -41,7 +41,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.Home3DAttributesController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.VCView;
 
 /**
  * Home 3D attributes editing panel.
@@ -380,7 +380,7 @@ public class Home3DAttributesPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(View parentView) {
+  public void displayView(VCView parentView) {
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
             this, this.dialogTitle, this.wallsTransparencySlider) == JOptionPane.OK_OPTION
         && this.controller != null) {
