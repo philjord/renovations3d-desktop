@@ -443,16 +443,19 @@ public class Component3DManager {
 
     @Override
     public void preRender() {
+    	super.preRender();
       this.renderingObserver.canvas3DPreRendered(this);
     }
 
     @Override
     public void postRender() {
+    	super.postRender();
       this.renderingObserver.canvas3DPostRendered(this);
     }
 
     @Override
     public void postSwap() {
+    	super.postSwap();
       this.renderingObserver.canvas3DSwapped(this);
     }
     //PJPJPJPJ no more paint
