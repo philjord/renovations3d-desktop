@@ -20,34 +20,20 @@
 package com.eteks.sweethome3d.swing;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
-import java.awt.Container;
-import java.awt.Cursor;
-import java.awt.DefaultFocusTraversalPolicy;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Rectangle;
-import java.awt.Shape;
-import java.awt.event.ActionEvent;
-import java.awt.geom.AffineTransform;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Locale;
 
-import javax.swing.Action;
 import javax.swing.ActionMap;
-import javax.swing.ImageIcon;
-import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
@@ -57,24 +43,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.text.AbstractDocument;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultHighlighter;
-import javax.swing.text.Element;
-import javax.swing.text.Highlighter;
-import javax.swing.text.Position;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
-import javax.swing.text.html.BlockView;
-import javax.swing.text.html.HTML;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.HTMLEditorKit.HTMLFactory;
 
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -82,7 +50,7 @@ import com.eteks.sweethome3d.viewcontroller.HelpController;
 import com.eteks.sweethome3d.viewcontroller.HelpView;
 
 /**
- * A pane displaying Sweet Home 3D help.
+ *Buggered with to make proguard work, this class no longer does anything useful
  * @author Emmanuel Puybaret
  */
 public class HelpPane extends JRootPane implements HelpView {
@@ -107,20 +75,7 @@ public class HelpPane extends JRootPane implements HelpView {
       installKeyboardActions();
     }
     
-    setPage(controller.getHelpPage());
-    controller.addPropertyChangeListener(HelpController.Property.HELP_PAGE, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            setPage(controller.getHelpPage());
-            highlightText(controller.getHighlightedText());
-          }
-        });
-    controller.addPropertyChangeListener(HelpController.Property.BROWSER_PAGE, 
-        new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            SwingTools.showDocumentInBrowser(controller.getBrowserPage());
-          }
-        });
+   
   }
 
   /** 
@@ -128,55 +83,7 @@ public class HelpPane extends JRootPane implements HelpView {
    */
   private void createActions(UserPreferences preferences, 
                              final HelpController controller) {
-    ActionMap actions = getActionMap();    
-    try {
-      final ControllerAction showPreviousAction = new ControllerAction(
-          preferences, HelpPane.class, ActionType.SHOW_PREVIOUS.name(), controller, "showPrevious");
-      showPreviousAction.setEnabled(controller.isPreviousPageEnabled());
-      controller.addPropertyChangeListener(HelpController.Property.PREVIOUS_PAGE_ENABLED, 
-          new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              showPreviousAction.setEnabled(controller.isPreviousPageEnabled());
-            }
-          });
-      actions.put(ActionType.SHOW_PREVIOUS, showPreviousAction);
-      
-      final ControllerAction showNextAction = new ControllerAction(
-          preferences, HelpPane.class, ActionType.SHOW_NEXT.name(), controller, "showNext");
-      showNextAction.setEnabled(controller.isNextPageEnabled());
-      controller.addPropertyChangeListener(HelpController.Property.NEXT_PAGE_ENABLED, 
-          new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent ev) {
-              showNextAction.setEnabled(controller.isNextPageEnabled());
-            }
-          });
-      actions.put(ActionType.SHOW_NEXT, showNextAction);
-      
-      actions.put(ActionType.SEARCH, new ResourceAction(preferences, HelpPane.class, ActionType.SEARCH.name()) {
-          @Override
-          public void actionPerformed(ActionEvent ev) {
-            final Cursor previousCursor = getCursor();
-            setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-            try {
-              String searchedText = searchTextField.getText().trim();
-              if (searchedText.length() > 0) {
-                controller.search(searchedText);
-              }
-            } finally {
-              setCursor(previousCursor);
-            }
-          }
-        });
-    } catch (NoSuchMethodException ex) {
-      throw new RuntimeException(ex);
-    }
-    actions.put(ActionType.CLOSE, new ResourceAction(
-          preferences, HelpPane.class, ActionType.CLOSE.name(), true) {
-        @Override
-        public void actionPerformed(ActionEvent ev) {
-          frame.setVisible(false);
-        }
-      });
+
   }
 
   /**
@@ -224,168 +131,9 @@ public class HelpPane extends JRootPane implements HelpView {
    * Creates the components displayed by this view.
   */
   private void createComponents(UserPreferences preferences, final HelpController controller) {
-    this.searchLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, HelpPane.class, "searchLabel.text"));
-    this.searchTextField = new JTextField(12);
-    // Under Mac OS 10.5 use client properties to use search text field look and feel
-    if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
-      this.searchTextField.putClientProperty("JTextField.variant", "search");
-      this.searchTextField.putClientProperty("JTextField.Search.FindAction",
-          getActionMap().get(ActionType.SEARCH));
-    } 
-    this.searchTextField.addActionListener(getActionMap().get(ActionType.SEARCH));
-    // Enable search only if search text field isn't empty
-    this.searchTextField.getDocument().addDocumentListener(new DocumentListener() {
-        public void changedUpdate(DocumentEvent ev) {
-          getActionMap().get(ActionType.SEARCH).setEnabled(searchTextField.getText().trim().length() > 0);
-          controller.setHighlightedText(searchTextField.getText());
-        }
-    
-        public void insertUpdate(DocumentEvent ev) {
-          changedUpdate(ev);
-        }
-    
-        public void removeUpdate(DocumentEvent ev) {
-          changedUpdate(ev);
-        }
-      });
-    
-    this.helpEditorPane = new JEditorPane();
-    this.helpEditorPane.setBorder(null);
-    this.helpEditorPane.setEditable(false);
-    this.helpEditorPane.setContentType("text/html");
-    this.helpEditorPane.putClientProperty(JEditorPane.W3C_LENGTH_UNITS, Boolean.TRUE);
-    this.helpEditorPane.setHighlighter(new DefaultHighlighter());
-    PropertyChangeListener highlightingTextListener = new PropertyChangeListener() {
-        public void propertyChange(PropertyChangeEvent ev) {
-          highlightText(controller.getHighlightedText());
-        }
-      };
-    controller.addPropertyChangeListener(HelpController.Property.HIGHLIGHTED_TEXT, highlightingTextListener);
-    this.helpEditorPane.addPropertyChangeListener("page", highlightingTextListener);
-    final float resolutionScale = SwingTools.getResolutionScale();
-    if (resolutionScale != 1) {
-      final ViewFactory htmlFactory = new HTMLFactory() {
-          @Override
-          public View create(Element element) {
-            AttributeSet attributes = element.getAttributes();
-            if (attributes.getAttribute(AbstractDocument.ElementNameAttribute) == null
-                && attributes.getAttribute(StyleConstants.NameAttribute) == HTML.Tag.HTML) {
-              return new BlockView(element, View.Y_AXIS) {
-                  @Override
-                  protected void layout(int width, int height) {
-                    super.layout(Math.round(width / resolutionScale), Math.round(height * resolutionScale));
-                  }
-
-                  @Override
-                  public void paint(Graphics g, Shape allocation) {
-                    Graphics2D g2D = (Graphics2D)g;
-                    AffineTransform oldTransform = g2D.getTransform();
-                    g2D.scale(resolutionScale, resolutionScale);
-                    super.paint(g2D, allocation);
-                    g2D.setTransform(oldTransform);
-                  }
-
-                  @Override
-                  public float getMinimumSpan(int axis) {
-                    return super.getMinimumSpan(axis) * resolutionScale;
-                  }
-
-                  @Override
-                  public float getMaximumSpan(int axis) {
-                    return super.getMaximumSpan(axis) * resolutionScale;
-                  }
-
-                  @Override
-                  public float getPreferredSpan(int axis) {
-                    return super.getPreferredSpan(axis) * resolutionScale;
-                  }
-
-                  @Override
-                  public Shape modelToView(int pos, Shape shape, Position.Bias b) throws BadLocationException {
-                    Rectangle bounds = shape.getBounds();
-                    shape = super.modelToView(pos, bounds, b);
-                    bounds = shape.getBounds();
-                    bounds.x *= resolutionScale;
-                    bounds.y *= resolutionScale;
-                    bounds.width *= resolutionScale;
-                    bounds.height *= resolutionScale;
-                    return bounds;
-                  }
-
-                  @Override
-                  public int viewToModel(float x, float y, Shape shape, Position.Bias[] bias) {
-                    Rectangle bounds = shape.getBounds();
-                    x /= resolutionScale;
-                    y /= resolutionScale;
-                    bounds.x /= resolutionScale;
-                    bounds.y /= resolutionScale;
-                    bounds.width /= resolutionScale;
-                    bounds.height /= resolutionScale;
-                    return super.viewToModel(x, y, bounds, bias);
-                  }
-                };
-            }
-            return super.create(element);
-          }
-        };
-      this.helpEditorPane.setEditorKit(new HTMLEditorKit() {
-          @Override
-          public ViewFactory getViewFactory() {
-            return htmlFactory;
-          }
-        });
-    }
-    
-    setFocusTraversalPolicy(new DefaultFocusTraversalPolicy() {
-        @Override
-        public Component getDefaultComponent(Container container) {
-          return helpEditorPane;
-        }
-      });
+   
   }
 
-  /**
-   * Highlights the words of the given text in HTML pane.
-   */
-  private void highlightText(String highlightedText) {
-    DefaultHighlighter.DefaultHighlightPainter highlightPainter = 
-        new DefaultHighlighter.DefaultHighlightPainter(new Color(255, 204, 51));
-    this.helpEditorPane.getHighlighter().removeAllHighlights();
-    if (highlightedText != null) {
-      ArrayList<String> highlightedWords = new ArrayList<String>();
-      for (String highlightedWord : highlightedText.split("\\s")) {
-        if (highlightedWord.length() > 0) {
-          highlightedWords.add(highlightedWord);
-        }
-      }                            
-      highlightWords(this.helpEditorPane.getDocument().getDefaultRootElement(), 
-          highlightedWords.toArray(new String [highlightedWords.size()]), highlightPainter);
-    } 
-  }
-
-  private void highlightWords(Element element, 
-                              String [] highlightedWords, 
-                              Highlighter.HighlightPainter highlightPainter) {
-    if (element.isLeaf()) {
-      int startOffset = element.getStartOffset();
-      try {
-        String text = element.getDocument().getText(element.getStartOffset(), 
-            element.getEndOffset() - startOffset).toLowerCase();
-        for (String highlightedWord : highlightedWords) {
-          for (int index = 0; index < text.length() - 1 &&  (index = text.indexOf(highlightedWord, index)) >= 0; index += highlightedWord.length() + 1) {
-            this.helpEditorPane.getHighlighter().addHighlight(
-                startOffset + index, startOffset + index + highlightedWord.length(), highlightPainter);
-          }
-        }
-      } catch (BadLocationException ex) {
-        // Ignore unexpected exception
-      }
-    } else {
-      for (int i = 0, n = element.getElementCount(); i < n; i++) {
-        highlightWords(element.getElement(i), highlightedWords, highlightPainter);
-      }
-    }
-  }
 
   /**
    * Sets components mnemonics and label / component associations.
@@ -493,58 +241,21 @@ public class HelpPane extends JRootPane implements HelpView {
    * Adds an hyperlink listener on the editor pane displayed by this pane.
    */
   private void addHyperlinkListener(final HelpController controller) {
-    this.helpEditorPane.addHyperlinkListener(new HyperlinkListener() {
-        public void hyperlinkUpdate(HyperlinkEvent ev) {
-          if (ev.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-            controller.showPage(ev.getURL());
-          }
-        }
-      });
+    
   }
 
   /**
    * Installs keys bound to actions. 
    */
   private void installKeyboardActions() {
-    ActionMap actions = getActionMap();      
-    // As no menu is created for this pane, change its input map to ensure accelerators work
-    InputMap inputMap = getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_PREVIOUS).getValue(Action.ACCELERATOR_KEY), 
-        ActionType.SHOW_PREVIOUS);
-    inputMap.put((KeyStroke)actions.get(ActionType.SHOW_NEXT).getValue(Action.ACCELERATOR_KEY), 
-        ActionType.SHOW_NEXT);
-    inputMap.put((KeyStroke)actions.get(ActionType.CLOSE).getValue(Action.ACCELERATOR_KEY), 
-        ActionType.CLOSE);
-    inputMap.put((KeyStroke)actions.get(ActionType.SEARCH).getValue(Action.ACCELERATOR_KEY), 
-        ActionType.SEARCH);
+  
   }
 
   /**
    * Displays this pane in a frame.
    */
   public void displayView() {
-    if (this.frame == null) {
-      this.frame = new JFrame() {
-          {
-            // Replace frame rootPane by help view
-            setRootPane(HelpPane.this);
-          }
-        };
-      // Update frame image and title 
-      this.frame.setIconImage(new ImageIcon(HelpPane.class.getResource(
-          this.preferences.getLocalizedString(HelpPane.class, "helpFrame.icon"))).getImage());
-      this.frame.setTitle(this.preferences.getLocalizedString(HelpPane.class, "helpFrame.title"));
-      this.frame.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
-      // Compute frame size and location
-      computeFrameBounds(this.frame);
-      // Just hide help frame when user close it
-      this.frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-    }
-    
-    // Show frame
-    this.frame.setVisible(true);
-    this.frame.setState(JFrame.NORMAL);
-    this.frame.toFront();
+   
   }
   
   /**
