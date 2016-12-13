@@ -76,7 +76,6 @@
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{HomeXMLHandler.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{TextureChoiceView.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.swing.resources.icons.tango"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{View.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ModelMaterialsController.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{Controller.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{DefaultPatternTexture.java"/>
@@ -95,6 +94,7 @@
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ThreadedTaskController.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{OBJWriter.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{DefaultLibrary.java"/>
+        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{VCView.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{HomeController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{RecorderException.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io.resources.texturableCylinder"/>
