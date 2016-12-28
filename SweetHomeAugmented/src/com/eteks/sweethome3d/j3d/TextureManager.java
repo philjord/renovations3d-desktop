@@ -108,7 +108,7 @@ public class TextureManager {
    */
    
   private Texture getColoredImageTexture(Color color) {
-    BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+    BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = (Graphics2D) image.getGraphics();
     g.setColor(color);
     g.drawLine(0, 0, 0, 0);

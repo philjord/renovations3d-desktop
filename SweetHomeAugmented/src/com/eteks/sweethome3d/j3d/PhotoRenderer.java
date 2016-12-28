@@ -238,7 +238,7 @@ public class PhotoRenderer
 			skyImageStream.close();
 			// Create a temporary image base light twice as high that will contain sky image in the top part
 			BufferedImage imageBaseLightImage = new BufferedImage(skyImage.getWidth(), skyImage.getHeight() * 2,
-					BufferedImage.TYPE_INT_RGB);
+					BufferedImage.TYPE_INT_ARGB);
 			Graphics2D g2D = (Graphics2D) imageBaseLightImage.getGraphics();
 			//PPJPJPJ removed drawRenderedImage
 			g2D.drawImage(skyImage, null, 0, 0);
