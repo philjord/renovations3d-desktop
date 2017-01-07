@@ -1778,8 +1778,7 @@ public class ModelManager {
    */
   private static class SVGPathSupport {
     public static Shape parsePathShape(String svgPathShape) {
-    	//PJPJPJP AWTPathProducer is awt bum
-    	System.err.println("AWTPathProducer is awt bum");
+    	//PJPJPJP AWTPathProducer is awt, but in fact I don't care!
      /* try {
         AWTPathProducer pathProducer = new AWTPathProducer();
         PathParser pathParser = new PathParser();

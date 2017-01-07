@@ -13,13 +13,10 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_zh_TW.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.plugin"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{PlanView.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.ru"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ImportedFurnitureWizardController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CollectionListener.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.pl"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{OBJMaterial.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{WizardController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_zh_CN.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_vi.properties"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.io.resources"/>
@@ -31,6 +28,7 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/tools/package.html"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_pt.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_de.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_sv.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_hu.properties"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.de"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_zh_CN.properties"/>
@@ -38,7 +36,6 @@
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.sv"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{Max3DSLoader.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.bg"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ViewFactoryAdapter.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeApplication.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Selectable.java"/>
         <file path="/SweetHomeAVR/src/com/eteks/sweethome3d/j3d/PhotoRenderer.properties"/>
@@ -48,7 +45,8 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_vi.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.nl"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_cs.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{PageSetupController.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_nl.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_pl.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/package.html"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.ja"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_ja.properties"/>
@@ -61,55 +59,46 @@
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{IllegalHomonymException.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.es"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_it.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_zh_TW.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{HomeContentContext.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_ru.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CatalogItem.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Sash.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.tools{TemporaryURLContent.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{DialogView.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.io"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{PatternsCatalog.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_bg.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.cs"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{UserPreferencesController.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{TextureChoiceController.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{Wall3D.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{HelpController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_sv.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{AbstractPhotoController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_hu.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_en_US.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CatalogDoorOrWindow.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.tools{SimpleURLContent.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_ru.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.tools{ExtensionsClassLoader.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{PrintPreviewController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.zh_CN"/>
         <file path="/SweetHomeAVR/.classpath"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{WallController.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{FurnitureCatalogController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CollectionChangeSupport.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CatalogTexture.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_bg.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_pt.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Library.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_bg.properties"/>
         <file path="/SweetHomeAVR/src/com/eteks/sweethome3d/j3d/package.html"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_hu.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{VideoController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.en"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_zh_TW.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_fr.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_hu.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_nl.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{HomeXMLHandler.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_ja.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{TextureChoiceView.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.swing.resources.icons.tango"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ModelMaterialsController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_en_US.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{Controller.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_cs.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{DefaultPatternTexture.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{DefaultTexturesCatalog.java"/>
@@ -129,39 +118,39 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_zh_CN.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.el"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_hu.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_cs.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_de.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ThreadedTaskController.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{OBJWriter.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{DefaultLibrary.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{VCView.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{HomeController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{RecorderException.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_nl.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io.resources.texturableCylinder"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package.html"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_fr.properties"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_pl.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_ru.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_fr.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_cs.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{FurnitureCategory.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.en"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{RoomController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_nl.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_zh_CN.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_fr.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{BackgroundImageWizardController.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_de.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit.properties"/>
         <file path="/SweetHomeAVR/.project"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_de.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_vi.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_ru.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeEnvironment.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{PlanController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.swing{FileContentManager.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_de.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_pt.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_zh_CN.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.tools{URLContent.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_pl.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package.html"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.cs"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeDoorOrWindow.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{TexturesCatalog.java"/>
@@ -172,7 +161,6 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_it.properties"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.zh_CN"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_de.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{BaseboardChoiceController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{TexturesCategory.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Camera.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.ja"/>
@@ -187,27 +175,24 @@
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.sv"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.de"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{AspectRatio.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ThreadedTaskView.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Light.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io.resources.textures"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{URLContentClassLoader.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.bg"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{Object3DBranchFactory.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_ja.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_es.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_ru.properties"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.nl"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/package.html"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_it.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{NotEnoughSpaceRecorderException.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_el.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{LabelController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_fr.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{HomeFurnitureController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_zh_TW.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeTexture.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io.resources.patterns"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_el.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ViewFactory.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_hu.properties"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.swing.resources.icons.tango"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.resources"/>
@@ -216,22 +201,21 @@
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{DamagedHomeIOException.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_sv.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{InterruptedRecorderException.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{FurnitureController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/tools/OperatingSystem.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ImportedTextureWizardController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{HomeURLContent.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_vi.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_el.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.swing.resources"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.pl"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ObserverCameraController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_zh_TW.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{CompassController.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{Ground3D.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.zh_TW"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_fr.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CatalogLight.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{DefaultHomeOutputStream.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_pt.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_pt.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_el.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_zh_TW.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_sv.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_bg.properties"/>
@@ -243,14 +227,14 @@
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{TextureManager.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.pt"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{Base64.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_ja.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{PhotoController.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_it.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_ja.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_it.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Content.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeRecorder.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_cs.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{HomeView.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{Room3D.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/HomeComponent3D.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_es.properties"/>
@@ -277,34 +261,28 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_el.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Baseboard.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/HomePDFPrinter.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{Home3DAttributesController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{LightSource.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.swing.resources.cursors"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_vi.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{HomeController3D.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeObject.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io.resources"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_el.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.zh_TW"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{HelpView.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_en_US.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_es.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_vi.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{Object3DFactory.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.pt"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_sv.properties"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ImportedFurnitureWizardStepsView.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{LevelController.java"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.j3d{Component3DManager.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_pt.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{HomeFileRecorder.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{ContentManager.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_ja.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_es.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeLight.java"/>
+        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{SelectionEvent.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{PolylineController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_hu.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_fr.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.it"/>
@@ -312,7 +290,6 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_ru.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Home.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{PieceOfFurniture.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller{PhotosController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.hu"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_bg.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io.resources.contributions"/>
