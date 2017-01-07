@@ -42,6 +42,8 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
+
 import com.eteks.sweethome3d.io.AutoRecoveryManager;
 import com.eteks.sweethome3d.io.FileUserPreferences;
 import com.eteks.sweethome3d.io.HomeFileRecorder;
@@ -164,7 +166,12 @@ public class SweetHomeAVR extends HomeApplication
 
 		
 		
-		System.setProperty("j3d.debug", "true");
+		//System.setProperty("j3d.debug", "true");
+		
+		SimpleShaderAppearance.setMaxLights(2);
+		
+		SimpleShaderAppearance.setVersionES100();
+		
 		new SweetHomeAVR().init(args);
 	}
 
