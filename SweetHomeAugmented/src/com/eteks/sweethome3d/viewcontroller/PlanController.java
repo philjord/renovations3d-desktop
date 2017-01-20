@@ -7050,6 +7050,8 @@ public class PlanController extends FurnitureController implements Controller {
           }
 
           getView().setCursor(PlanView.CursorType.DUPLICATION);
+          //PJPJ only redo selection if something changes, expensive
+          selectItems(this.movedItems, home.isAllLevelsSelection());
         } else if (!duplicationActivated
                    && this.duplicatedItems != null) {
           // Delete moved items 
@@ -7064,10 +7066,12 @@ public class PlanController extends FurnitureController implements Controller {
           if (this.movedPieceOfFurniture != null) {
             this.movedPieceOfFurniture = (HomePieceOfFurniture)this.movedItems.get(0);
           }
-          getView().setCursor(PlanView.CursorType.MOVE);
+          getView().setCursor(PlanView.CursorType.MOVE);  
+          //PJPJ only redo selection if something changes, expensive
+          selectItems(this.movedItems, home.isAllLevelsSelection());
         }
-        
-        selectItems(this.movedItems, home.isAllLevelsSelection());
+        //PJPJ only redo selection if something changes above, expensive
+        //selectItems(this.movedItems, home.isAllLevelsSelection());
       }
     }
 

@@ -163,12 +163,8 @@ public class SweetHomeAVR extends HomeApplication
 		System.setProperty("j3d.defaultReadCapability", "false");
 		System.setProperty("j3d.defaultNodePickable", "false");
 		System.setProperty("j3d.defaultNodeCollidable", "false");
-
-		
 		
 		//System.setProperty("j3d.debug", "true");
-		
-		SimpleShaderAppearance.setMaxLights(2);
 		
 		SimpleShaderAppearance.setVersionES100();
 		

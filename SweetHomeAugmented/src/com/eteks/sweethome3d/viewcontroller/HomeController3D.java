@@ -532,6 +532,17 @@ public class HomeController3D implements Controller {
       }
       boolean selectionEmpty = selectedItems.size() == 0 || !centerOnSelection;
 
+      if (this.aerialViewBoundsLowerPoint == null) {
+          this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};
+          this.aerialViewBoundsUpperPoint = new float [] {MIN_WIDTH, MIN_DEPTH, MIN_HEIGHT};
+        } 
+      float minX = Float.MAX_VALUE;
+      float minY = Float.MAX_VALUE;
+      float maxX = Float.MIN_VALUE;
+      float maxY = Float.MIN_VALUE;
+      float finalMinZ = Float.MAX_VALUE;
+      float finalMaxZ = Float.MIN_VALUE;
+      
       // Compute plan bounds to include rooms, walls and furniture
       boolean containsVisibleWalls = false;
       for (Wall wall : selectionEmpty
@@ -543,7 +554,7 @@ public class HomeController3D implements Controller {
           float wallElevation = wall.getLevel() != null 
               ? wall.getLevel().getElevation() 
               : 0;
-          float minZ = selectionEmpty
+         float minZ = selectionEmpty
               ? 0
               : wallElevation;
           
@@ -558,9 +569,20 @@ public class HomeController3D implements Controller {
           if (heightAtEnd != null) {
             maxZ = Math.max(maxZ, wallElevation + heightAtEnd);
           }
-          for (float [] point : wall.getPoints()) {
-            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
-          }
+          //PJ wildly inefficient
+          //for (float [] point : wall.getPoints()) {
+          //  updateAerialViewBounds(point [0], point [1], minZ, maxZ);
+          //}
+                   
+          for (float [] point : wall.getPoints()) {        	  
+        	  minX = point [0] < minX ? point [0] : minX;
+        	  minY = point [1] < minY ? point [1] : minY;
+        	  maxX = point [0] > maxX ? point [0] : maxX;
+        	  maxY = point [1] > maxY ? point [1] : maxY;         	  
+          }      
+          finalMinZ = minZ < finalMinZ ? minZ : finalMinZ;
+          finalMaxZ = maxZ > finalMaxZ ? maxZ : finalMaxZ;   
+          
         }
       }
 
@@ -577,9 +599,17 @@ public class HomeController3D implements Controller {
             minZ = piece.getGroundElevation();
             maxZ = piece.getGroundElevation() + piece.getHeight();
           }
-          for (float [] point : piece.getPoints()) {
-            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
-          }
+          //for (float [] point : piece.getPoints()) {
+          //  updateAerialViewBounds(point [0], point [1], minZ, maxZ);
+          //}
+          for (float [] point : piece.getPoints()) {        	  
+        	  minX = point [0] < minX ? point [0] : minX;
+        	  minY = point [1] < minY ? point [1] : minY;
+        	  maxX = point [0] > maxX ? point [0] : maxX;
+        	  maxY = point [1] > maxY ? point [1] : maxY;         	  
+          }      
+          finalMinZ = minZ < finalMinZ ? minZ : finalMinZ;
+          finalMaxZ = maxZ > finalMaxZ ? maxZ : finalMaxZ;   
         }
       }
       
@@ -598,9 +628,17 @@ public class HomeController3D implements Controller {
               maxZ = Math.max(MIN_HEIGHT, roomLevel.getElevation());
             }
           }
-          for (float [] point : room.getPoints()) {
-            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
-          }
+          //for (float [] point : room.getPoints()) {
+          //  updateAerialViewBounds(point [0], point [1], minZ, maxZ);
+          //}
+          for (float [] point : room.getPoints()) {        	  
+        	  minX = point [0] < minX ? point [0] : minX;
+        	  minY = point [1] < minY ? point [1] : minY;
+        	  maxX = point [0] > maxX ? point [0] : maxX;
+        	  maxY = point [1] > maxY ? point [1] : maxY;         	  
+          }      
+          finalMinZ = minZ < finalMinZ ? minZ : finalMinZ;
+          finalMaxZ = maxZ > finalMaxZ ? maxZ : finalMaxZ;   
         }
       }
       
@@ -617,11 +655,26 @@ public class HomeController3D implements Controller {
             minZ = 
             maxZ = label.getGroundElevation();
           }
-          for (float [] point : label.getPoints()) {
-            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
-          }
+          //for (float [] point : label.getPoints()) {
+          //  updateAerialViewBounds(point [0], point [1], minZ, maxZ);
+          //}
+          for (float [] point : label.getPoints()) {        	  
+        	  minX = point [0] < minX ? point [0] : minX;
+        	  minY = point [1] < minY ? point [1] : minY;
+        	  maxX = point [0] > maxX ? point [0] : maxX;
+        	  maxY = point [1] > maxY ? point [1] : maxY;         	  
+          }      
+          finalMinZ = minZ < finalMinZ ? minZ : finalMinZ;
+          finalMaxZ = maxZ > finalMaxZ ? maxZ : finalMaxZ;   
         }
       }
+      
+      this.aerialViewBoundsLowerPoint [0] = Math.min(this.aerialViewBoundsUpperPoint [0], minX);
+      this.aerialViewBoundsUpperPoint [0] = Math.max(this.aerialViewBoundsUpperPoint [0], maxX);
+      this.aerialViewBoundsLowerPoint [1] = Math.min(this.aerialViewBoundsLowerPoint [1], minY); 
+      this.aerialViewBoundsUpperPoint [1] = Math.max(this.aerialViewBoundsUpperPoint [1], maxY);
+      this.aerialViewBoundsLowerPoint [2] = Math.min(this.aerialViewBoundsLowerPoint [2], finalMinZ); 
+      this.aerialViewBoundsUpperPoint [2] = Math.max(this.aerialViewBoundsUpperPoint [2], finalMaxZ);         
       
       if (this.aerialViewBoundsLowerPoint == null) {
         this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};
