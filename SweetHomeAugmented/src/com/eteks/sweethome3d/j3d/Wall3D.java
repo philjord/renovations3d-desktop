@@ -20,6 +20,7 @@
 package com.eteks.sweethome3d.j3d;
 
 import javaawt.EventQueue;
+import javaawt.Rectangle;
 import javaawt.Shape;
 import javaawt.geom.Area;
 import javaawt.geom.GeneralPath;
@@ -307,33 +308,44 @@ public class Wall3D extends Object3DBranch {
     // Search which doors or windows intersect with this wall side or its baseboard
     List<DoorOrWindowArea> windowIntersections = new ArrayList<DoorOrWindowArea>();
     List<HomePieceOfFurniture> intersectingDoorOrWindows = new ArrayList<HomePieceOfFurniture>();
+    Rectangle wallBounds = wallShape.getBounds();
     for (HomePieceOfFurniture piece : getVisibleDoorsAndWindows(this.home.getFurniture())) {
       float pieceElevation = piece.getGroundElevation();
       if (pieceElevation + piece.getHeight() > wallElevation
           && pieceElevation < maxTopElevation) {
-        Area pieceArea = new Area(getShape(piece.getPoints()));
-        Area intersectionArea = new Area(wallShape);
-        intersectionArea.intersect(pieceArea);
-        if (!intersectionArea.isEmpty()) {
-          if (baseboard != null) {
-            double pieceWallAngle = Math.abs(wallYawAngle - piece.getAngle()) % Math.PI;
-            if (pieceWallAngle < 1E-5 || (Math.PI - pieceWallAngle) < 1E-5) {
-              // Increase piece depth to ensure baseboard will be cut even if the window is as thick as the wall 
-              HomePieceOfFurniture deeperPiece = piece.clone();
-              deeperPiece.setDepth(deeperPiece.getDepth() + 2 * baseboard.getThickness());
-              pieceArea = new Area(getShape(deeperPiece.getPoints()));
-            } 
-            intersectionArea = new Area(wallOrBaseboardShape);
-            intersectionArea.intersect(pieceArea);
-            if (intersectionArea.isEmpty()) {
-              continue;
-            }
-          }
-          windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
-          intersectingDoorOrWindows.add(piece);
-          // Remove from wall area the piece shape
-          wallOrBaseboardArea.subtract(pieceArea);
-        }
+    	  
+	    //PJPJ Area intersection is WILDLY slow, like madly slow
+	    // so fast bounds intersects to short cut out
+	    Shape pieceShape = getShape(piece.getPoints());
+	    if(pieceShape.intersects(wallBounds))
+	    {    	
+	        //Area pieceArea = new Area(getShape(piece.getPoints()));
+	    	Area pieceArea = new Area(pieceShape);
+	        Area intersectionArea = new Area(wallShape);
+	        intersectionArea.intersect(pieceArea);
+	        
+	        
+	        if (!intersectionArea.isEmpty()) {
+	          if (baseboard != null) {
+	            double pieceWallAngle = Math.abs(wallYawAngle - piece.getAngle()) % Math.PI;
+	            if (pieceWallAngle < 1E-5 || (Math.PI - pieceWallAngle) < 1E-5) {
+	              // Increase piece depth to ensure baseboard will be cut even if the window is as thick as the wall 
+	              HomePieceOfFurniture deeperPiece = piece.clone();
+	              deeperPiece.setDepth(deeperPiece.getDepth() + 2 * baseboard.getThickness());
+	              pieceArea = new Area(getShape(deeperPiece.getPoints()));
+	            } 
+	            intersectionArea = new Area(wallOrBaseboardShape);
+	            intersectionArea.intersect(pieceArea);
+	            if (intersectionArea.isEmpty()) {
+	              continue;
+	            }
+	          }
+	          windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
+	          intersectingDoorOrWindows.add(piece);
+	          // Remove from wall area the piece shape
+	          wallOrBaseboardArea.subtract(pieceArea);
+	        }
+	    }
       }
     }
     // Refine intersections in case some doors or windows are superimposed
