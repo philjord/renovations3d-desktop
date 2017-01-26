@@ -58,9 +58,9 @@
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{HomeContentContext.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_ru.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CatalogItem.java"/>
+        <file path="/SweetHomeAVR/src/com/eteks/sweethome3d/io/DefaultUserPreferences.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{Sash.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.tools{TemporaryURLContent.java"/>
-        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.io"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{PatternsCatalog.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.cs"/>
@@ -130,6 +130,7 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_de.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_vi.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeEnvironment.java"/>
+        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.io{AutoRecoveryManager.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_de.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_pt.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_zh_CN.properties"/>

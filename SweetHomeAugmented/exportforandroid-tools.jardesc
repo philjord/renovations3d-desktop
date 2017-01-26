@@ -13,10 +13,14 @@
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
         <javaElement handleIdentifier="=awtshim/src"/>
         <javaElement handleIdentifier="=java3d-utils2-and/src\/main\/java"/>
+        <javaElement handleIdentifier="=awtshim-android/src"/>
         <javaElement handleIdentifier="=vecmath/src"/>
+        <file path="/awtshim-android/.classpath"/>
         <javaElement handleIdentifier="=java3d-utils-and/src\/classes\/share"/>
         <javaElement handleIdentifier="=java3d-core-and/build-tools"/>
+        <file path="/awtshim-android/.gitignore"/>
         <javaElement handleIdentifier="=java3d-core-and/src"/>
         <javaElement handleIdentifier="=awtgeom/src"/>
+        <file path="/awtshim-android/.project"/>
     </selectedElements>
 </jardesc>
