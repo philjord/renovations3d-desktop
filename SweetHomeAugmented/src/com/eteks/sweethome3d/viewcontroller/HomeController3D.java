@@ -25,7 +25,6 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 import javaxswing.undo.UndoableEditSupport;
@@ -192,8 +191,8 @@ public class HomeController3D implements Controller {
     ArrayList<Camera> storedCameras = new ArrayList<Camera>(homeStoredCameras.size() + 1);
     storedCameras.addAll(homeStoredCameras);
     // Don't keep two cameras with the same name or the same location
-    for (Iterator<Camera> it = storedCameras.iterator(); it.hasNext(); ) {
-      Camera storedCamera = it.next();
+    for (int i = storedCameras.size() - 1; i >= 0; i--) {
+      Camera storedCamera = storedCameras.get(i);
       if (name.equals(storedCamera.getName())
           || (camera.getX() == storedCamera.getX()
               && camera.getY() == storedCamera.getY()
@@ -203,7 +202,7 @@ public class HomeController3D implements Controller {
               && camera.getFieldOfView() == storedCamera.getFieldOfView()
               && camera.getTime() == storedCamera.getTime()
               && camera.getLens() == storedCamera.getLens())) {
-        it.remove();
+        storedCameras.remove(i);
       }
     }
     storedCameras.add(0, camera);
@@ -532,17 +531,6 @@ public class HomeController3D implements Controller {
       }
       boolean selectionEmpty = selectedItems.size() == 0 || !centerOnSelection;
 
-      if (this.aerialViewBoundsLowerPoint == null) {
-          this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};
-          this.aerialViewBoundsUpperPoint = new float [] {MIN_WIDTH, MIN_DEPTH, MIN_HEIGHT};
-        } 
-      float minX = Float.MAX_VALUE;
-      float minY = Float.MAX_VALUE;
-      float maxX = Float.MIN_VALUE;
-      float maxY = Float.MIN_VALUE;
-      float finalMinZ = Float.MAX_VALUE;
-      float finalMaxZ = Float.MIN_VALUE;
-      
       // Compute plan bounds to include rooms, walls and furniture
       boolean containsVisibleWalls = false;
       for (Wall wall : selectionEmpty
@@ -569,20 +557,9 @@ public class HomeController3D implements Controller {
           if (heightAtEnd != null) {
             maxZ = Math.max(maxZ, wallElevation + heightAtEnd);
           }
-          //PJ wildly inefficient
-          //for (float [] point : wall.getPoints()) {
-          //  updateAerialViewBounds(point [0], point [1], minZ, maxZ);
-          //}
-                   
           for (float [] point : wall.getPoints()) {        	  
-        	  minX = point [0] < minX ? point [0] : minX;
-        	  minY = point [1] < minY ? point [1] : minY;
-        	  maxX = point [0] > maxX ? point [0] : maxX;
-        	  maxY = point [1] > maxY ? point [1] : maxY;         	  
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }      
-          finalMinZ = minZ < finalMinZ ? minZ : finalMinZ;
-          finalMaxZ = maxZ > finalMaxZ ? maxZ : finalMaxZ;   
-          
         }
       }
 
@@ -599,17 +576,9 @@ public class HomeController3D implements Controller {
             minZ = piece.getGroundElevation();
             maxZ = piece.getGroundElevation() + piece.getHeight();
           }
-          //for (float [] point : piece.getPoints()) {
-          //  updateAerialViewBounds(point [0], point [1], minZ, maxZ);
-          //}
           for (float [] point : piece.getPoints()) {        	  
-        	  minX = point [0] < minX ? point [0] : minX;
-        	  minY = point [1] < minY ? point [1] : minY;
-        	  maxX = point [0] > maxX ? point [0] : maxX;
-        	  maxY = point [1] > maxY ? point [1] : maxY;         	  
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }      
-          finalMinZ = minZ < finalMinZ ? minZ : finalMinZ;
-          finalMaxZ = maxZ > finalMaxZ ? maxZ : finalMaxZ;   
         }
       }
       
@@ -628,17 +597,9 @@ public class HomeController3D implements Controller {
               maxZ = Math.max(MIN_HEIGHT, roomLevel.getElevation());
             }
           }
-          //for (float [] point : room.getPoints()) {
-          //  updateAerialViewBounds(point [0], point [1], minZ, maxZ);
-          //}
           for (float [] point : room.getPoints()) {        	  
-        	  minX = point [0] < minX ? point [0] : minX;
-        	  minY = point [1] < minY ? point [1] : minY;
-        	  maxX = point [0] > maxX ? point [0] : maxX;
-        	  maxY = point [1] > maxY ? point [1] : maxY;         	  
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }      
-          finalMinZ = minZ < finalMinZ ? minZ : finalMinZ;
-          finalMaxZ = maxZ > finalMaxZ ? maxZ : finalMaxZ;   
         }
       }
       
@@ -655,26 +616,11 @@ public class HomeController3D implements Controller {
             minZ = 
             maxZ = label.getGroundElevation();
           }
-          //for (float [] point : label.getPoints()) {
-          //  updateAerialViewBounds(point [0], point [1], minZ, maxZ);
-          //}
           for (float [] point : label.getPoints()) {        	  
-        	  minX = point [0] < minX ? point [0] : minX;
-        	  minY = point [1] < minY ? point [1] : minY;
-        	  maxX = point [0] > maxX ? point [0] : maxX;
-        	  maxY = point [1] > maxY ? point [1] : maxY;         	  
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
           }      
-          finalMinZ = minZ < finalMinZ ? minZ : finalMinZ;
-          finalMaxZ = maxZ > finalMaxZ ? maxZ : finalMaxZ;   
         }
       }
-      
-      this.aerialViewBoundsLowerPoint [0] = Math.min(this.aerialViewBoundsUpperPoint [0], minX);
-      this.aerialViewBoundsUpperPoint [0] = Math.max(this.aerialViewBoundsUpperPoint [0], maxX);
-      this.aerialViewBoundsLowerPoint [1] = Math.min(this.aerialViewBoundsLowerPoint [1], minY); 
-      this.aerialViewBoundsUpperPoint [1] = Math.max(this.aerialViewBoundsUpperPoint [1], maxY);
-      this.aerialViewBoundsLowerPoint [2] = Math.min(this.aerialViewBoundsLowerPoint [2], finalMinZ); 
-      this.aerialViewBoundsUpperPoint [2] = Math.max(this.aerialViewBoundsUpperPoint [2], finalMaxZ);         
       
       if (this.aerialViewBoundsLowerPoint == null) {
         this.aerialViewBoundsLowerPoint = new float [] {0, 0, 0};

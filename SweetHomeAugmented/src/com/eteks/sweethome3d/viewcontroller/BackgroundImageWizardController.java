@@ -23,6 +23,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.net.URL;
+import java.util.List;
 
 import javaxswing.undo.AbstractUndoableEdit;
 import javaxswing.undo.CannotRedoException;
@@ -59,6 +60,7 @@ public class BackgroundImageWizardController extends WizardController
   private VCView                                 stepsView;
   
   private Step    step;
+  private BackgroundImage referenceBackgroundImage;
   private Content image;
   private Float   scaleDistance;
   private float   scaleDistanceXStart;
@@ -87,6 +89,19 @@ public class BackgroundImageWizardController extends WizardController
     this.imageScaleStepState = new ImageScaleStepState();
     this.imageOriginStepState = new ImageOriginStepState();
     setStepState(this.imageChoiceStepState);
+    // Search the background image used as a reference to initialize the edited one
+    Level selectedLevel = this.home.getSelectedLevel();
+    if (selectedLevel != null) {
+      List<Level> levels = this.home.getLevels();
+      int levelIndex = levels.indexOf(selectedLevel);
+      for (int i = levelIndex - 1; i >= 0 && this.referenceBackgroundImage == null; i--) {
+        this.referenceBackgroundImage = levels.get(i).getBackgroundImage();
+      }
+      // If no background image exists on previous level, search in upper levels 
+      for (int i = levelIndex + 1; i < levels.size() && this.referenceBackgroundImage == null; i++) {
+        this.referenceBackgroundImage = levels.get(i).getBackgroundImage();
+  }
+    }
   }
 
   /**
@@ -256,6 +271,15 @@ public class BackgroundImageWizardController extends WizardController
   }
 
   /**
+   * Returns the background image of another level that can be used to initialize 
+   * the scale values of the edited image.
+   * @since 5.3
+   */
+  public BackgroundImage getReferenceBackgroundImage() {
+    return this.referenceBackgroundImage;
+  }
+  
+  /**
    * Sets the image content of the background image.
    */
   public void setImage(Content image) {
@@ -308,7 +332,7 @@ public class BackgroundImageWizardController extends WizardController
       this.scaleDistanceXEnd = scaleDistanceXEnd;
       this.scaleDistanceYEnd = scaleDistanceYEnd;
       this.propertyChangeSupport.firePropertyChange(
-          Property.SCALE_DISTANCE.name(), oldDistancePoints, 
+          Property.SCALE_DISTANCE_POINTS.name(), oldDistancePoints, 
           new float [][] {{scaleDistanceXStart, scaleDistanceYStart},
                           {scaleDistanceXEnd, scaleDistanceYEnd}});
     }

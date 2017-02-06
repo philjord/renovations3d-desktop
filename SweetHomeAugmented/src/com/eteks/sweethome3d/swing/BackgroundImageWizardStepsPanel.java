@@ -214,14 +214,16 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements VCView {
               ((NullableSpinner.NullableSpinnerLengthModel)scaleDistanceSpinner.getModel()).getLength());
         }
       });
-    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE,
-        new PropertyChangeListener() {
+    PropertyChangeListener scaleDistanceChangeListener = new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             // If scale distance changes updates scale spinner
-            scaleDistanceSpinnerModel.setNullable(controller.getScaleDistance() == null);
-            scaleDistanceSpinnerModel.setLength(controller.getScaleDistance());
+          Float scaleDistance = controller.getScaleDistance();
+          scaleDistanceSpinnerModel.setNullable(scaleDistance == null);
+          scaleDistanceSpinnerModel.setLength(scaleDistance);
           }
-        });
+      };
+    scaleDistanceChangeListener.propertyChange(null);
+    controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE, scaleDistanceChangeListener);
     this.scalePreviewComponent = new ScaleImagePreviewComponent(controller);
     
     // Image origin panel components
@@ -527,6 +529,20 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements VCView {
                   controller.setImage(readContent);
                   setImageChangeTexts(preferences);
                   imageChoiceErrorLabel.setVisible(false);
+                  BackgroundImage referenceBackgroundImage = controller.getReferenceBackgroundImage();
+                  if (referenceBackgroundImage != null
+                      && referenceBackgroundImage.getScaleDistanceXStart() < readImage.getWidth()
+                      && referenceBackgroundImage.getScaleDistanceXEnd() < readImage.getWidth()
+                      && referenceBackgroundImage.getScaleDistanceYStart() < readImage.getHeight()
+                      && referenceBackgroundImage.getScaleDistanceYEnd() < readImage.getHeight()) {
+                    // Initialize distance and origin with values of the reference image
+                    controller.setScaleDistance(referenceBackgroundImage.getScaleDistance());
+                    controller.setScaleDistancePoints(referenceBackgroundImage.getScaleDistanceXStart(), 
+                        referenceBackgroundImage.getScaleDistanceYStart(), 
+                        referenceBackgroundImage.getScaleDistanceXEnd(), 
+                        referenceBackgroundImage.getScaleDistanceYEnd());
+                    controller.setOrigin(referenceBackgroundImage.getXOrigin(), referenceBackgroundImage.getYOrigin());
+                  } else {
                   // Initialize distance and origin with default values
                   controller.setScaleDistance(null);
                   float scaleDistanceXStart = readImage.getWidth() * 0.1f;
@@ -535,6 +551,7 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements VCView {
                   controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
                       scaleDistanceXEnd, scaleDistanceYStart);
                   controller.setOrigin(0, 0);
+                  }
                 } else if (isShowing()){
                   controller.setImage(null);
                   setImageChoiceTexts(preferences);

@@ -160,6 +160,7 @@ import javax.swing.table.TableColumnModel;
 import javax.swing.text.JTextComponent;
 
 import org.jogamp.java3d.Node;
+import org.jogamp.java3d.VirtualUniverse;
 
 import com.eteks.sweethome3d.j3d.Ground3D;
 import com.eteks.sweethome3d.j3d.OBJWriter;
@@ -881,6 +882,7 @@ public class HomePane extends JRootPane implements HomeView {
       
       @Override
       public void keyTyped(KeyEvent ev) {
+        if (ev.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
         // This listener manages accelerator keys that may require the use of shift key 
         // depending on keyboard layout (like + - or ?) 
         ActionMap actionMap = getActionMap();
@@ -901,6 +903,7 @@ public class HomePane extends JRootPane implements HomeView {
             ev.consume();
           }
         }
+      }
       }
     };
 
@@ -3784,7 +3787,11 @@ public class HomePane extends JRootPane implements HomeView {
     }
     float maxMemoryGigaByte = Math.max(0.1f, Runtime.getRuntime().maxMemory() / 1073741824f);    
     javaVersion += " / " + new DecimalFormat("#.#").format(maxMemoryGigaByte) + " GB max";
-    String message = String.format(messageFormat, aboutVersion, javaVersion);
+    String java3dVersion = (String)VirtualUniverse.getProperties().get("j3d.version");
+    if (java3dVersion != null) {
+      java3dVersion = java3dVersion.split("\\s") [0];
+    }
+    String message = String.format(messageFormat, aboutVersion, javaVersion, java3dVersion);
     JComponent messagePane = createEditorPane(message);
     messagePane.setOpaque(false);
     
