@@ -43,7 +43,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.ObserverCameraController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Observer camera editing panel.
@@ -335,7 +335,7 @@ public class ObserverCameraPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     JFormattedTextField elevationSpinnerTextField = 
         ((JSpinner.DefaultEditor)this.elevationSpinner.getEditor()).getTextField();
     if (SwingTools.showConfirmDialog((JComponent)parentView, this, this.dialogTitle, 

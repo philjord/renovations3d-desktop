@@ -23,9 +23,9 @@ package com.eteks.sweethome3d.viewcontroller;
  * The view that displays a pane in a dialog.
  * @author Emmanuel Puybaret
  */
-public interface DialogView extends VCView {
+public interface DialogView extends View {
   /**
    * Displays this wizard view in a modal dialog.
    */
-  public abstract void displayView(VCView parentView);
+  public abstract void displayView(View parentView);
 }

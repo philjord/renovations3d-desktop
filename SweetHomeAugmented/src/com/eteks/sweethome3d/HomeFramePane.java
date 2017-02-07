@@ -58,14 +58,14 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
 import com.eteks.sweethome3d.viewcontroller.HomeView;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A pane that displays a 
  * {@link com.eteks.sweethome3d.swing.HomePane home pane} in a frame.
  * @author Emmanuel Puybaret
  */
-public class HomeFramePane extends JRootPane implements VCView {
+public class HomeFramePane extends JRootPane implements View {
   private static final String FRAME_X_VISUAL_PROPERTY         = "com.eteks.sweethome3d.SweetHome3D.FrameX";
   private static final String FRAME_Y_VISUAL_PROPERTY         = "com.eteks.sweethome3d.SweetHome3D.FrameY";
   private static final String FRAME_WIDTH_VISUAL_PROPERTY     = "com.eteks.sweethome3d.SweetHome3D.FrameWidth";

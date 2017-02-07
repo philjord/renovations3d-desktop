@@ -48,7 +48,7 @@ import com.eteks.sweethome3d.viewcontroller.BaseboardChoiceController;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.RoomController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Room editing panel.
@@ -808,7 +808,7 @@ public class RoomPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
             this, this.dialogTitle, this.nameTextField) == JOptionPane.OK_OPTION
         && this.controller != null) {

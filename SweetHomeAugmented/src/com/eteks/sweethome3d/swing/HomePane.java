@@ -205,7 +205,7 @@ import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanController.Mode;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * The MVC view that edits a home. 
@@ -825,12 +825,12 @@ public class HomePane extends JRootPane implements HomeView {
           Component gainedFocusedComponent = (Component)ev.getNewValue(); 
           if (SwingUtilities.isDescendingFrom(gainedFocusedComponent, SwingUtilities.getWindowAncestor(homePane))
               && gainedFocusedComponent instanceof JComponent) {
-            VCView [] focusableViews = {homePane.controller.getFurnitureCatalogController().getView(),
+            View [] focusableViews = {homePane.controller.getFurnitureCatalogController().getView(),
                                       homePane.controller.getFurnitureController().getView(),
                                       homePane.controller.getPlanController().getView(),
                                       homePane.controller.getHomeController3D().getView()};
             // Notify controller that active view changed
-            for (VCView view : focusableViews) {
+            for (View view : focusableViews) {
               if (view != null && SwingUtilities.isDescendingFrom(gainedFocusedComponent, (JComponent)view)) {
                 homePane.controller.focusedViewChanged(view);
                 gainedFocusedComponent.addKeyListener(homePane.specialKeysListener);
@@ -2231,7 +2231,7 @@ public class HomePane extends JRootPane implements HomeView {
         private TransferHandler         transferHandler;
         private boolean                 autoscrolls;
         private Cursor                  previousCursor;
-        private VCView                    previousView;
+        private View                    previousView;
         private boolean                 escaped; 
         
         {
@@ -2290,7 +2290,7 @@ public class HomePane extends JRootPane implements HomeView {
             if (selectedLevel == null || selectedLevel.isViewable()) {
               List<Selectable> transferredFurniture = Arrays.asList(
                   new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
-              VCView view;
+              View view;
               float [] pointInView = getPointInPlanView(ev, transferredFurniture);
               if (pointInView != null) {
                 view = controller.getPlanController().getView();
@@ -2351,7 +2351,7 @@ public class HomePane extends JRootPane implements HomeView {
         }
         
         private float [] getPointInFurnitureView(MouseEvent ev) {
-          VCView furnitureView = controller.getFurnitureController().getView();
+          View furnitureView = controller.getFurnitureController().getView();
           if (furnitureView != null) {
             JComponent furnitureComponent = (JComponent)furnitureView;
             Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getX(), ev.getY(), 
@@ -2377,7 +2377,7 @@ public class HomePane extends JRootPane implements HomeView {
                 if (selectedLevel == null || selectedLevel.isViewable()) {
                   List<Selectable> transferredFurniture = Arrays.asList(
                           new Selectable [] {controller.getFurnitureController().createHomePieceOfFurniture(this.selectedPiece)});
-                  VCView view;
+                  View view;
                   float [] pointInView = getPointInPlanView(ev, transferredFurniture);
                   if (pointInView != null) {
                     controller.getPlanController().stopDraggedItems();
@@ -2917,7 +2917,7 @@ public class HomePane extends JRootPane implements HomeView {
         if (dialogX != null && dialogY != null && dialogWidth != null && dialogHeight != null) {
           EventQueue.invokeLater(new Runnable() {
               public void run() {
-                VCView view3D = controller.getHomeController3D().getView();
+                View view3D = controller.getHomeController3D().getView();
                 // Check 3D view can be viewed in one of the available screens      
                 if (getActionMap().get(ActionType.DETACH_3D_VIEW).isEnabled() 
                     && SwingTools.isRectangleVisibleAtScreen(new Rectangle(
@@ -3192,7 +3192,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Adds to <code>view</code> a mouse listener that disables all menu items of
    * <code>menuBar</code> during a drag and drop operation in <code>view</code>.
    */
-  private void disableMenuItemsDuringDragAndDrop(VCView view, 
+  private void disableMenuItemsDuringDragAndDrop(View view, 
                                                  final JMenuBar menuBar) {
     class MouseAndFocusListener extends MouseAdapter implements FocusListener {      
       @Override
@@ -3255,7 +3255,7 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Detaches the given <code>view</code> from home view.
    */
-  public void detachView(final VCView view) {
+  public void detachView(final View view) {
     JComponent component = (JComponent)view;
     Container parent = component.getParent();
     if (parent instanceof JViewport) {
@@ -3300,7 +3300,7 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Detaches a <code>view</code> at the given location and size.
    */
-  private void detachView(final VCView view, int x, int y, int width, int height) {
+  private void detachView(final View view, int x, int y, int width, int height) {
     JComponent component = (JComponent)view;
     Container parent = component.getParent();
     if (parent instanceof JViewport) {
@@ -3449,7 +3449,7 @@ public class HomePane extends JRootPane implements HomeView {
   /**
    * Attaches the given <code>view</code> to home view.
    */
-  public void attachView(final VCView view) {
+  public void attachView(final View view) {
     this.controller.setHomeProperty(view.getClass().getName() + DETACHED_VIEW_VISUAL_PROPERTY, String.valueOf(false));
 
     JComponent dummyComponent = (JComponent)findChild(this, view.getClass().getName());
@@ -4192,7 +4192,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToCSV(String csvFile) throws RecorderException {
-    VCView furnitureView = this.controller.getFurnitureController().getView();
+    View furnitureView = this.controller.getFurnitureController().getView();
     FurnitureTable furnitureTable;
     if (furnitureView instanceof FurnitureTable) {
       furnitureTable = (FurnitureTable)furnitureView;
@@ -4239,7 +4239,7 @@ public class HomePane extends JRootPane implements HomeView {
    * Caution !!! This method may be called from an other thread than EDT.  
    */
   public void exportToSVG(String svgFile) throws RecorderException {
-    VCView planView = this.controller.getPlanController().getView();
+    View planView = this.controller.getPlanController().getView();
     final PlanComponent planComponent;
     if (planView instanceof PlanComponent) {
       planComponent = (PlanComponent)planView;

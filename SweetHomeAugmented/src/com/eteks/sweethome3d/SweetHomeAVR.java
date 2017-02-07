@@ -64,7 +64,7 @@ import com.eteks.sweethome3d.swing.SwingViewFactory;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.ViewFactory;
 
 import javaawt.VMEventQueue;
@@ -656,7 +656,7 @@ public class SweetHomeAVR extends HomeApplication
 					{
 						JFrame homeFrame = getHomeFrame(home);
 						homeFrame.toFront();
-						homeName = contentManager.showSaveDialog((VCView) homeFrame.getRootPane(), null,
+						homeName = contentManager.showSaveDialog((View) homeFrame.getRootPane(), null,
 								ContentManager.ContentType.SWEET_HOME_3D, null);
 					}
 					if (homeName != null)

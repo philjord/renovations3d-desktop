@@ -37,7 +37,7 @@ import javax.swing.Timer;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskController;
 import com.eteks.sweethome3d.viewcontroller.ThreadedTaskView;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A MVC view of a threaded task.
@@ -129,7 +129,7 @@ public class ThreadedTaskPanel extends JPanel implements ThreadedTaskView {
    * Sets the running status of the threaded task. 
    * If <code>taskRunning</code> is <code>true</code>, a waiting dialog will be shown.
    */
-  public void setTaskRunning(boolean taskRunning, VCView executingView) {
+  public void setTaskRunning(boolean taskRunning, View executingView) {
     this.taskRunning = taskRunning;
     if (taskRunning && this.dialog == null) {
       String dialogTitle = this.preferences.getLocalizedString(

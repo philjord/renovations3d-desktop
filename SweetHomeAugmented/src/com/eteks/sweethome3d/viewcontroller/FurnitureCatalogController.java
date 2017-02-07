@@ -45,7 +45,7 @@ public class FurnitureCatalogController implements Controller {
   private final ContentManager          contentManager;
   private final List<SelectionListener> selectionListeners;
   private List<CatalogPieceOfFurniture> selectedFurniture;
-  private VCView                          catalogView;
+  private View                          catalogView;
 
 
   /**
@@ -130,7 +130,7 @@ public class FurnitureCatalogController implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public VCView getView() {
+  public View getView() {
     // Create view lazily only once it's needed
     if (this.catalogView == null) {
       this.catalogView = viewFactory.createFurnitureCatalogView(this.catalog, this.preferences, this);

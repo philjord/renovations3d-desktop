@@ -56,7 +56,7 @@ public class HomeController3D implements Controller {
   private final ViewFactory           viewFactory;
   private final ContentManager        contentManager;
   private final UndoableEditSupport   undoSupport;
-  private VCView                        home3DView;
+  private View                        home3DView;
   // Possibles states
   private final CameraControllerState topCameraState;
   private final CameraControllerState observerCameraState;
@@ -159,7 +159,7 @@ public class HomeController3D implements Controller {
   /**
    * Returns the view associated with this controller.
    */
-  public VCView getView() {
+  public View getView() {
     // Create view lazily only once it's needed
     if (this.home3DView == null) {
       this.home3DView = this.viewFactory.createView3D(this.home, this.preferences, this);

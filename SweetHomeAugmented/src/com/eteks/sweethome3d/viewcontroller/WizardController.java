@@ -53,7 +53,7 @@ public abstract class WizardController implements Controller {
   private boolean backStepEnabled;
   private boolean nextStepEnabled;
   private boolean lastStep;
-  private VCView    stepView;
+  private View    stepView;
   private URL     stepIcon;
   private String  title;
   private boolean resizable;
@@ -97,7 +97,7 @@ public abstract class WizardController implements Controller {
   /**
    * Displays the view controlled by this controller. 
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     getView().displayView(parentView);
   }
 
@@ -171,9 +171,9 @@ public abstract class WizardController implements Controller {
   /**
    * Sets the step view.
    */
-  private void setStepView(VCView stepView) {
+  private void setStepView(View stepView) {
     if (stepView != this.stepView) {
-      VCView oldStepView = this.stepView;
+      View oldStepView = this.stepView;
       this.stepView = stepView;
       this.propertyChangeSupport.firePropertyChange(Property.STEP_VIEW.name(), oldStepView, stepView);
     }
@@ -182,7 +182,7 @@ public abstract class WizardController implements Controller {
   /**
    * Returns the current step view.
    */
-  public VCView getStepView() {
+  public View getStepView() {
     return this.stepView;
   }
   
@@ -317,7 +317,7 @@ public abstract class WizardController implements Controller {
     public void exit() {
     }
 
-    public abstract VCView getView();
+    public abstract View getView();
     
     public URL getIcon() {
       return null;

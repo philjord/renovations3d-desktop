@@ -102,7 +102,7 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceView;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Button displaying a texture as an icon. When the user clicks
@@ -815,7 +815,7 @@ public class TextureChoiceComponent extends JButton implements TextureChoiceView
       }
     }
 
-    public void displayView(VCView textureChoiceComponent) {
+    public void displayView(View textureChoiceComponent) {
       // Show panel in a resizable modal dialog
       final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, 
           JOptionPane.OK_CANCEL_OPTION);

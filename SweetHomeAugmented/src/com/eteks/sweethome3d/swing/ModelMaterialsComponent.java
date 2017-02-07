@@ -79,13 +79,13 @@ import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.ModelMaterialsController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Button giving access to materials editor. When the user clicks
  * on this button a dialog appears to let him choose materials.
  */
-public class ModelMaterialsComponent extends JButton implements VCView {
+public class ModelMaterialsComponent extends JButton implements View {
   /**
    * Creates a texture button.
    */
@@ -602,7 +602,7 @@ public class ModelMaterialsComponent extends JButton implements VCView {
           GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), -20, 0));
     }
     
-    public void displayView(VCView parent) {
+    public void displayView(View parent) {
       // Show panel in a resizable modal dialog
       final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, 
           JOptionPane.OK_CANCEL_OPTION);

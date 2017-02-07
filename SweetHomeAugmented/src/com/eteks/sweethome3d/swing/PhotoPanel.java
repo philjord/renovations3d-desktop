@@ -98,7 +98,7 @@ import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A panel to edit photo creation. 
@@ -627,7 +627,7 @@ public class PhotoPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a non modal dialog.
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     if (currentPhotoPanel == this) {
       SwingUtilities.getWindowAncestor(PhotoPanel.this).toFront();
     } else {

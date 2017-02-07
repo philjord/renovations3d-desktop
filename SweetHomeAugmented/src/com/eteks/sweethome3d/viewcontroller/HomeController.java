@@ -125,7 +125,7 @@ public class HomeController implements Controller {
   private static HelpController       helpController;  // Only one help controller
   private int                         saveUndoLevel;
   private boolean                     notUndoableModifications;
-  private VCView                        focusedView;
+  private View                        focusedView;
 
   private static final Content REPAIRED_IMAGE_CONTENT = new ResourceURLContent(HomeController.class, "resources/repairedImage.png");
   private static final Content REPAIRED_ICON_CONTENT = new ResourceURLContent(HomeController.class, "resources/repairedIcon.png");
@@ -1475,7 +1475,7 @@ public class HomeController implements Controller {
    * Adds items to home, moves them of (dx, dy) 
    * and posts a drop operation to undo support.
    */
-  public void drop(final List<? extends Selectable> items, VCView destinationView, float dx, float dy) {
+  public void drop(final List<? extends Selectable> items, View destinationView, float dx, float dy) {
     addPastedItems(items, dx, dy, destinationView == getPlanController().getView(), "undoDropName");
   }
 
@@ -1759,7 +1759,7 @@ public class HomeController implements Controller {
   /**
    * Updates actions when focused view changed.
    */
-  public void focusedViewChanged(VCView focusedView) {
+  public void focusedViewChanged(View focusedView) {
     this.focusedView = focusedView;
     enableActionsBoundToSelection();
     enablePasteAction();
@@ -2804,7 +2804,7 @@ public class HomeController implements Controller {
   /**
    * Detaches the given <code>view</code> from home view.
    */
-  public void detachView(VCView view) {
+  public void detachView(View view) {
     if (view != null) {
       getView().detachView(view);
       this.notUndoableModifications = true;
@@ -2815,7 +2815,7 @@ public class HomeController implements Controller {
   /**
    * Attaches the given <code>view</code> to home view.
    */
-  public void attachView(VCView view) {
+  public void attachView(View view) {
     if (view != null) {
       getView().attachView(view);
       this.notUndoableModifications = true;
@@ -2926,7 +2926,7 @@ public class HomeController implements Controller {
                                                          ThreadedTaskController controller) {
             // Return a dummy view that doesn't do anything
             return new ThreadedTaskView() {
-              public void setTaskRunning(boolean taskRunning, VCView executingView) {
+              public void setTaskRunning(boolean taskRunning, View executingView) {
               }
               
               public void invokeLater(Runnable runnable) {

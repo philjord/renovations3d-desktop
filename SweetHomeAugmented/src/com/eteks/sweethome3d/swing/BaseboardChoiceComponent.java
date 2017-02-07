@@ -39,13 +39,13 @@ import javax.swing.event.ChangeListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.BaseboardChoiceController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Baseboard editing panel.
  * @author Emmanuel Puybaret
  */
-public class BaseboardChoiceComponent extends JPanel implements VCView {
+public class BaseboardChoiceComponent extends JPanel implements View {
   private NullableCheckBox      visibleCheckBox;
   private JRadioButton          sameColorAsWallRadioButton;
   private JRadioButton          colorRadioButton;

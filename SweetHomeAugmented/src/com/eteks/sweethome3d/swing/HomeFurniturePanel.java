@@ -50,7 +50,7 @@ import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.HomeFurnitureController;
 import com.eteks.sweethome3d.viewcontroller.ModelMaterialsController;
 import com.eteks.sweethome3d.viewcontroller.TextureChoiceController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Home furniture editing panel.
@@ -1124,7 +1124,7 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     if (SwingTools.showConfirmDialog((JComponent)parentView, 
             this, this.dialogTitle, this.nameTextField) == JOptionPane.OK_OPTION) {
       this.controller.modifyFurniture();

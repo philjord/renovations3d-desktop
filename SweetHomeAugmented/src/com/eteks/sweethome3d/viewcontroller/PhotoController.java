@@ -51,7 +51,7 @@ public class PhotoController extends AbstractPhotoController {
 
   public PhotoController(Home home,
                          UserPreferences preferences, 
-                         VCView view3D, ViewFactory viewFactory,
+                         View view3D, ViewFactory viewFactory,
                          ContentManager contentManager) {
     super(home, preferences, view3D, contentManager);
     this.home = home;
@@ -125,7 +125,7 @@ public class PhotoController extends AbstractPhotoController {
   /**
    * Displays the view controlled by this controller.
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     getView().displayView(parentView);
   }
 

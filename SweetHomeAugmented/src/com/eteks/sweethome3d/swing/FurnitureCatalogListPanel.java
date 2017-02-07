@@ -99,13 +99,13 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.FurnitureCatalogController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * A furniture catalog view that displays furniture in a list, with a combo and search text field.
  * @author Emmanuel Puybaret
  */
-public class FurnitureCatalogListPanel extends JPanel implements VCView {
+public class FurnitureCatalogListPanel extends JPanel implements View {
   private ListSelectionListener listSelectionListener;
   private JLabel                categoryFilterLabel;
   private JComboBox             categoryFilterComboBox;

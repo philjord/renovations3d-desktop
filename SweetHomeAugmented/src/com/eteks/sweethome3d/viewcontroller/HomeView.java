@@ -33,7 +33,7 @@ import com.eteks.sweethome3d.model.Selectable;
  * The main view that displays a home.
  * @author Emmanuel Puybaret
  */
-public interface HomeView extends VCView {
+public interface HomeView extends View {
   /**
    * The actions proposed by the view to user.
    */
@@ -97,12 +97,12 @@ public interface HomeView extends VCView {
   /**
    * Detaches the given <code>view</code> from home view.
    */
-  public abstract void detachView(VCView view);
+  public abstract void detachView(View view);
                 
   /**
    * Attaches the given <code>view</code> to home view.
    */
-  public abstract void attachView(VCView view);
+  public abstract void attachView(View view);
   
   /**
    * Displays a content chooser open dialog to choose the name of a home.

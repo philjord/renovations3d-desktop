@@ -36,7 +36,7 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
-  public VCView createBackgroundImageWizardStepsView(BackgroundImage backgroundImage, UserPreferences preferences,
+  public View createBackgroundImageWizardStepsView(BackgroundImage backgroundImage, UserPreferences preferences,
                                                    BackgroundImageWizardController backgroundImageWizardController) {
     throw new UnsupportedOperationException();
   }
@@ -44,7 +44,7 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
-  public VCView createFurnitureCatalogView(FurnitureCatalog catalog, UserPreferences preferences,
+  public View createFurnitureCatalogView(FurnitureCatalog catalog, UserPreferences preferences,
                                          FurnitureCatalogController furnitureCatalogController) {
     throw new UnsupportedOperationException();
   }
@@ -52,7 +52,7 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
-  public VCView createFurnitureView(Home home, UserPreferences preferences, FurnitureController furnitureController) {
+  public View createFurnitureView(Home home, UserPreferences preferences, FurnitureController furnitureController) {
     throw new UnsupportedOperationException();
   }
 
@@ -105,7 +105,7 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
-  public VCView createImportedTextureWizardStepsView(CatalogTexture texture, String textureName,
+  public View createImportedTextureWizardStepsView(CatalogTexture texture, String textureName,
                                                    UserPreferences preferences,
                                                    ImportedTextureWizardController importedTextureWizardController) {
     throw new UnsupportedOperationException();
@@ -182,7 +182,7 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
-  public VCView createBaseboardChoiceView(UserPreferences preferences,
+  public View createBaseboardChoiceView(UserPreferences preferences,
                                         BaseboardChoiceController baseboardChoiceController) {
     throw new UnsupportedOperationException();
   }
@@ -190,7 +190,7 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
-  public VCView createModelMaterialsView(UserPreferences preferences, 
+  public View createModelMaterialsView(UserPreferences preferences, 
                                        ModelMaterialsController modelMaterialsController) {
     throw new UnsupportedOperationException();
   }
@@ -214,7 +214,7 @@ public class ViewFactoryAdapter implements ViewFactory {
   /**
    * @throws UnsupportedOperationException
    */
-  public VCView createView3D(final Home home, UserPreferences preferences, final HomeController3D controller) {
+  public View createView3D(final Home home, UserPreferences preferences, final HomeController3D controller) {
     throw new UnsupportedOperationException();
   }
 

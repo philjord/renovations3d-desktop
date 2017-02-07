@@ -64,7 +64,7 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
 import com.eteks.sweethome3d.viewcontroller.BaseboardChoiceController;
 import com.eteks.sweethome3d.viewcontroller.DialogView;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 import com.eteks.sweethome3d.viewcontroller.WallController;
 
 /**
@@ -1131,7 +1131,7 @@ public class WallPanel extends JPanel implements DialogView {
   /**
    * Displays this panel in a modal dialog box. 
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     Component homeRoot = SwingUtilities.getRoot((Component)parentView);
     if (homeRoot != null) {
       JOptionPane optionPane = new JOptionPane(this, 

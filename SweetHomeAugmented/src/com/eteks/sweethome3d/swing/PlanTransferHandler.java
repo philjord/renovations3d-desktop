@@ -42,7 +42,7 @@ import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.HomeController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Plan transfer handler.
@@ -235,7 +235,7 @@ public class PlanTransferHandler extends LocatedTransferHandler {
                                              final List<Selectable> transferedItems) {
     if (isDrop()) {
       Point2D dropLocation = getDropModelLocation(destination);
-      if (destination instanceof VCView) {
+      if (destination instanceof View) {
         this.homeController.drop(transferedItems, this.homeController.getPlanController().getView(), 
             (float)dropLocation.getX(), (float)dropLocation.getY());
       } else {

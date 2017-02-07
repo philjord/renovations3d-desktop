@@ -53,7 +53,7 @@ public class PhotosController extends AbstractPhotoController {
   private String       fileFormat;
   private Float        fileCompressionQuality;
 
-  public PhotosController(Home home, UserPreferences preferences, VCView view3D, 
+  public PhotosController(Home home, UserPreferences preferences, View view3D, 
                           ViewFactory viewFactory, ContentManager contentManager) {
     super(home, preferences, view3D, contentManager);
     this.home = home;
@@ -104,7 +104,7 @@ public class PhotosController extends AbstractPhotoController {
   /**
    * Displays the view controlled by this controller.
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     getView().displayView(parentView);
   }
 

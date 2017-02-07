@@ -34,14 +34,14 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays furniture <code>catalog</code>.
    */
-  public abstract VCView createFurnitureCatalogView(FurnitureCatalog catalog,
+  public abstract View createFurnitureCatalogView(FurnitureCatalog catalog,
                                            UserPreferences preferences,
                                            FurnitureCatalogController furnitureCatalogController);
   
   /**
    * Returns a new view that displays <code>home</code> furniture list.
    */
-  public abstract VCView createFurnitureView(Home home, UserPreferences preferences,
+  public abstract View createFurnitureView(Home home, UserPreferences preferences,
                                            FurnitureController furnitureController);
 
   /**
@@ -53,7 +53,7 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays <code>home</code> in 3D.
    */
-  public abstract VCView createView3D(Home home, UserPreferences preferences,
+  public abstract View createView3D(Home home, UserPreferences preferences,
                                     HomeController3D homeController3D);
 
   /**
@@ -71,7 +71,7 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps the user to choose a background image. 
    */
-  public abstract VCView createBackgroundImageWizardStepsView(
+  public abstract View createBackgroundImageWizardStepsView(
                                  BackgroundImage backgroundImage,
                                  UserPreferences preferences, 
                                  BackgroundImageWizardController backgroundImageWizardController);
@@ -88,7 +88,7 @@ public interface ViewFactory {
   /**
    * Returns a new view that displays the different steps that helps the user to import a texture. 
    */
-  public abstract VCView createImportedTextureWizardStepsView(
+  public abstract View createImportedTextureWizardStepsView(
                                  CatalogTexture texture, String textureName,
                                  UserPreferences preferences,
                                  ImportedTextureWizardController importedTextureWizardController);
@@ -171,13 +171,13 @@ public interface ViewFactory {
   /**
    * Returns a new view that edits the baseboard of its controller.  
    */
-  public abstract VCView createBaseboardChoiceView(UserPreferences preferences,
+  public abstract View createBaseboardChoiceView(UserPreferences preferences,
                                                  BaseboardChoiceController baseboardChoiceController);
 
   /**
    * Returns a new view that edits the materials of its controller.  
    */
-  public abstract VCView createModelMaterialsView(UserPreferences preferences,
+  public abstract View createModelMaterialsView(UserPreferences preferences,
                                                  ModelMaterialsController modelMaterialsController);
 
   /**

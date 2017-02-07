@@ -726,7 +726,7 @@ public class ImportedFurnitureWizardController extends WizardController
     }
     
     @Override
-    public VCView getView() {
+    public View getView() {
       return getStepsView();
     }    
     

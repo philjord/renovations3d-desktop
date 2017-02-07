@@ -86,13 +86,13 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
 import com.eteks.sweethome3d.viewcontroller.ContentManager;
 import com.eteks.sweethome3d.viewcontroller.ImportedTextureWizardController;
-import com.eteks.sweethome3d.viewcontroller.VCView;
+import com.eteks.sweethome3d.viewcontroller.View;
 
 /**
  * Wizard panel for background image choice. 
  * @author Emmanuel Puybaret
  */
-public class ImportedTextureWizardStepsPanel extends JPanel implements VCView {
+public class ImportedTextureWizardStepsPanel extends JPanel implements View {
   private static final int LARGE_IMAGE_PIXEL_COUNT_THRESHOLD = 640 * 640;
   private static final int IMAGE_PREFERRED_MAX_SIZE = 512;
   private static final int LARGE_IMAGE_MAX_PIXEL_COUNT = IMAGE_PREFERRED_MAX_SIZE * IMAGE_PREFERRED_MAX_SIZE;

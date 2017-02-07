@@ -93,7 +93,7 @@ public class LevelController implements Controller {
   /**
    * Displays the view controlled by this controller.
    */
-  public void displayView(VCView parentView) {
+  public void displayView(View parentView) {
     getView().displayView(parentView);
   }
 
