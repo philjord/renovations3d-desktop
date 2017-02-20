@@ -122,6 +122,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		setCapability(BranchGroup.ALLOW_CHILDREN_READ);
 		setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
 
+		// allow furniture picking
+		setPickable(true);
+		setCapability(Node.ENABLE_PICK_REPORTING);
+		
 		createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
 	}
 
@@ -135,6 +139,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	{
 		
 		pieceTransformGroup.setName("pieceTransformGroup " + piece.getName());
+		pieceTransformGroup.setPickable(true);
 		// Allow the change of the transformation that sets piece size and position
 		pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
 		pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_READ);
@@ -414,6 +419,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		// Add model node to branch group
 		modelBranch = new BranchGroup();
 		modelBranch.setName("modelBranch");
+		modelBranch.setPickable(true);
 		//modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
 		filledModelNode = normalization;
 		modelBranch.addChild(filledModelNode);
@@ -564,6 +570,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 */
 	private void setModelCapabilities(Node node)
 	{
+		//PJPJPJ let's get picking under way shall we?
+		node.setPickable(true);
+		//node.setCapability(Node.ENABLE_PICK_REPORTING);
+
 		if (node instanceof Group)
 		{
 			node.setCapability(Group.ALLOW_CHILDREN_READ);
@@ -1105,6 +1115,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			geometry.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
 			if (geometry instanceof IndexedGeometryArray)
 				geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
+			
+			
+			geometry.setCapability(Geometry.ALLOW_INTERSECT);
 		}
 	}
 

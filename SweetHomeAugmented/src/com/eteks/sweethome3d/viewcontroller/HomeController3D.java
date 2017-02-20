@@ -908,4 +908,35 @@ public class HomeController3D implements Controller {
       this.observerCamera = null;
     }
   }
+  
+  
+  /**
+   * Controls the modification of selected walls.
+   */
+  public void modifySelectedWalls() {
+    if (!Home.getWallsSubList(this.home.getSelectedItems()).isEmpty()) {
+      new WallController(this.home, this.preferences, this.viewFactory,
+          this.contentManager, this.undoSupport).displayView(getView());
+    }
+  }
+  
+  /**
+   * Controls the modification of the selected rooms.
+   */
+  public void modifySelectedRooms() {
+    if (!Home.getRoomsSubList(this.home.getSelectedItems()).isEmpty()) {
+      new RoomController(this.home, this.preferences, this.viewFactory,
+          this.contentManager, this.undoSupport).displayView(getView());
+    }
+  }
+  
+  /**
+   * Controls the modification of selected furniture.
+   */
+  public void modifySelectedFurniture() {
+    if (!Home.getFurnitureSubList(this.home.getSelectedItems()).isEmpty()) {
+      new HomeFurnitureController(this.home, this.preferences,  
+          this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());
+    }
+  }
 }

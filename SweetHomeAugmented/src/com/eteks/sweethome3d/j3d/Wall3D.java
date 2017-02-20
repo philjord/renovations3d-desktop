@@ -41,6 +41,7 @@ import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.Geometry;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
+import org.jogamp.java3d.IndexedGeometryArray;
 import org.jogamp.java3d.Node;
 import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
@@ -51,6 +52,7 @@ import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.GeometryMerger;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.picking.PickTool;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
@@ -102,10 +104,15 @@ public class Wall3D extends Object3DBranch {
     // Allow to read branch shape children
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     
+    setPickable(true);
+    setCapability(Node.ENABLE_PICK_REPORTING);
+     
+    
     // Add wall bottom, baseboard, main and top shapes to branch for left and right side
     for (int i = 0; i < 8; i++) {
       Group wallSideGroup = new Group();
       wallSideGroup.setCapability(Group.ALLOW_CHILDREN_READ);
+      wallSideGroup.setPickable(true);
       wallSideGroup.addChild(createWallPartShape(false));
       if (!ignoreDrawingMode) {
         // Add wall left and right empty outline shapes to branch
@@ -116,20 +123,23 @@ public class Wall3D extends Object3DBranch {
         
     // Set wall shape geometry and appearance
     updateWallGeometry(waitModelAndTextureLoadingEnd);
-    updateWallAppearance(waitModelAndTextureLoadingEnd);
+    updateWallAppearance(waitModelAndTextureLoadingEnd);   
   }
 
   /**
    * Returns a new wall part shape with no geometry  
    * and a default appearance with a white material.
    */
-  private Node createWallPartShape(boolean outline) {
+  private Shape3D createWallPartShape(boolean outline) {
     Shape3D wallShape = new Shape3D();
     // Allow wall shape to change its geometry
     wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
     wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
     wallShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-
+    
+    if (!outline) 
+    	wallShape.setPickable(true);
+    
     Appearance wallAppearance = new SimpleShaderAppearance();
     wallShape.setAppearance(wallAppearance);
     wallAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
@@ -229,29 +239,50 @@ public class Wall3D extends Object3DBranch {
 		if (wallGeometries[i].size() > 0)
 		{
 			GeometryInfo gi = GeometryMerger.mergeGeometryArray(((List<GeometryArray>) wallGeometries[i]));
-			Geometry wallGeometry = gi.getIndexedGeometryArray(true, true, false, true, true);
+			Geometry wallGeometry = makePickable(gi.getIndexedGeometryArray(true, true, false, true, true));			
 			wallFilledShapes[i].addGeometry(wallGeometry);
 			if (wallOutlineShapes[i] != null)
 			{
 				wallOutlineShapes[i].addGeometry(wallGeometry);
+			}			
+		}
+      }
+    }
+        
+    for (int i = 0; i < wallSideGroups.length; i++) { 
+      for (int j = currentGeometriesCounts [i] - 1; j >= 0; j--) {
+		// sometimes null
+		if (wallFilledShapes[i].getGeometry(j) != null)
+		{
+			wallFilledShapes[i].removeGeometry(j);
+			if (wallOutlineShapes[i] != null)
+			{
+				wallOutlineShapes[i].removeGeometry(j);
 			}
 		}
       }
     }
-    for (int i = 0; i < wallSideGroups.length; i++) { 
-      for (int j = currentGeometriesCounts [i] - 1; j >= 0; j--) {
-				// odd race condition
-				if (wallFilledShapes[i].getGeometry(j) != null)
-				{
-					wallFilledShapes[i].removeGeometry(j);
-					if (wallOutlineShapes[i] != null)
-					{
-						wallOutlineShapes[i].removeGeometry(j);
-					}
-				}
-      }
-    }
   }
+  
+	private static Geometry makePickable(Geometry geometry)
+	{		 
+		if (geometry != null)
+		{
+			// set up for geometry picking
+			if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)
+			{
+				geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
+				geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
+				geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
+				geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
+				if (geometry instanceof IndexedGeometryArray)
+					geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
+
+				geometry.setCapability(Geometry.ALLOW_INTERSECT);
+			}
+		}
+		return geometry;
+	}
   
   /**
    * Creates <code>wall</code> or baseboard geometries computed with windows or doors 
@@ -615,6 +646,18 @@ public class Wall3D extends Object3DBranch {
         }
       }
     }
+		for (Geometry g : bottomGeometries)
+		{
+			makePickable(g);
+		}
+		for (Geometry g : sideGeometries)
+		{
+			 makePickable(g);
+		}
+		for (Geometry g : topGeometries)
+		{
+			 makePickable(g);
+		}
   }
 
   /**
@@ -888,7 +931,7 @@ public class Wall3D extends Object3DBranch {
       normalGenerator.setCreaseAngle(0);
     }
     normalGenerator.generateNormals(geometryInfo);  
-    return geometryInfo.getIndexedGeometryArray();
+    return makePickable(geometryInfo.getIndexedGeometryArray());
   }
 
   /**
@@ -949,7 +992,7 @@ public class Wall3D extends Object3DBranch {
       normalGenerator.setCreaseAngle(0);
     }
     normalGenerator.generateNormals(geometryInfo);
-    return geometryInfo.getIndexedGeometryArray ();
+    return makePickable(geometryInfo.getIndexedGeometryArray ());
   }
   
   /**
@@ -974,7 +1017,7 @@ public class Wall3D extends Object3DBranch {
       normalGenerator.setCreaseAngle(0);
     }
     normalGenerator.generateNormals(geometryInfo);
-    return geometryInfo.getIndexedGeometryArray ();
+    return makePickable(geometryInfo.getIndexedGeometryArray ());
   }
   
   /**
@@ -1171,7 +1214,7 @@ public class Wall3D extends Object3DBranch {
             geometryInfo.setTextureCoordinates(0, textureCoords);
           }
           new NormalGenerator().generateNormals(geometryInfo);
-          wallGeometries.add(geometryInfo.getIndexedGeometryArray());
+          wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray()));
         
           if (borderCoords.size() > 0) { 
             // Generate border geometry 
@@ -1186,7 +1229,7 @@ public class Wall3D extends Object3DBranch {
             geometryInfo.convertToIndexedTriangles();
             
             new NormalGenerator(Math.PI / 2).generateNormals(geometryInfo);
-            wallGeometries.add(geometryInfo.getIndexedGeometryArray());
+            wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray()));
           }
           
           if (slopingTopCoords.size() > 0) { 
@@ -1198,8 +1241,8 @@ public class Wall3D extends Object3DBranch {
             geometryInfo.convertToIndexedTriangles();
             
             new NormalGenerator().generateNormals(geometryInfo);
-            wallTopGeometries.add(geometryInfo.getIndexedGeometryArray());
-          }
+            wallTopGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray()));
+          }          
         }
       }
     }
@@ -1461,4 +1504,6 @@ public class Wall3D extends Object3DBranch {
       return false;
     }
   }
+  
+ 
 }

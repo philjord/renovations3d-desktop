@@ -146,6 +146,7 @@ import com.eteks.sweethome3d.j3d.Object3DBranch;
 import com.eteks.sweethome3d.j3d.Object3DBranchFactory;
 import com.eteks.sweethome3d.j3d.TextureManager;
 import com.eteks.sweethome3d.j3d.Wall3D;
+import com.eteks.sweethome3d.j3d.mouseover.HomeComponent3DMouseHandler;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
@@ -309,7 +310,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		// and clean up universe once its parent frame is disposed
 		addAncestorListener(preferences, controller, displayShadowOnFloor);
 	}
-
+	//PJPJP
+	HomeComponent3DMouseHandler homeComponent3DMouseHandler;
 	/**
 	 * Adds an ancestor listener to this component to manage the creation of the canvas and its universe 
 	 * and clean up the universe.  
@@ -376,6 +378,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 					onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
 					component3D.setFocusable(false);
 					updateNavigationPanelImage();
+					
+					
+					//PJPJPJ mouse iteraction with picking
+					homeComponent3DMouseHandler = new HomeComponent3DMouseHandler(home, preferences, controller);
+					homeComponent3DMouseHandler.setConfig(canvas3D, onscreenUniverse.getLocale());
 				}
 			}
 
@@ -2013,6 +2020,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	private BranchGroup createSceneTree(boolean displayShadowOnFloor, boolean listenToHomeUpdates, boolean waitForLoading)
 	{
 		BranchGroup root = new BranchGroup();
+		root.setName("Universe Root");
+		root.setPickable(true);
+		
 		// Build scene tree
 		root.addChild(createHomeTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
 		root.addChild(createBackgroundNode(listenToHomeUpdates, waitForLoading));
@@ -2500,9 +2510,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	private Group createHomeRoot()
 	{
 		Group homeGroup = new Group();
+		homeGroup.setName("Home Root");
 		//  Allow group to have new children
 		homeGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
 		homeGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+		
+		homeGroup.setPickable(true);
 		return homeGroup;
 	}
 
@@ -2985,6 +2998,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	private Node addObject(Group group, Selectable homeObject, int index, boolean listenToHomeUpdates, boolean waitForLoading)
 	{
 		Object3DBranch object3D = createObject3D(homeObject, waitForLoading);
+		
 		
 	
 		if (listenToHomeUpdates)
