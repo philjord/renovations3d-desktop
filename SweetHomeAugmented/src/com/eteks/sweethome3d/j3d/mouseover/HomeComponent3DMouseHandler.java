@@ -64,6 +64,8 @@ public class HomeComponent3DMouseHandler extends MouseOverHandler
 					{
 						controller.modifySelectedRooms();
 					}
+					
+					//FIXME: Label3D need to be selectable too but not Ground3D
 				}
 			}
 

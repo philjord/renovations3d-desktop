@@ -50,13 +50,18 @@ import com.eteks.sweethome3d.model.Room;
  * Root of a branch that matches a home object. 
  */
 public abstract class Object3DBranch extends BranchGroup {
+	public static final int WALL_STENCIL_MASK = 1<<1;
+	public static final int FURN_STENCIL_MASK = 1<<2;
+	public static int OUTLINE_WIDTH = 10;
+	public static Color3f OUTLINE_COLOR = new Color3f(1f,0.9f,0f);
   // The coloring attributes used for drawing outline 
   protected static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES = 
-      new ColoringAttributes(new Color3f(0.16f, 0.16f, 0.16f), ColoringAttributes.FASTEST);
+      new ColoringAttributes(OUTLINE_COLOR, ColoringAttributes.FASTEST);
   protected static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES = 
-      new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_BACK, 0);
+      new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_NONE, 0.1f, true, 0.1f);
+ 	
   protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
-      new LineAttributes(0.5f, LineAttributes.PATTERN_SOLID, true);
+      new LineAttributes(OUTLINE_WIDTH, LineAttributes.PATTERN_SOLID, true);
 
   protected static final Integer  DEFAULT_COLOR         = 0xFFFFFF;
   protected static final Integer  DEFAULT_AMBIENT_COLOR = 0x333333;
@@ -65,6 +70,7 @@ public abstract class Object3DBranch extends BranchGroup {
   private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
   private static final Map<Float, TextureAttributes>    textureAttributes = new HashMap<Float, TextureAttributes>();
   private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
+
   
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
@@ -340,4 +346,7 @@ public abstract class Object3DBranch extends BranchGroup {
     
     return areaPointsWithoutHoles;
   }
+
+  //PJPJPJPJ for outlining
+  public abstract void showOutline(boolean isSelected);
 }

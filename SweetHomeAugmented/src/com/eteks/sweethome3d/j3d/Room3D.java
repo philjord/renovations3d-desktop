@@ -751,4 +751,10 @@ public class Room3D extends Object3DBranch {
     RenderingAttributes renderingAttributes = roomPartAppearance.getRenderingAttributes();
     renderingAttributes.setVisible(visible);
   }
+
+	@Override
+	public void showOutline(boolean isSelected)
+	{
+		// TODO PJ outline	
+	}
 }

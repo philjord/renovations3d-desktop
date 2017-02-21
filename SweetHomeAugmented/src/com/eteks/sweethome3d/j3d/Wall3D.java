@@ -38,11 +38,14 @@ import java.util.WeakHashMap;
 
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.ColoringAttributes;
 import org.jogamp.java3d.Geometry;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
 import org.jogamp.java3d.IndexedGeometryArray;
+import org.jogamp.java3d.LineAttributes;
 import org.jogamp.java3d.Node;
+import org.jogamp.java3d.PolygonAttributes;
 import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.Texture;
@@ -52,8 +55,8 @@ import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.GeometryMerger;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
-import org.jogamp.java3d.utils.picking.PickTool;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
+import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
 import org.jogamp.vecmath.Vector3f;
@@ -107,6 +110,8 @@ public class Wall3D extends Object3DBranch {
     setPickable(true);
     setCapability(Node.ENABLE_PICK_REPORTING);
      
+    //PJPJPJ make an outline
+    ignoreDrawingMode = false;
     
     // Add wall bottom, baseboard, main and top shapes to branch for left and right side
     for (int i = 0; i < 8; i++) {
@@ -125,6 +130,7 @@ public class Wall3D extends Object3DBranch {
     updateWallGeometry(waitModelAndTextureLoadingEnd);
     updateWallAppearance(waitModelAndTextureLoadingEnd);   
   }
+  
 
   /**
    * Returns a new wall part shape with no geometry  
@@ -137,10 +143,53 @@ public class Wall3D extends Object3DBranch {
     wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
     wallShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     
+    //PJPJPJPJ outlines aren't pickable obviously
     if (!outline) 
     	wallShape.setPickable(true);
     
-    Appearance wallAppearance = new SimpleShaderAppearance();
+    //PJPJPJPJ stencil based outlining
+    Appearance wallAppearance;
+   
+    int outlineStencilMask = Object3DBranch.WALL_STENCIL_MASK;
+    RenderingAttributes renderingAttributes = new RenderingAttributes();
+    if (outline) {    	
+      wallAppearance = new SimpleShaderAppearance(Object3DBranch.OUTLINE_COLOR);// special non auto build version for outlining
+      wallAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
+      wallAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
+      wallAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
+    //PJPJ for outlines
+		renderingAttributes.setStencilEnable(true);
+		renderingAttributes.setStencilWriteMask(outlineStencilMask);
+		renderingAttributes.setStencilFunction(RenderingAttributes.NOT_EQUAL, outlineStencilMask, outlineStencilMask);
+		renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_KEEP, //
+				RenderingAttributes.STENCIL_KEEP, //
+				RenderingAttributes.STENCIL_KEEP);
+		//geoms often have colors in verts
+		renderingAttributes.setIgnoreVertexColors(true);
+		// draw it even when hidden
+		renderingAttributes.setDepthBufferEnable(false);
+		renderingAttributes.setDepthTestFunction(RenderingAttributes.ALWAYS);	
+		renderingAttributes.setVisible(false);
+		
+    } else {
+      wallAppearance = new SimpleShaderAppearance();
+      wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+      wallAppearance.setMaterial(DEFAULT_MATERIAL);      
+      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
+      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
+
+      //PJPJ for outlines
+      renderingAttributes.setStencilEnable(false);
+      renderingAttributes.setStencilWriteMask(outlineStencilMask);
+      renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
+      renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_REPLACE, //
+				RenderingAttributes.STENCIL_REPLACE, //
+				RenderingAttributes.STENCIL_REPLACE);
+      
+    }
+    
+    
     wallShape.setAppearance(wallAppearance);
     wallAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
     TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
@@ -148,23 +197,29 @@ public class Wall3D extends Object3DBranch {
     transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
     wallAppearance.setTransparencyAttributes(transparencyAttributes);
     wallAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
-    RenderingAttributes renderingAttributes = new RenderingAttributes();
     renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-    wallAppearance.setRenderingAttributes(renderingAttributes);
+    renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);
     
-    if (outline) {
-      wallAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
-      wallAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
-      wallAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
-    } else {
-      wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-      wallAppearance.setMaterial(DEFAULT_MATERIAL);      
-      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
-      wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
-    }
+    wallAppearance.setRenderingAttributes(renderingAttributes);
     return wallShape;
   }
+  
+	//PJPJPJ outlining
+	@Override
+	public void showOutline(boolean showOutline)
+	{
+		for (int i = 0; i < 8; i++)
+		{
+			Shape3D outlineShape = (Shape3D) ((Group) this.getChild(i)).getChild(1);
+			RenderingAttributes ra1 = outlineShape.getAppearance().getRenderingAttributes();
+			ra1.setVisible(showOutline);
+			
+			Shape3D filledShape = (Shape3D) ((Group) this.getChild(i)).getChild(0);
+			RenderingAttributes ra0 = filledShape.getAppearance().getRenderingAttributes();
+			ra0.setStencilEnable(showOutline);
+		}
+
+	}
 
   @Override
   public void update() {
@@ -1438,6 +1493,7 @@ public class Wall3D extends Object3DBranch {
     // Update wall side visibility
     RenderingAttributes renderingAttributes = wallSideAppearance.getRenderingAttributes();
     HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+    //PJ outline
     renderingAttributes.setVisible(drawingMode == HomeEnvironment.DrawingMode.OUTLINE 
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
   }

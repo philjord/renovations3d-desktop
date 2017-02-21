@@ -70,7 +70,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -126,7 +125,6 @@ import org.jogamp.java3d.TransformGroup;
 import org.jogamp.java3d.TransformInterpolator;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.View;
-import org.jogamp.java3d.VirtualUniverse;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.java3d.utils.universe.SimpleUniverse;
@@ -160,6 +158,8 @@ import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
+import com.eteks.sweethome3d.model.SelectionEvent;
+import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -212,6 +212,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	private PropertyChangeListener roomChangeListener;
 	private CollectionListener<Label> labelListener;
 	private PropertyChangeListener labelChangeListener;
+	
+	private SelectionListener selectionOutliningListener;
 	// Offscreen printed image cache
 	// Creating an offscreen buffer is a quite lengthy operation so we keep the last printed image in this field
 	// This image should be set to null each time the 3D view changes
@@ -309,7 +311,29 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		// Add an ancestor listener to create canvas 3D and its universe once this component is made visible 
 		// and clean up universe once its parent frame is disposed
 		addAncestorListener(preferences, controller, displayShadowOnFloor);
+		
+		
+		//PJPJPJ for outlining
+		selectionOutliningListener = new SelectionOutliningListener();		
+	    home.addSelectionListener(selectionOutliningListener);
 	}
+	
+	
+	private class SelectionOutliningListener implements SelectionListener
+	{
+		@Override
+		public void selectionChanged(SelectionEvent selectionEvent)
+		{
+			for(Selectable sel : homeObjects.keySet())
+			{
+				boolean isSelected = selectionEvent.getSelectedItems().contains(sel);
+				Object3DBranch obj3D = homeObjects.get(sel);
+				obj3D.showOutline(isSelected);				
+			}			 
+		}	
+	}
+	
+	
 	//PJPJP
 	HomeComponent3DMouseHandler homeComponent3DMouseHandler;
 	/**

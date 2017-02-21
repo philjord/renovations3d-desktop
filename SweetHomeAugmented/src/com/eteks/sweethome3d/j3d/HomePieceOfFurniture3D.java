@@ -423,6 +423,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		//modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
 		filledModelNode = normalization;
 		modelBranch.addChild(filledModelNode);
+		
+		//PJPJ for outline
+		ignoreDrawingMode = false;
 		if (!ignoreDrawingMode)
 		{
 			// Add outline model node
@@ -552,15 +555,99 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		}
 		else if (node instanceof Shape3D)
 		{
-			Appearance outlineAppearance = new SimpleShaderAppearance();
+			//PJPJ for outlines
+			Appearance outlineAppearance = new SimpleShaderAppearance(Object3DBranch.OUTLINE_COLOR);
 			((Shape3D) node).setAppearance(outlineAppearance);
 			outlineAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
 			RenderingAttributes renderingAttributes = new RenderingAttributes();
+			
+			renderingAttributes.setStencilEnable(true);
+			int outlineStencilMask = Object3DBranch.FURN_STENCIL_MASK;
+			renderingAttributes.setStencilWriteMask(outlineStencilMask);
+			renderingAttributes.setStencilFunction(RenderingAttributes.NOT_EQUAL, outlineStencilMask, outlineStencilMask);
+			renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_KEEP, //
+					RenderingAttributes.STENCIL_KEEP, //
+					RenderingAttributes.STENCIL_KEEP);
+			//geoms often have colors in verts
+			renderingAttributes.setIgnoreVertexColors(true);
+			// draw it even when hidden
+			renderingAttributes.setDepthBufferEnable(false);			
+			renderingAttributes.setDepthTestFunction(RenderingAttributes.ALWAYS);	
+			renderingAttributes.setVisible(false);
+			
 			renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
 			outlineAppearance.setRenderingAttributes(renderingAttributes);
 			outlineAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
 			outlineAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
 			outlineAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
+		}
+	}
+	
+	@Override
+	public void showOutline(boolean isSelected)
+	{
+		if(outlineModelNode != null)
+		{
+			setVisible(outlineModelNode, isSelected);
+			setStencil(filledModelNode, isSelected);
+		}
+	}
+	private void setStencil(Node node, boolean stencil)
+	{
+		if (node instanceof Group)
+		{
+			// Set visibility of all children
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
+			{
+				setStencil(enumeration.next(), stencil);
+			}
+		}
+		else if (node instanceof Link)
+		{
+			setStencil(((Link) node).getSharedGroup(), stencil);
+		}
+		else if (node instanceof Shape3D)
+		{
+			final Shape3D shape = (Shape3D) node;
+			Appearance appearance = shape.getAppearance();
+			if (appearance != null)
+			{
+				RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
+				if (renderingAttributes != null)
+				{
+					renderingAttributes.setStencilEnable(stencil);
+				}
+			}
+		}
+	}
+	private void setVisible(Node node, boolean visible)
+	{
+		if (node instanceof Group)
+		{
+			// Set visibility of all children
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			while (enumeration.hasNext())
+			{
+				setVisible(enumeration.next(), visible);
+			}
+		}
+		else if (node instanceof Link)
+		{
+			setVisible(((Link) node).getSharedGroup(), visible);
+		}
+		else if (node instanceof Shape3D)
+		{
+			final Shape3D shape = (Shape3D) node;
+			Appearance appearance = shape.getAppearance();
+			if (appearance != null)
+			{
+				RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
+				if (renderingAttributes != null)
+				{
+					renderingAttributes.setVisible(visible);
+				}
+			}
 		}
 	}
 
@@ -572,7 +659,6 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	{
 		//PJPJPJ let's get picking under way shall we?
 		node.setPickable(true);
-		//node.setCapability(Node.ENABLE_PICK_REPORTING);
 
 		if (node instanceof Group)
 		{
@@ -908,8 +994,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
 			if (renderingAttributes == null)
 			{
-				renderingAttributes = new RenderingAttributes();
-				renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+				renderingAttributes = createRenderingAttributesWithOutline();
 				appearance.setRenderingAttributes(renderingAttributes);
 			}
 
@@ -1062,11 +1147,31 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
 		return polygonAttributes;
 	}
+	
+	private RenderingAttributes createRenderingAttributesWithOutline()
+	{
+		RenderingAttributes renderingAttributes = new RenderingAttributes();
+		renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+		renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);
+		
+		//PJPJ for outlines
+		int outlineStencilMask = Object3DBranch.FURN_STENCIL_MASK;
+	      renderingAttributes.setStencilEnable(false);
+	      renderingAttributes.setStencilWriteMask(outlineStencilMask);
+	      renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
+	      renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_REPLACE, //
+					RenderingAttributes.STENCIL_REPLACE, //
+					RenderingAttributes.STENCIL_REPLACE);
+		return renderingAttributes;
+	}
 
 	private Appearance createAppearanceWithChangeCapabilities()
 	{
 		Appearance appearance = new SimpleShaderAppearance();
 		setAppearanceCapabilities(appearance);
+		//PJPJP
+		appearance.setRenderingAttributes(createRenderingAttributesWithOutline());
+	      
 		return appearance;
 	}
 

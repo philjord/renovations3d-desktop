@@ -432,5 +432,11 @@ public class Ground3D extends Object3DBranch {
     new NormalGenerator(0).generateNormals(geometryInfo);
     groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
   }
+  
+  	@Override
+	public void showOutline(boolean isSelected)
+	{
+		//Never bad idea indeed
+	}
 }
 

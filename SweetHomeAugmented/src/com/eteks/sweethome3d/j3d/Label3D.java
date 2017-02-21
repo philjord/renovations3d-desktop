@@ -240,4 +240,10 @@ public class Label3D extends Object3DBranch {
     this.texture = null;
     this.baseLineTransform = null;
   }
+  
+  	@Override
+	public void showOutline(boolean isSelected)
+	{
+		// TODO PJ outline	
+	}
 }
