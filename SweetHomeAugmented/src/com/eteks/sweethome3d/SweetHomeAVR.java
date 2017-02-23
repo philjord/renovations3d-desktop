@@ -42,6 +42,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import org.jogamp.java3d.JoglesPipeline;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 
 import com.eteks.sweethome3d.io.AutoRecoveryManager;
@@ -163,6 +164,9 @@ public class SweetHomeAVR extends HomeApplication
 		System.setProperty("j3d.defaultReadCapability", "false");
 		System.setProperty("j3d.defaultNodePickable", "false");
 		System.setProperty("j3d.defaultNodeCollidable", "false");
+		
+		
+		JoglesPipeline.LATE_RELEASE_CONTEXT = false;
 		
 		//System.setProperty("j3d.debug", "true");
 		
