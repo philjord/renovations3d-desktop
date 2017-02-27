@@ -296,7 +296,8 @@ public class Wall3D extends Object3DBranch {
 		if (wallGeometries[i].size() > 0)
 		{
 			GeometryInfo gi = GeometryMerger.mergeGeometryArray(((List<GeometryArray>) wallGeometries[i]));
-			Geometry wallGeometry = makePickable(gi.getIndexedGeometryArray(true, true, false, true, true));			
+			//new Stripifier().stripify(gi);
+			Geometry wallGeometry = makePickable(gi.getIndexedGeometryArray(true,true,true,true,true));			
 			wallFilledShapes[i].addGeometry(wallGeometry);
 			if (wallOutlineShapes[i] != null)
 			{
@@ -988,8 +989,8 @@ public class Wall3D extends Object3DBranch {
       normalGenerator.setCreaseAngle(0);
     }
     normalGenerator.generateNormals(geometryInfo);  
-
-    return makePickable(geometryInfo.getIndexedGeometryArray());
+    //new Stripifier().stripify(geometryInfo);
+    return makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
   }
 
   /**
@@ -1272,7 +1273,8 @@ public class Wall3D extends Object3DBranch {
             geometryInfo.setTextureCoordinates(0, textureCoords);
           }
           new NormalGenerator().generateNormals(geometryInfo);
-          wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray()));
+          //new Stripifier().stripify(geometryInfo);
+          wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true)));
         
           if (borderCoords.size() > 0) { 
             // Generate border geometry 
@@ -1287,7 +1289,8 @@ public class Wall3D extends Object3DBranch {
             geometryInfo.convertToIndexedTriangles();
             
             new NormalGenerator(Math.PI / 2).generateNormals(geometryInfo);
-            wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray()));
+            //new Stripifier().stripify(geometryInfo);
+            wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true)));
           }
           
           if (slopingTopCoords.size() > 0) { 
@@ -1299,7 +1302,8 @@ public class Wall3D extends Object3DBranch {
             geometryInfo.convertToIndexedTriangles();
             
             new NormalGenerator().generateNormals(geometryInfo);
-            wallTopGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray()));
+            //new Stripifier().stripify(geometryInfo);
+            wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true)));
           }          
         }
       }

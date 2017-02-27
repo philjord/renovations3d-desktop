@@ -40,6 +40,7 @@ import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.GeometryMerger;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.geometry.Stripifier;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
@@ -153,7 +154,8 @@ public class Room3D extends Object3DBranch {
 			if (gs.length > 0)
 			{
 				GeometryInfo gi = GeometryMerger.mergeGeometryArray(gs);
-				roomShape.addGeometry(gi.getIndexedGeometryArray(true, true, false, true, true));
+				//new Stripifier().stripify(gi);
+			    roomShape.addGeometry(gi.getIndexedGeometryArray(true,true,true,true,true));
 			}
     }
     for (int i = currentGeometriesCount - 1; i >= 0; i--) {
@@ -475,7 +477,8 @@ public class Room3D extends Object3DBranch {
     
     // Generate normals
     new NormalGenerator().generateNormals(geometryInfo);
-    return geometryInfo.getIndexedGeometryArray(true,true,false,true,true);
+    //new Stripifier().stripify(geometryInfo);
+    return geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
   }
 
   /**
@@ -563,7 +566,8 @@ public class Room3D extends Object3DBranch {
     
     // Generate normals
     new NormalGenerator(Math.PI / 8).generateNormals(geometryInfo);
-    return geometryInfo.getIndexedGeometryArray(true,true,false,true,true);
+    //new Stripifier().stripify(geometryInfo);
+    return geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
   }
 
   private void removeStaircasesFromArea(List<HomePieceOfFurniture> visibleStaircases, Area area) {

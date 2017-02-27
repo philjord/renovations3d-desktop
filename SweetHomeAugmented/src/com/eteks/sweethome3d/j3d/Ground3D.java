@@ -36,6 +36,7 @@ import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.geometry.Stripifier;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
@@ -378,7 +379,8 @@ public class Ground3D extends Object3DBranch {
       }
       geometryInfo.setStripCounts(stripCounts);
       new NormalGenerator(0).generateNormals(geometryInfo);
-      groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
+      //new Stripifier().stripify(geometryInfo);
+      groundShape.addGeometry(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
     }
   }
 
@@ -430,7 +432,8 @@ public class Ground3D extends Object3DBranch {
     geometryInfo.convertToIndexedTriangles();
     
     new NormalGenerator(0).generateNormals(geometryInfo);
-    groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
+    //new Stripifier().stripify(geometryInfo);
+    groundShape.addGeometry(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
   }
   
   	@Override

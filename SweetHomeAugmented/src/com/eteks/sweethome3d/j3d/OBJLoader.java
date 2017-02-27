@@ -59,6 +59,7 @@ import org.jogamp.java3d.loaders.Scene;
 import org.jogamp.java3d.loaders.SceneBase;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.geometry.Stripifier;
 import org.jogamp.java3d.utils.image.TextureLoader;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Color3f;
@@ -598,7 +599,8 @@ public class OBJLoader extends LoaderBase implements Loader
 				}
 
 				//PJPJPJ make it byref  nio
-				geometryArray = geometryInfo.getIndexedGeometryArray(true, true, false, true, true);
+				//new Stripifier().stripify(geometryInfo);
+				geometryArray = geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
 			}
 			else
 			{ // Line

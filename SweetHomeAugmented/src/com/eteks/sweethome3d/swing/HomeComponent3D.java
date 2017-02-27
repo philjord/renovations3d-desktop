@@ -126,6 +126,7 @@ import org.jogamp.java3d.TransformInterpolator;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.View;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
+import org.jogamp.java3d.utils.geometry.Stripifier;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.java3d.utils.universe.SimpleUniverse;
 import org.jogamp.java3d.utils.universe.Viewer;
@@ -2182,9 +2183,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		//PJPJPJPJ
 		geometryInfo.convertToIndexedTriangles();
 
-		geometryInfo.indexify();
-		geometryInfo.compact();
-		Geometry halfSphereGeometry = geometryInfo.getIndexedGeometryArray();
+		//geometryInfo.indexify();
+		//geometryInfo.compact();
+		//new Stripifier().stripify(geometryInfo);
+		Geometry halfSphereGeometry = geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
 		return halfSphereGeometry;
 	}
 
@@ -3279,7 +3281,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 					stripCountsArray[i] = stripCounts.get(i);
 				}
 				geometryInfo.setStripCounts(stripCountsArray);
-				shadow.addGeometry(geometryInfo.getIndexedGeometryArray());
+				shadow.addGeometry(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
 			}
 		}
 

@@ -162,7 +162,9 @@ public class DAELoader extends LoaderBase implements Loader {
    * Returns the scene described in the given DAE file.
    */
   private Scene load(InputStream in, URL baseUrl) throws FileNotFoundException {
-    try {
+    System.out.println("DAELoader in use");
+	  
+	  try {
       return parseXMLStream(in, baseUrl);
     } catch (IOException ex) {
       throw new ParsingErrorException(ex.getMessage());
