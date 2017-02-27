@@ -3644,7 +3644,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float width = doorOrWindow.getWidth();
     float x;
     if (cutOutShape != null
-        && !"M0,0 v1 h1 v-1 z".equals(cutOutShape)) {
+        && !HomeDoorOrWindow.DEFAULT_CUT_OUT_SHAPE.equals(cutOutShape)) {
       // In case of a complex cut out, compute location and width of the window hole at wall intersection
     	//PJPJPJPJ
       javaawt.Shape shape = ModelManager.getInstance().getShape(cutOutShape);

@@ -78,6 +78,7 @@
         <file path="/SweetHomeAVR/.classpath"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CollectionChangeSupport.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CatalogTexture.java"/>
+        <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.io{HomeXMLHandler.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_bg.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_pt.properties"/>
@@ -89,7 +90,6 @@
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_zh_TW.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_hu.properties"/>
-        <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{HomeXMLHandler.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_ja.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_cs.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.io{DefaultPatternTexture.java"/>
@@ -141,7 +141,6 @@
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.android_props.resources.cursors"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package.html"/>
         <javaElement handleIdentifier="=SweetHomeAVR/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.cs"/>
-        <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{HomeDoorOrWindow.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{TexturesCatalog.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_bg.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_ja.properties"/>

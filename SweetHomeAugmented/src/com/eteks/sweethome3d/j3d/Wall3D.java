@@ -55,6 +55,7 @@ import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.GeometryMerger;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
+import org.jogamp.java3d.utils.geometry.Stripifier;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3f;
@@ -65,6 +66,7 @@ import com.eteks.sweethome3d.model.Baseboard;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.DoorOrWindow;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -620,7 +622,7 @@ public class Wall3D extends Object3DBranch {
       // Compute geometry for doors or windows that have a known front area
       for (final HomePieceOfFurniture doorOrWindow : intersectingDoorOrWindows) {
         if (doorOrWindow instanceof DoorOrWindow
-            && !"M0,0 v1 h1 v-1 z".equals(((DoorOrWindow)doorOrWindow).getCutOutShape())) {
+            && !HomeDoorOrWindow.DEFAULT_CUT_OUT_SHAPE.equals(((DoorOrWindow)doorOrWindow).getCutOutShape())) {
           double angleDifference = Math.abs(wallYawAngle - doorOrWindow.getAngle()) % (2 * Math.PI);
           if (angleDifference < epsilon
               || angleDifference > 2 * Math.PI - epsilon
@@ -979,13 +981,14 @@ public class Wall3D extends Object3DBranch {
     
     //PJPJPJPJ
     geometryInfo.convertToIndexedTriangles();
-    
+       
     // Generate normals
     NormalGenerator normalGenerator = new NormalGenerator();
     if (arcCircleCenter == null) {
       normalGenerator.setCreaseAngle(0);
     }
     normalGenerator.generateNormals(geometryInfo);  
+
     return makePickable(geometryInfo.getIndexedGeometryArray());
   }
 

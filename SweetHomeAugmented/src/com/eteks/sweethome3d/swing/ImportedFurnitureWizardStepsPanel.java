@@ -98,6 +98,7 @@ import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCategory;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -666,7 +667,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.staircaseCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setStaircaseCutOutShape(staircaseCheckBox.isSelected() 
-              ? "M0,0 v1 h1 v-1 z" 
+              ? HomeDoorOrWindow.DEFAULT_CUT_OUT_SHAPE 
               : null);
         }
       });
