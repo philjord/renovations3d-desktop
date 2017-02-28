@@ -93,9 +93,13 @@ public class HomeController3D implements Controller {
   private void addModelListeners(final Home home) {
     home.addPropertyChangeListener(Home.Property.CAMERA, new PropertyChangeListener() {      
         public void propertyChange(PropertyChangeEvent ev) {
-          setCameraState(home.getCamera() == home.getTopCamera() 
-              ? topCameraState
-              : observerCameraState);
+        	//PJPJPJ allow a "no update" style camera with view of -1, for plan speed
+        	if( ((Camera)ev.getNewValue()).getFieldOfView() == -1)
+        		cameraState.exit();
+        	else        		
+		        setCameraState(home.getCamera() == home.getTopCamera() 
+		              ? topCameraState
+		              : observerCameraState);
         }
       });
     // Add listeners to adjust observer camera elevation when the elevation of the selected level  
@@ -266,7 +270,14 @@ public class HomeController3D implements Controller {
     new Home3DAttributesController(this.home, this.preferences, 
         this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());    
   }
-
+  
+  
+  /**
+   * PJPJPJ allow HomeComponent3D view to exit and enter camera states
+   */
+  public CameraControllerState getCameraState() {
+    return this.cameraState;
+  }
   /**
    * Changes current state of controller.
    */
