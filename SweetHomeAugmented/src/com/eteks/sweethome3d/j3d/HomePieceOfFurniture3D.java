@@ -583,6 +583,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		}
 	}
 	
+	
 	@Override
 	public void showOutline(boolean isSelected)
 	{
@@ -590,8 +591,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		{
 			setVisible(outlineModelNode, isSelected);
 			setStencil(filledModelNode, isSelected);
+			isShowOutline = isSelected;
 		}
 	}
+	private boolean isShowOutline = false;
+	@Override
+	public boolean isShowOutline()
+  	{
+  		return isShowOutline;
+  	}
 	private void setStencil(Node node, boolean stencil)
 	{
 		if (node instanceof Group)

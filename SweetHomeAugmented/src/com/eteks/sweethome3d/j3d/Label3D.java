@@ -245,5 +245,12 @@ public class Label3D extends Object3DBranch {
 	public void showOutline(boolean isSelected)
 	{
 		// TODO PJ outline	
+  		isShowOutline = isSelected;	 
+	}
+	private boolean isShowOutline = false;
+	@Override
+	public boolean isShowOutline()
+	{
+		return isShowOutline;
 	}
 }

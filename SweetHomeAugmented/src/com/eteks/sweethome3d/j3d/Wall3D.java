@@ -221,6 +221,13 @@ public class Wall3D extends Object3DBranch {
 			ra0.setStencilEnable(showOutline);
 		}
 
+		isShowOutline = showOutline;	 
+	}
+	private boolean isShowOutline = false;
+	@Override
+	public boolean isShowOutline()
+	{
+		return isShowOutline;
 	}
 
   @Override

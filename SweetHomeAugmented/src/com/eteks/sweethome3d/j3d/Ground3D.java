@@ -441,5 +441,10 @@ public class Ground3D extends Object3DBranch {
 	{
 		//Never bad idea indeed
 	}
+  	
+  	public boolean isShowOutline()
+  	{
+  		return false;
+  	}
 }
 

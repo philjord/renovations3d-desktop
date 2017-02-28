@@ -349,4 +349,5 @@ public abstract class Object3DBranch extends BranchGroup {
 
   //PJPJPJPJ for outlining
   public abstract void showOutline(boolean isSelected);
+  public abstract boolean isShowOutline();
 }
