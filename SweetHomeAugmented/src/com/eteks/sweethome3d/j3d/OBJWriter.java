@@ -568,40 +568,83 @@ public class OBJWriter extends FilterWriter {
 
       if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
         if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
-          float [] vertexData = geometryArray.getInterleavedVertices();
-          int vertexSize = vertexData.length / geometryArray.getVertexCount();
-          // Write vertices coordinates 
-          for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
-               index < n; index++, i += vertexSize) {
-            Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-            writeVertex(parentTransformations, vertex, index, vertexIndexSubstitutes);
-          }
-          // Write texture coordinates
-          if (texCoordGeneration != null) {
-            if (textureCoordinatesGenerated) {
-              for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
-                    index < n; index++, i += vertexSize) {
-                TexCoord2f textureCoordinates = generateTextureCoordinates(
-                    vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
-                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
-              }
-            }
-          } else if (textureCoordinatesDefined) {
-            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
-                  index < n; index++, i += vertexSize) {
-              TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
-              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
-            }
-          }
-          // Write normals
-          if (normalsDefined) {
-            for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
-                 normalsDefined && index < n; index++, i += vertexSize) {
-              Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
-                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
-            }
-          }
+        	//PJPJPJ added support for nio style
+  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+  			{
+  			// Write vertices coordinates
+  	          FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
+  	          int vertexSize = vertexData.limit() / geometryArray.getVertexCount();
+	          // Write vertices coordinates 
+	          for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+	               index < n; index++, i += vertexSize) {
+  	            Point3f vertex = new Point3f(vertexData.get(i), vertexData.get(i + 1), vertexData.get(i + 2));
+  	            writeVertex(parentTransformations, vertex, index,
+  	                vertexIndexSubstitutes);
+  	          }
+  	          // Write texture coordinates
+  	          if (texCoordGeneration != null) {
+  	            if (textureCoordinatesGenerated) {
+  	            	 for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+  		                    index < n; index++, i += vertexSize) {
+  	                TexCoord2f textureCoordinates = generateTextureCoordinates(
+  	                		vertexData.get(i), vertexData.get(i + 1), vertexData.get(i + 2), planeS, planeT);
+  	                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
+  	              }
+  	            }
+  	          } else if (textureCoordinatesDefined) {
+  	        	for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
+  	                  index < n; index++, i += vertexSize) {
+  	              TexCoord2f textureCoordinates = new TexCoord2f(vertexData.get(i), vertexData.get(i + 1));
+  	              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
+  	            }
+  	          }
+  	          // Write normals
+  	          if (normalsDefined) {
+  	        	for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
+  		                 normalsDefined && index < n; index++, i += vertexSize) {
+  	              Vector3f normal = new Vector3f(vertexData.get(i), vertexData.get(i + 1), vertexData.get(i + 2));
+  	              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
+  	                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
+  	            }
+  	          }
+  			}
+  			else
+  			{
+	          float [] vertexData = geometryArray.getInterleavedVertices();
+	          int vertexSize = vertexData.length / geometryArray.getVertexCount();
+	          // Write vertices coordinates 
+	          for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+	               index < n; index++, i += vertexSize) {
+	            Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
+	            writeVertex(parentTransformations, vertex, index, vertexIndexSubstitutes);
+	          }
+	          // Write texture coordinates
+	          if (texCoordGeneration != null) {
+	            if (textureCoordinatesGenerated) {
+	              for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+	                    index < n; index++, i += vertexSize) {
+	                TexCoord2f textureCoordinates = generateTextureCoordinates(
+	                    vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
+	                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
+	              }
+	            }
+	          } else if (textureCoordinatesDefined) {
+	            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
+	                  index < n; index++, i += vertexSize) {
+	              TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
+	              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
+	            }
+	          }
+	          // Write normals
+	          if (normalsDefined) {
+	            for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
+	                 normalsDefined && index < n; index++, i += vertexSize) {
+	              Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
+	              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
+	                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
+	            }
+	          }
+  			}
         } else {
         	//PJPJPJ added support for nio style
   			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)

@@ -881,48 +881,96 @@ public class PhotoRenderer
 				{
 					if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0)
 					{
-						float[] vertexData = geometryArray.getInterleavedVertices();
-						int vertexSize = vertexData.length / geometryArray.getVertexCount();
-						// Export vertices coordinates 
-						for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
-						{
-							Point3f vertex = new Point3f(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
-							exportVertex(parentTransformations, vertex, index, vertices);
-						}
-						// Export normals
-						if (normals != null)
-						{
-							for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
+						//PJPJPJ added support for nio style
+			  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+			  			{
+			  				// Export vertices coordinates
+							FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
+							int vertexSize = vertexData.limit() / geometryArray.getVertexCount();
+							// Export vertices coordinates 
+							for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
 							{
-								Vector3f normal = new Vector3f(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
-								exportNormal(parentTransformations, normal, index, normals, backFaceNormalFlip);
+								Point3f vertex = new Point3f(vertexData.get(i), vertexData.get(i + 1), vertexData.get(i + 2));
+								exportVertex(parentTransformations, vertex, index, vertices);
 							}
-						}
-						// Export texture coordinates
-						if (texCoordGeneration != null)
-						{
-							if (uvsGenerated)
+							// Export normals
+							if (normals != null)
 							{
-								for (int index = 0, i = vertexSize - 3, n = geometryArray
-										.getVertexCount(); index < n; index++, i += vertexSize)
+								for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
 								{
-									TexCoord2f textureCoordinates = generateTextureCoordinates(vertexData[i], vertexData[i + 1],
-											vertexData[i + 2], planeS, planeT);
+									Vector3f normal = new Vector3f(vertexData.get(i), vertexData.get(i + 1), vertexData.get(i + 2));
+									exportNormal(parentTransformations, normal, index, normals, backFaceNormalFlip);
+								}
+							}
+							// Export texture coordinates
+							if (texCoordGeneration != null)
+							{
+								if (uvsGenerated)
+								{
+									for (int index = 0, i = vertexSize - 3, n = geometryArray
+											.getVertexCount(); index < n; index++, i += vertexSize)
+									{
+										TexCoord2f textureCoordinates = generateTextureCoordinates(vertexData.get(i),
+												vertexData.get(i + 1), vertexData.get(i + 2), planeS, planeT);
+										exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
+									}
+								}
+							}
+							else if (uvs != null)
+							{
+								for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
+								{
+									TexCoord2f textureCoordinates = new TexCoord2f(vertexData.get(i), vertexData.get(i + 1));
 									exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
 								}
 							}
-						}
-						else if (uvs != null)
-						{
-							for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
+			  			}
+			  			else
+			  			{
+							float[] vertexData = geometryArray.getInterleavedVertices();
+							int vertexSize = vertexData.length / geometryArray.getVertexCount();
+							// Export vertices coordinates 
+							for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
 							{
-								TexCoord2f textureCoordinates = new TexCoord2f(vertexData[i], vertexData[i + 1]);
-								exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
+								Point3f vertex = new Point3f(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
+								exportVertex(parentTransformations, vertex, index, vertices);
 							}
-						}
+							// Export normals
+							if (normals != null)
+							{
+								for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
+								{
+									Vector3f normal = new Vector3f(vertexData[i], vertexData[i + 1], vertexData[i + 2]);
+									exportNormal(parentTransformations, normal, index, normals, backFaceNormalFlip);
+								}
+							}
+							// Export texture coordinates
+							if (texCoordGeneration != null)
+							{
+								if (uvsGenerated)
+								{
+									for (int index = 0, i = vertexSize - 3, n = geometryArray
+											.getVertexCount(); index < n; index++, i += vertexSize)
+									{
+										TexCoord2f textureCoordinates = generateTextureCoordinates(vertexData[i], vertexData[i + 1],
+												vertexData[i + 2], planeS, planeT);
+										exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
+									}
+								}
+							}
+							else if (uvs != null)
+							{
+								for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += vertexSize)
+								{
+									TexCoord2f textureCoordinates = new TexCoord2f(vertexData[i], vertexData[i + 1]);
+									exportTextureCoordinates(textureCoordinates, textureTransform, index, uvs);
+								}
+							}
+			  			}
 					}
 					else
-					{//PJPJPJ added support for nio style
+					{
+						//PJPJPJ added support for nio style
 			  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
 			  			{
 			  				// Export vertices coordinates

@@ -363,14 +363,30 @@ public class ModelManager {
         Point3f vertex = new Point3f();
         if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
           if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
-            float [] vertexData = geometryArray.getInterleavedVertices();
-            int vertexSize = vertexData.length / vertexCount;
-            for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
-              vertex.x = vertexData [j];
-              vertex.y = vertexData [j + 1];
-              vertex.z = vertexData [j + 2];
-              updateBounds(vertex, transformation, lower, upper);
-            }
+            
+        	//PJPJPJ added support for nio style
+    			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+    			{
+    				FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
+		          int vertexSize = vertexData.limit() / vertexCount;
+		          for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
+		            vertex.x = vertexData.get(j);
+		            vertex.y = vertexData.get(j + 1);
+		            vertex.z = vertexData.get(j + 2);
+		            updateBounds(vertex, transformation, lower, upper);
+		          }
+    			}
+    			else
+    			{
+    				float [] vertexData = geometryArray.getInterleavedVertices();
+		            int vertexSize = vertexData.length / vertexCount;
+		            for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
+		              vertex.x = vertexData [j];
+		              vertex.y = vertexData [j + 1];
+		              vertex.z = vertexData [j + 2];
+		              updateBounds(vertex, transformation, lower, upper);
+		            }
+		          }
           } else {
         	//PJPJPJ added support for nio style
   			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
@@ -1556,16 +1572,32 @@ public class ModelManager {
             Point3f vertex = new Point3f();
             if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
               if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
-                float [] vertexData = geometryArray.getInterleavedVertices();
-                int vertexSize = vertexData.length / vertexCount;
-                // Store vertices coordinates 
-                for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
-                  vertex.x = vertexData [j];
-                  vertex.y = vertexData [j + 1];
-                  vertex.z = vertexData [j + 2];
-                  parentTransformations.transform(vertex);
-                  vertices.add(new float [] {vertex.x, vertex.z});
-                }
+            	//PJPJPJ added support for nio style
+      			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
+      			{
+      				FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
+  		          int vertexSize = vertexData.limit() / vertexCount;
+  		          for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
+  		            vertex.x = vertexData.get(j);
+  		            vertex.y = vertexData.get(j + 1);
+  		            vertex.z = vertexData.get(j + 2);
+  		            parentTransformations.transform(vertex);
+	                  	vertices.add(new float [] {vertex.x, vertex.z});
+  		          }
+      			}
+      			else
+      			{
+      				float [] vertexData = geometryArray.getInterleavedVertices();
+	                int vertexSize = vertexData.length / vertexCount;
+	                // Store vertices coordinates 
+	                for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
+	                  vertex.x = vertexData [j];
+	                  vertex.y = vertexData [j + 1];
+	                  vertex.z = vertexData [j + 2];
+	                  parentTransformations.transform(vertex);
+	                  vertices.add(new float [] {vertex.x, vertex.z});
+	                }
+      			}
               } else {
             	//PJPJPJ added support for nio style
     			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
