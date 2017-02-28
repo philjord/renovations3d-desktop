@@ -86,7 +86,7 @@ public abstract class MouseOverHandler
 		{
 			pickCanvas = new PickCanvas(canvas3D, locale);
 			pickCanvas.setMode(PickInfo.PICK_GEOMETRY);
-			pickCanvas.setTolerance(1.0f);
+			pickCanvas.setTolerance(0.0f);// mkae sure it's a ray not a cone
 
 			canvas3D.getGLWindow().addMouseListener(mouseAdapter);
 			//System.out.println("MouseOverHandler setconfig " + this);
