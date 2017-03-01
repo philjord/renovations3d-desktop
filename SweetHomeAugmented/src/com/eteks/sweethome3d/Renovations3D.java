@@ -119,7 +119,7 @@ import javaawt.imageio.VMImageIO;
  * <a href="http://download.oracle.com/javase/6/docs/technotes/tools/windows/java.html">java</a> option.
  * @author Emmanuel Puybaret
  */
-public class SweetHomeAVR extends HomeApplication
+public class Renovations3D extends HomeApplication
 {
 	private static final String PREFERENCES_FOLDER = "com.eteks.sweethome3d.preferencesFolder";
 	private static final String APPLICATION_FOLDERS = "com.eteks.sweethome3d.applicationFolders";
@@ -140,7 +140,7 @@ public class SweetHomeAVR extends HomeApplication
 	 * manager, view factory and plug-in manager handled by this application are
 	 * lazily instantiated to let subclasses override their creation.
 	 */
-	protected SweetHomeAVR()
+	protected Renovations3D()
 	{
 		this.homeFrameControllers = new HashMap<Home, HomeFrameController>();
 	}
@@ -172,7 +172,7 @@ public class SweetHomeAVR extends HomeApplication
 		
 		SimpleShaderAppearance.setVersionES100();
 		
-		new SweetHomeAVR().init(args);
+		new Renovations3D().init(args);
 	}
 
 	/**
@@ -349,7 +349,7 @@ public class SweetHomeAVR extends HomeApplication
 		{
 			try
 			{
-				return getUserPreferences().getLocalizedString(SweetHomeAVR.class, "applicationId");
+				return getUserPreferences().getLocalizedString(Renovations3D.class, "applicationId");
 			}
 			catch (IllegalArgumentException ex)
 			{
@@ -364,7 +364,7 @@ public class SweetHomeAVR extends HomeApplication
 	@Override
 	public String getName()
 	{
-		return getUserPreferences().getLocalizedString(SweetHomeAVR.class, "applicationName");
+		return getUserPreferences().getLocalizedString(Renovations3D.class, "applicationName");
 	}
 
 	/**
@@ -380,7 +380,7 @@ public class SweetHomeAVR extends HomeApplication
 		}
 		else
 		{
-			return getUserPreferences().getLocalizedString(SweetHomeAVR.class, "applicationVersion");
+			return getUserPreferences().getLocalizedString(Renovations3D.class, "applicationVersion");
 		}
 	}
 
@@ -418,7 +418,7 @@ public class SweetHomeAVR extends HomeApplication
 	{
 		initSystemProperties();
 
-		SwingTools.showSplashScreenWindow(SweetHomeAVR.class.getResource("resources/splashScreen.jpg"));
+		SwingTools.showSplashScreenWindow(Renovations3D.class.getResource("resources/splashScreen.jpg"));
 
 		// Add a listener that opens a frame when a home is added to application
 		addHomesListener(new CollectionListener<Home>() {
@@ -509,7 +509,7 @@ public class SweetHomeAVR extends HomeApplication
 			@Override
 			public void run()
 			{
-				SweetHomeAVR.this.start(args);
+				Renovations3D.this.start(args);
 			}
 		});
 	}
@@ -695,8 +695,8 @@ public class SweetHomeAVR extends HomeApplication
 	private void show3DError()
 	{
 		UserPreferences userPreferences = getUserPreferences();
-		String message = userPreferences.getLocalizedString(SweetHomeAVR.class, "3DError.message");
-		String title = userPreferences.getLocalizedString(SweetHomeAVR.class, "3DError.title");
+		String message = userPreferences.getLocalizedString(Renovations3D.class, "3DError.message");
+		String title = userPreferences.getLocalizedString(Renovations3D.class, "3DError.title");
 		JOptionPane.showMessageDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), message, title,
 				JOptionPane.ERROR_MESSAGE);
 	}
@@ -709,10 +709,10 @@ public class SweetHomeAVR extends HomeApplication
 	private boolean confirmSaveAfter3DError()
 	{
 		UserPreferences userPreferences = getUserPreferences();
-		String message = userPreferences.getLocalizedString(SweetHomeAVR.class, "confirmSaveAfter3DError.message");
-		String title = userPreferences.getLocalizedString(SweetHomeAVR.class, "confirmSaveAfter3DError.title");
-		String save = userPreferences.getLocalizedString(SweetHomeAVR.class, "confirmSaveAfter3DError.save");
-		String doNotSave = userPreferences.getLocalizedString(SweetHomeAVR.class, "confirmSaveAfter3DError.doNotSave");
+		String message = userPreferences.getLocalizedString(Renovations3D.class, "confirmSaveAfter3DError.message");
+		String title = userPreferences.getLocalizedString(Renovations3D.class, "confirmSaveAfter3DError.title");
+		String save = userPreferences.getLocalizedString(Renovations3D.class, "confirmSaveAfter3DError.save");
+		String doNotSave = userPreferences.getLocalizedString(Renovations3D.class, "confirmSaveAfter3DError.doNotSave");
 
 		return JOptionPane.showOptionDialog(KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow(), message, title,
 				JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null, new Object[] { save, doNotSave },
@@ -894,9 +894,9 @@ public class SweetHomeAVR extends HomeApplication
 		private static final String LAST_DIRECTORY = "lastDirectory#";
 		private static final String LAST_DEFAULT_DIRECTORY = "lastDefaultDirectory";
 
-		private final Class<? extends SweetHomeAVR> mainClass;
+		private final Class<? extends Renovations3D> mainClass;
 
-		public FileContentManagerWithRecordedLastDirectories(UserPreferences preferences, Class<? extends SweetHomeAVR> mainClass)
+		public FileContentManagerWithRecordedLastDirectories(UserPreferences preferences, Class<? extends Renovations3D> mainClass)
 		{
 			super(preferences);
 			this.mainClass = mainClass;

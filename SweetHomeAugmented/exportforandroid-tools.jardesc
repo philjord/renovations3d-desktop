@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1" standalone="no"?>
 <jardesc>
-    <jar path="C:/Users/phil/AndroidStudioProjects/sweethomeavr-android/app/libs/sweethome3D-tools.jar"/>
-    <options buildIfNeeded="true" compress="true" descriptionLocation="/SweetHomeAVR/exportforandroid-tools.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
+    <jar path="C:/Users/phil/AndroidStudioProjects/renovations3d-android/app/libs/sweethome3D-tools.jar"/>
+    <options buildIfNeeded="true" compress="true" descriptionLocation="/Renovations3DDesktop/exportforandroid-tools.jardesc" exportErrors="true" exportWarnings="true" includeDirectoryEntries="false" overwrite="true" saveDescription="true" storeRefactorings="false" useSourceFolders="false"/>
     <storedRefactorings deprecationInfo="true" structuralOnly="false"/>
     <selectedProjects/>
     <manifest generateManifest="true" manifestLocation="/ElderScrollsExplorer/META-INF/MANIFEST.MF" manifestVersion="1.0" reuseManifest="false" saveManifest="false" usesManifest="true">
