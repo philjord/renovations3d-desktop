@@ -494,7 +494,8 @@ public class HomeController3D implements Controller {
      */
     public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
       this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
-      updateCameraFromHomeBounds(false);
+      if(this.topCamera != null)//PJPJ this throws an exception if we are not currently entered into this state
+    	  updateCameraFromHomeBounds(false);
     }
     
     /**

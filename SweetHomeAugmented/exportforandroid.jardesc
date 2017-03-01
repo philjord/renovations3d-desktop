@@ -24,6 +24,7 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/tools/package.html"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog_pl.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_pt.properties"/>
+        <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.android_props.resources"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultUserPreferences_de.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{UserPreferences.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_sv.properties"/>
@@ -72,6 +73,7 @@
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.viewcontroller.resources.help.zh_CN"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CollectionChangeSupport.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.model{CatalogTexture.java"/>
+        <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.android_props.resources.cursors"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_bg.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_pt.properties"/>

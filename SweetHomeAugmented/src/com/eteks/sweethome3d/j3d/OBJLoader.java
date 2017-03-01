@@ -625,10 +625,10 @@ public class OBJLoader extends LoaderBase implements Loader
 				}
 			}
 
-			// Clone appearance to avoid sharing it PJPJ why?
+			// Clone appearance to avoid sharing it
 			if (appearance != null)
 			{
-				//appearance = (Appearance) appearance.cloneNodeComponent(false);
+				appearance = (Appearance) appearance.cloneNodeComponent(false);// PJPJ why?
 				// Create texture coordinates if geometry doesn't define its own coordinates 
 				// and appearance contains a texture 
 				if (!firstGeometryHasTextureCoordinateIndices && appearance.getTexture() != null)
