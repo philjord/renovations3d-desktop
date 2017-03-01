@@ -38,14 +38,11 @@ import java.util.WeakHashMap;
 
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.ColoringAttributes;
 import org.jogamp.java3d.Geometry;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
 import org.jogamp.java3d.IndexedGeometryArray;
-import org.jogamp.java3d.LineAttributes;
 import org.jogamp.java3d.Node;
-import org.jogamp.java3d.PolygonAttributes;
 import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.Texture;
@@ -55,9 +52,7 @@ import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.GeometryInfo;
 import org.jogamp.java3d.utils.geometry.GeometryMerger;
 import org.jogamp.java3d.utils.geometry.NormalGenerator;
-import org.jogamp.java3d.utils.geometry.Stripifier;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
-import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
 import org.jogamp.vecmath.Vector3f;
@@ -110,6 +105,7 @@ public class Wall3D extends Object3DBranch {
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);
     
     setPickable(true);
+    setCapability(Node.ALLOW_PICKABLE_WRITE);
     setCapability(Node.ENABLE_PICK_REPORTING);
      
     //PJPJPJ make an outline
@@ -187,8 +183,7 @@ public class Wall3D extends Object3DBranch {
       renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
       renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_REPLACE, //
 				RenderingAttributes.STENCIL_REPLACE, //
-				RenderingAttributes.STENCIL_REPLACE);
-      
+				RenderingAttributes.STENCIL_REPLACE);      
     }
     
     

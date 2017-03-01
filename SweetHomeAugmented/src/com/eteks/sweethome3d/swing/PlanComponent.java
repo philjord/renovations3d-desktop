@@ -2942,6 +2942,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                      Color foregroundColor, PaintMode paintMode) {
     g2D.setPaint(foregroundColor);
     Font previousFont = g2D.getFont();
+    if(this.sortedLevelRooms != null )//PJ why can this be null
     for (Room room : this.sortedLevelRooms) { 
       boolean selectedRoom = selectedItems.contains(room);
       // In clipboard paint mode, paint room only if it is selected
@@ -3539,8 +3540,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                               List<? extends Selectable> selectedItems, float planScale, 
                               Color backgroundColor, Color foregroundColor, 
                               Color furnitureOutlineColor,
-                              PaintMode paintMode, boolean paintIcon) {    
-    if (!furniture.isEmpty()) {
+                              PaintMode paintMode, boolean paintIcon) {
+	  //PJPJP note sure why furniture can be null here
+    if (furniture !=null && !furniture.isEmpty()) {
       BasicStroke pieceBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, paintMode) / planScale);
       Boolean allFurnitureViewedFromTop = null;
       // Draw furniture
@@ -3719,6 +3721,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     Font previousFont = g2D.getFont();
     g2D.setPaint(foregroundColor);
     // Draw furniture name
+    if(furniture != null)//PJ how can this be null?
     for (HomePieceOfFurniture piece : furniture) {
       if (piece.isVisible()) {
         boolean selectedPiece = selectedItems.contains(piece);

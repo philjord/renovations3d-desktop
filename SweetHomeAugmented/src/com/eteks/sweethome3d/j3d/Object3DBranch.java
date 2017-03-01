@@ -52,6 +52,8 @@ import com.eteks.sweethome3d.model.Room;
 public abstract class Object3DBranch extends BranchGroup {
 	public static final int WALL_STENCIL_MASK = 1<<1;
 	public static final int FURN_STENCIL_MASK = 1<<2;
+	public static final int ROOM_STENCIL_MASK = 1<<3;
+	
 	public static int OUTLINE_WIDTH = 10;
 	public static Color3f OUTLINE_COLOR = new Color3f(1f,0.9f,0f);
   // The coloring attributes used for drawing outline 

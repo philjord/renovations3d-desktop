@@ -124,6 +124,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 
 		// allow furniture picking
 		setPickable(true);
+		setCapability(Node.ALLOW_PICKABLE_WRITE);
 		setCapability(Node.ENABLE_PICK_REPORTING);
 		
 		createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
@@ -382,9 +383,14 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		}
 		// Update visibility of filled model shapes
 		boolean visible = piece.isVisible() && (piece.getLevel() == null || piece.getLevel().isViewableAndVisible());
+		
+		//PJPJPJ only allow picking if we can see the object 
+		  setPickable(visible);
+		  
 		HomeMaterial[] materials = piece.getColor() == null && piece.getTexture() == null ? piece.getModelMaterials() : null;
 		setVisible(getFilledModelNode(), visible && (drawingMode == null || drawingMode == HomeEnvironment.DrawingMode.FILL
 				|| drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE), materials);
+			
 		if (outlineModelNode != null)
 		{
 			// Update visibility of outline model shapes
