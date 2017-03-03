@@ -391,13 +391,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		setVisible(getFilledModelNode(), visible && (drawingMode == null || drawingMode == HomeEnvironment.DrawingMode.FILL
 				|| drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE), materials);
 			
-		if (outlineModelNode != null)
-		{
-			// Update visibility of outline model shapes
-			setVisible(outlineModelNode, visible
-					&& (drawingMode == HomeEnvironment.DrawingMode.OUTLINE || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE),
-					materials);
-		}
+		//note outlineModel visibility only set on showoutline
 	}
 
 	/**
@@ -592,7 +586,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	
 	@Override
 	public void showOutline(boolean isSelected)
-	{
+	{		
 		if(outlineModelNode != null)
 		{
 			setVisible(outlineModelNode, isSelected);
