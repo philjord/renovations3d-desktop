@@ -606,7 +606,7 @@ public class ModelPreviewComponent extends JComponent {
    */
   public void setBackground(Color backgroundColor) {
     super.setBackground(backgroundColor);
-    ((Background)this.sceneTree.getChild(1)).setColor(new Color3f(backgroundColor.getRed(),backgroundColor.getGreen(),backgroundColor.getBlue()));
+    ((Background)this.sceneTree.getChild(1)).setColor(new Color3f(backgroundColor.getRed() / 255f,backgroundColor.getGreen() / 255f,backgroundColor.getBlue() / 255f));
   }
   
   /**

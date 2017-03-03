@@ -2187,6 +2187,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		//geometryInfo.compact();
 		//new Stripifier().stripify(geometryInfo);
 		Geometry halfSphereGeometry = geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
+		halfSphereGeometry.setName("Sky");
 		return halfSphereGeometry;
 	}
 
@@ -2196,7 +2197,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	private void updateBackgroundColorAndTexture(final Appearance backgroundAppearance, Home home, boolean waitForLoading)
 	{
 		Color c = new Color(home.getEnvironment().getSkyColor());
-		Color3f skyColor = new Color3f(c.getRed(), c.getGreen(), c.getBlue());
+		Color3f skyColor = new Color3f(c.getRed() / 255f, c.getGreen() / 255f, c.getBlue() / 255f);
 		backgroundAppearance.getColoringAttributes().setColor(skyColor);
 		HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
 		if (skyTexture != null)
