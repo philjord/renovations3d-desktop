@@ -177,6 +177,9 @@ public class Wall3D extends Object3DBranch {
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
 
+      
+      ((SimpleShaderAppearance)wallAppearance).setUpdatableCapabilities();
+      
       //PJPJ for outlines
       renderingAttributes.setStencilEnable(false);
       renderingAttributes.setStencilWriteMask(outlineStencilMask);

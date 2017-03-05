@@ -153,6 +153,8 @@ public class Room3D extends Object3DBranch {
 		    roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
 		    roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
 		    
+		    ((SimpleShaderAppearance)roomAppearance).setUpdatableCapabilities();
+		    
 		    //PJPJ only floor contributes to stenciling
 		    if(part == FLOOR_PART)
 		    {

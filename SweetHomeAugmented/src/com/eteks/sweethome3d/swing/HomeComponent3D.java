@@ -2067,13 +2067,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	 */
 	private Node createBackgroundNode(boolean listenToHomeUpdates, final boolean waitForLoading)
 	{
-		final Appearance backgroundAppearance = new SimpleShaderAppearance();
+		final SimpleShaderAppearance backgroundAppearance = new SimpleShaderAppearance();
 		ColoringAttributes backgroundColoringAttributes = new ColoringAttributes();
 		backgroundAppearance.setColoringAttributes(backgroundColoringAttributes);
 		// Allow background color and texture to change
 		backgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
 		backgroundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
 		backgroundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
+		//PJPJPJPJ allow updatable shader building
+		backgroundAppearance.setUpdatableCapabilities();
 
 		Geometry halfSphereGeometry = createHalfSphereGeometry(true);
 		final Shape3D halfSphere = new Shape3D(halfSphereGeometry, backgroundAppearance);
@@ -2081,12 +2083,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		BranchGroup backgroundBranch = new BranchGroup();
 		backgroundBranch.setName("backgroundBranch");
 		backgroundBranch.addChild(halfSphere);
-		backgroundBranch.addChild(new Shape3D(createHalfSphereGeometry(false)));
+		//PJPJP what the hell was this no appearance shape doing exactly?
+		//backgroundBranch.addChild(new Shape3D(createHalfSphereGeometry(false)));
 
 		final Background background = new Background(backgroundBranch);
 		updateBackgroundColorAndTexture(backgroundAppearance, this.home, waitForLoading);
 		background.setImageScaleMode(Background.SCALE_FIT_ALL);
-		background.setApplicationBounds(new BoundingBox(new Point3d(-1E7, -1E7, -1E7), new Point3d(1E7, 1E7, 1E7)));
+		//PJPJ used an isInfinite version
+		background.setApplicationBounds(new BoundingSphere(new Point3d(0,0,0), Double.POSITIVE_INFINITY));
 
 		if (listenToHomeUpdates)
 		{

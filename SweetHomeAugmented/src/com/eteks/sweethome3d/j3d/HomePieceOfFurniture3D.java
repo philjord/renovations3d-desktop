@@ -97,6 +97,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	{
 		DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
 		NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
+		
+		//PJPJPJ for simpleshader builder
+		DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_MODE_READ);
+		NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_MODE_READ);
 	}
 
 	/**
@@ -1153,6 +1157,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
 		polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_READ);
 		polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
+		
+		//PJPJPJ for simpleshader builder
+		polygonAttributes.setCapability(PolygonAttributes.ALLOW_MODE_READ);
+		
 		return polygonAttributes;
 	}
 	
@@ -1213,6 +1221,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_READ);
 			polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_WRITE);
 		}
+		
+		((SimpleShaderAppearance)appearance).setUpdatableCapabilities();
+		
 	}
 
 	private void setGeometryCapabilities(Geometry geometry)
