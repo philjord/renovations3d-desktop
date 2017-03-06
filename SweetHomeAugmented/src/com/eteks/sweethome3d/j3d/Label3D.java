@@ -32,7 +32,9 @@ import org.jogamp.java3d.TransformGroup;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.Box;
 import org.jogamp.java3d.utils.image.TextureLoader;
+import org.jogamp.java3d.utils.shader.Cube;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
+import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Vector3d;
 import org.jogamp.vecmath.Vector4f;
 
@@ -40,7 +42,11 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.TextStyle;
 
+import javaawt.Color;
+import javaawt.Font;
 import javaawt.Graphics2D;
+import javaawt.RenderingHints;
+import javaawt.geom.AffineTransform;
 import javaawt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
 
@@ -57,6 +63,8 @@ public class Label3D extends Object3DBranch {
   
   static {
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
+    
+    DEFAULT_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_MODE_READ);
   }
 
   private String      text;
@@ -88,19 +96,17 @@ public class Label3D extends Object3DBranch {
             || label.getLevel().isViewableAndVisible())) {
       String text = label.getText();
       Integer color = label.getColor();
-      Integer outlineColor = label.getOutlineColor();
+//      Integer outlineColor = label.getOutlineColor();
       if (!text.equals(this.text)
           || (style == null && this.style != null)
           || (style != null && !style.equals(this.style))
           || (color == null && this.color != null)
           || (color != null && !color.equals(this.color))) {
         // If text, style and color changed, recompute label texture  
-    	  //PJPJPJ fonts are a problem but possible
     	 // TextPaint mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
          // mTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
          // mTextPaint.setTextSize(defaultTextSize);
-         // FontMetrics fm  = mTextPaint.getFontMetrics();
-          
+         // FontMetrics fm = mTextPaint.getFontMetrics();          
           
 //        int fontStyle = Font.PLAIN;
 //        if (style.isBold()) {
@@ -121,14 +127,27 @@ public class Label3D extends Object3DBranch {
         BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();
 //        FontMetrics fontMetrics = g2D.getFontMetrics(font);
-//        g2D.dispose();
+        Font font = g2D.getFont();// we get the system default font 
+        font.setSize((int) style.getFontSize());
+        g2D.dispose();
         
-        Rectangle2D textBounds = new Rectangle2D.Float(0,0,50,50);//fontMetrics.getStringBounds(text, g2D);
-        float textWidth = (float)textBounds.getWidth() + 2 * 1;//stroke.getLineWidth();
+        //Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
+        Rectangle2D textBounds = font.getStringBounds(text); 
+        //PJPJ on desktop the return should be say height +15, y -12
+        // on android this is returned as height -18, y +4, I'm not sure why
+        // so if we see android style swap to desktop style so the maths below is right
+        if (textBounds.getHeight() < 0)
+        {
+        	textBounds = new Rectangle2D.Float((float) textBounds.getX(),(float) (textBounds.getY()+textBounds.getHeight()), 
+        			(float) textBounds.getWidth(), (float) -textBounds.getHeight());
+        }
+        
+        
+        float textWidth = (float)textBounds.getWidth();// stroke width is generally 0 -> + 2 * stroke.getLineWidth();
 //        if (style.isItalic()) {
-//          textWidth += fontMetrics.getAscent() * 0.2;
-//        }
-        float textHeight = (float)textBounds.getHeight() + 2 * 1;//stroke.getLineWidth();
+ //         textWidth += fontMetrics.getAscent() * 0.2;
+ //       }
+        float textHeight = (float)textBounds.getHeight(); // stroke width is generally 0 -> + 2 * stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
         int width;
         int height;
@@ -148,25 +167,32 @@ public class Label3D extends Object3DBranch {
           // Draw text in an image
           BufferedImage textureImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);        
           g2D = (Graphics2D)textureImage.getGraphics();
-          //PJPJPJPJP
-//          g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-//          g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-//          g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-//          g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
-//          g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
-//          if (outlineColor != null) {
-//            g2D.setColor(new Color(outlineColor));
-//            g2D.setStroke(stroke);
-//            TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
-//            g2D.draw(textLayout.getOutline(null));
-//          }
-//          g2D.setFont(font);
-//          g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
+          g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+          g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+          // PJ affines are used as save/restore points in android g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
+          g2D.scale(scale, scale);
+          // stroke width is generally 0 -> g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
+          g2D.translate(0, -(float)(textBounds.getY()));
+          
+         /* if (outlineColor != null) {
+            g2D.setColor(new Color(outlineColor));
+            g2D.setStroke(stroke);
+            TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
+            g2D.draw(textLayout.getOutline(null));
+          }*/
+          
+          g2D.setFont(font);
+          //g2D.setColor(color != null ?  new Color(color) : new Color(0xff000000));//UIManager.getColor("TextField.foreground"));
+          //FIXME: my bit shifting on the setColor above is wrong somehow?, but setPaint gets it right
+          g2D.setPaint(color != null ?  new Color(color) : new Color(0xff000000));
+          
           g2D.drawString(text, 0f, 0f);
           g2D.dispose();
-  
+          
           Transform3D scaleTransform = new Transform3D();
           scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));
+          System.out.println("Scale applied  == "+new Vector3d(textWidth, 1, textHeight));
           // Move to the middle of base line
           this.baseLineTransform = new Transform3D();
           this.baseLineTransform.setTranslation(new Vector3d(0, 0, textHeight / 2 + textBounds.getY()));
@@ -192,7 +218,8 @@ public class Label3D extends Object3DBranch {
           transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
           group.addChild(transformGroup);
   
-          Appearance appearance = new SimpleShaderAppearance();
+          SimpleShaderAppearance appearance = new SimpleShaderAppearance();
+          appearance.setUpdatableCapabilities();
           appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
           appearance.setPolygonAttributes(DEFAULT_POLYGON_ATTRIBUTES);
           appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
@@ -200,12 +227,11 @@ public class Label3D extends Object3DBranch {
           appearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
               TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
           appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-  
           Box box = new Box(0.5f, 0f, 0.5f, appearance);
           Shape3D shape = box.getShape(Box.TOP);
+          shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
           box.removeChild(shape);
-          transformGroup.addChild(shape);
-          
+          transformGroup.addChild(shape);          
           addChild(group);
         }
         
@@ -222,7 +248,8 @@ public class Label3D extends Object3DBranch {
         transform.setTranslation(new Vector3d(label.getX(), label.getGroundElevation(), label.getY()));
         transform.mul(rotationY);
         transformGroup.setTransform(transform);
-        ((Shape3D)transformGroup.getChild(0)).getAppearance().setTexture(this.texture);
+        ((Shape3D)transformGroup.getChild(0)).getAppearance().setTexture(this.texture);        
+        
       }
     } else {
       clear();
