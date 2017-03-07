@@ -2051,7 +2051,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		// Build scene tree
 		root.addChild(createHomeTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
 		root.addChild(createBackgroundNode(listenToHomeUpdates, waitForLoading));
-		Node groundNode = createGroundNode(-0.5E7f, -0.5E7f, 1E7f, 1E7f, listenToHomeUpdates, waitForLoading);
+		//PJPJP dropped to 1 million meters no visual change, android goes down to 100km but a slight gaps shows
+		Node groundNode = createGroundNode(-0.5E6f, -0.5E6f, 1E6f, 1E6f, listenToHomeUpdates, waitForLoading);
 		root.addChild(groundNode);
 
 		this.defaultLights = createLights(groundNode, listenToHomeUpdates);
