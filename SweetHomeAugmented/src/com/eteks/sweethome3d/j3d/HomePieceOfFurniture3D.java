@@ -86,9 +86,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	private static final TransparencyAttributes DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES = new TransparencyAttributes(
 			TransparencyAttributes.NICEST, 0);
 	private static final PolygonAttributes DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = new PolygonAttributes(PolygonAttributes.POLYGON_FILL,
-			PolygonAttributes.CULL_NONE, 0, false);
+			PolygonAttributes.CULL_FRONT, 0, false);
 	private static final PolygonAttributes NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = new PolygonAttributes(
-			PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, true);
+			PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_BACK, 0, true);
 	private static final Bounds DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), Double.POSITIVE_INFINITY);
 
 	private final Home home;
