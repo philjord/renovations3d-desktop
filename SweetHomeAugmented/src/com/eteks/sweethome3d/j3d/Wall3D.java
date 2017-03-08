@@ -186,7 +186,9 @@ public class Wall3D extends Object3DBranch {
       renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
       renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_REPLACE, //
 				RenderingAttributes.STENCIL_REPLACE, //
-				RenderingAttributes.STENCIL_REPLACE);      
+				RenderingAttributes.STENCIL_REPLACE); 
+      
+      renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);
     }
     
     
@@ -198,7 +200,7 @@ public class Wall3D extends Object3DBranch {
     wallAppearance.setTransparencyAttributes(transparencyAttributes);
     wallAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
     renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-    renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);
+
     
     wallAppearance.setRenderingAttributes(renderingAttributes);
     return wallShape;
@@ -327,25 +329,6 @@ public class Wall3D extends Object3DBranch {
     }
   }
   
-	private static Geometry makePickable(Geometry geometry)
-	{		 
-		if (geometry != null)
-		{
-			// set up for geometry picking
-			if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)
-			{
-				geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-				geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
-				geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
-				geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-				if (geometry instanceof IndexedGeometryArray)
-					geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-
-				geometry.setCapability(Geometry.ALLOW_INTERSECT);
-			}
-		}
-		return geometry;
-	}
   
   /**
    * Creates <code>wall</code> or baseboard geometries computed with windows or doors 

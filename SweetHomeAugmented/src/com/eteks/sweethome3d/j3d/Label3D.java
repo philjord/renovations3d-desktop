@@ -22,7 +22,10 @@ package com.eteks.sweethome3d.j3d;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.Group;
+import org.jogamp.java3d.Node;
+import org.jogamp.java3d.OrderedGroup;
 import org.jogamp.java3d.PolygonAttributes;
+import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.TexCoordGeneration;
 import org.jogamp.java3d.Texture;
@@ -32,9 +35,7 @@ import org.jogamp.java3d.TransformGroup;
 import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.Box;
 import org.jogamp.java3d.utils.image.TextureLoader;
-import org.jogamp.java3d.utils.shader.Cube;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
-import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Vector3d;
 import org.jogamp.vecmath.Vector4f;
 
@@ -46,7 +47,6 @@ import javaawt.Color;
 import javaawt.Font;
 import javaawt.Graphics2D;
 import javaawt.RenderingHints;
-import javaawt.geom.AffineTransform;
 import javaawt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
 
@@ -83,6 +83,11 @@ public class Label3D extends Object3DBranch {
     setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
     
     update();
+    
+    //selection
+    setPickable(true);
+    setCapability(Node.ENABLE_PICK_REPORTING);
+    setUserData(label);
   }
 
   @Override
@@ -191,8 +196,7 @@ public class Label3D extends Object3DBranch {
           g2D.dispose();
           
           Transform3D scaleTransform = new Transform3D();
-          scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));
-          System.out.println("Scale applied  == "+new Vector3d(textWidth, 1, textHeight));
+          scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));          
           // Move to the middle of base line
           this.baseLineTransform = new Transform3D();
           this.baseLineTransform.setTranslation(new Vector3d(0, 0, textHeight / 2 + textBounds.getY()));
@@ -212,12 +216,16 @@ public class Label3D extends Object3DBranch {
           group.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
           group.setCapability(BranchGroup.ALLOW_DETACH);
           
+          group.setPickable(true);
+          
           TransformGroup transformGroup = new TransformGroup();
           // Allow the change of the transformation that sets label size, position and orientation
           transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
           transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
           group.addChild(transformGroup);
   
+          transformGroup.setPickable(true);
+          
           SimpleShaderAppearance appearance = new SimpleShaderAppearance();
           appearance.setUpdatableCapabilities();
           appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
@@ -229,10 +237,59 @@ public class Label3D extends Object3DBranch {
           appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
           Box box = new Box(0.5f, 0f, 0.5f, appearance);
           Shape3D shape = box.getShape(Box.TOP);
-          shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-          box.removeChild(shape);
-          transformGroup.addChild(shape);          
+          box.removeChild(shape);         
+          makePickable(shape); //PJPJP for selection
+          shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ); 
+         
+          
+          // base shape outlining
+          int outlineStencilMask = Object3DBranch.LABEL_STENCIL_MASK;
+          RenderingAttributes renderingAttributes = new RenderingAttributes();
+          renderingAttributes.setStencilEnable(false);
+          renderingAttributes.setStencilWriteMask(outlineStencilMask);
+          renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
+          renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_REPLACE, //
+    				RenderingAttributes.STENCIL_REPLACE, //
+    				RenderingAttributes.STENCIL_REPLACE);     
+          renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);          
+          appearance.setRenderingAttributes(renderingAttributes);
+          appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+          
+          //Outlining                    
+          RenderingAttributes olRenderingAttributes = new RenderingAttributes();          
+          SimpleShaderAppearance outlineAppearance = new SimpleShaderAppearance(Object3DBranch.OUTLINE_COLOR);// special non auto build version for outlining
+          outlineAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+          
+          outlineAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
+          outlineAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
+          outlineAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
+          
+          outlineAppearance.setTransparencyAttributes(DEFAULT_TRANSPARENCY_ATTRIBUTES);//put it in the transparent pass
+          olRenderingAttributes.setStencilEnable(true);
+          olRenderingAttributes.setStencilWriteMask(outlineStencilMask);
+          olRenderingAttributes.setStencilFunction(RenderingAttributes.NOT_EQUAL, outlineStencilMask, outlineStencilMask);
+          olRenderingAttributes.setStencilOp(RenderingAttributes.STENCIL_KEEP, //
+    				RenderingAttributes.STENCIL_KEEP, //
+    				RenderingAttributes.STENCIL_KEEP);
+    		//geoms often have colors in verts
+          olRenderingAttributes.setIgnoreVertexColors(true);
+    		// draw it even when hidden
+          olRenderingAttributes.setDepthBufferEnable(false);
+          olRenderingAttributes.setDepthTestFunction(RenderingAttributes.ALWAYS);	
+          olRenderingAttributes.setVisible(false);
+
+          olRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+          outlineAppearance.setRenderingAttributes(olRenderingAttributes);
+          
+          Shape3D olShape = new Shape3D();
+          olShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+          olShape.setAppearance(outlineAppearance);
+          olShape.setGeometry(shape.getGeometry());              
+
+          transformGroup.addChild(shape);    
+          transformGroup.addChild(olShape); // outline is child 1
           addChild(group);
+     
         }
         
         TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
@@ -271,8 +328,14 @@ public class Label3D extends Object3DBranch {
   	@Override
 	public void showOutline(boolean isSelected)
 	{
-		// TODO PJ outline	
-  		isShowOutline = isSelected;	 
+  		isShowOutline = isSelected;
+  		// only if we haven't been cleared
+  		if (numChildren() > 0)
+  		{
+	  		 TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
+	         ((Shape3D)transformGroup.getChild(1)).getAppearance().getRenderingAttributes().setVisible(isSelected);
+	         ((Shape3D)transformGroup.getChild(0)).getAppearance().getRenderingAttributes().setStencilEnable(isSelected);
+	  	}
 	}
 	private boolean isShowOutline = false;
 	@Override

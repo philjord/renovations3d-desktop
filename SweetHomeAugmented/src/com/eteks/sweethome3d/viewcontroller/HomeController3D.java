@@ -951,4 +951,14 @@ public class HomeController3D implements Controller {
           this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());
     }
   }
+  
+  /**
+   * Controls the modification of the selected labels.
+   */
+  public void modifySelectedLabels() {
+    if (!Home.getLabelsSubList(this.home.getSelectedItems()).isEmpty()) {
+      new LabelController(this.home, this.preferences, this.viewFactory,
+          this.undoSupport).displayView(getView());
+    }
+  }
 }

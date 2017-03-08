@@ -34,9 +34,13 @@ import java.util.WeakHashMap;
 
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.ColoringAttributes;
+import org.jogamp.java3d.Geometry;
+import org.jogamp.java3d.GeometryArray;
+import org.jogamp.java3d.IndexedGeometryArray;
 import org.jogamp.java3d.LineAttributes;
 import org.jogamp.java3d.Material;
 import org.jogamp.java3d.PolygonAttributes;
+import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.TextureAttributes;
 import org.jogamp.java3d.Transform3D;
@@ -53,6 +57,7 @@ public abstract class Object3DBranch extends BranchGroup {
 	public static final int WALL_STENCIL_MASK = 1<<1;
 	public static final int FURN_STENCIL_MASK = 1<<2;
 	public static final int ROOM_STENCIL_MASK = 1<<3;
+	public static final int LABEL_STENCIL_MASK = 1<<4;
 	
 	public static int OUTLINE_WIDTH = 10;
 	public static Color3f OUTLINE_COLOR = new Color3f(1f,0.9f,0f);
@@ -72,6 +77,7 @@ public abstract class Object3DBranch extends BranchGroup {
   private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
   private static final Map<Float, TextureAttributes>    textureAttributes = new HashMap<Float, TextureAttributes>();
   private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
+
 
   
   static {
@@ -352,4 +358,44 @@ public abstract class Object3DBranch extends BranchGroup {
   //PJPJPJPJ for outlining
   public abstract void showOutline(boolean isSelected);
   public abstract boolean isShowOutline();
+  
+  
+	public static Geometry makePickable(Geometry geometry)
+	{
+		if (geometry != null)
+		{
+			// set up for geometry picking
+			if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)
+			{
+				geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
+				geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
+				geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
+				geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
+				if (geometry instanceof IndexedGeometryArray)
+					geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
+
+				geometry.setCapability(Geometry.ALLOW_INTERSECT);
+			}
+		}
+		return geometry;
+	}
+
+	public static Shape3D makePickable(Shape3D shape3D)
+	{
+		// Note do NOT set Shape3D.ENABLE_PICK_REPORTING; or mouse over will not find the user data of the parent
+		if (shape3D != null)
+		{
+			// set up for geometry picking
+			if (!shape3D.isLive() && !shape3D.isCompiled())
+			{
+				shape3D.setPickable(true);
+
+				shape3D.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
+
+				for (int i = 0; i < shape3D.numGeometries(); i++)
+					makePickable(shape3D.getGeometry(i));
+			}
+		}
+		return shape3D;
+	}
 }

@@ -229,25 +229,7 @@ public class Room3D extends Object3DBranch {
   }
   
   
-  private static Geometry makePickable(Geometry geometry)
-	{		 
-		if (geometry != null)
-		{
-			// set up for geometry picking
-			if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)
-			{
-				geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-				geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
-				geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
-				geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-				if (geometry instanceof IndexedGeometryArray)
-					geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-
-				geometry.setCapability(Geometry.ALLOW_INTERSECT);
-			}
-		}
-		return geometry;
-	}
+ 
   
   /**
    * Returns room geometry computed from its points.
