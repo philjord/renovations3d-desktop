@@ -838,7 +838,8 @@ public class HomeController3D implements Controller {
       }
       home.addLevelsListener(this.levelsListener);
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      //PJ don't as this gets in teh way of 3d furniture selection
+      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
     
     @Override
@@ -846,7 +847,8 @@ public class HomeController3D implements Controller {
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta);
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    //PJ don't as this gets in teh way of 3d furniture selection
+      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
     
     @Override
@@ -854,7 +856,8 @@ public class HomeController3D implements Controller {
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.cos(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    //PJ don't as this gets in teh way of 3d furniture selection
+      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
     
     @Override
@@ -863,7 +866,8 @@ public class HomeController3D implements Controller {
       newElevation = Math.min(Math.max(newElevation, getMinimumElevation()), preferences.getLengthUnit().getMaximumElevation());
       this.observerCamera.setZ(newElevation);
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    //PJ don't as this gets in teh way of 3d furniture selection
+      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
 
     private void updateCameraMinimumElevation() {
@@ -883,7 +887,8 @@ public class HomeController3D implements Controller {
     public void rotateCameraYaw(float delta) {
       this.observerCamera.setYaw(this.observerCamera.getYaw() + delta); 
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    //PJ don't as this gets in teh way of 3d furniture selection
+      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
     
     @Override
@@ -894,7 +899,8 @@ public class HomeController3D implements Controller {
       newPitch = Math.min(newPitch, (float)Math.PI / 2);
       this.observerCamera.setPitch(newPitch); 
       // Select observer camera for user feedback
-      home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+    //PJ don't as this gets in teh way of 3d furniture selection
+      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
     }
     
     @Override
