@@ -389,13 +389,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		boolean visible = piece.isVisible() && (piece.getLevel() == null || piece.getLevel().isViewableAndVisible());
 		
 		//PJPJPJ only allow picking if we can see the object 
-		  setPickable(visible);
+		setPickable(visible);
 		  
 		HomeMaterial[] materials = piece.getColor() == null && piece.getTexture() == null ? piece.getModelMaterials() : null;
 		setVisible(getFilledModelNode(), visible && (drawingMode == null || drawingMode == HomeEnvironment.DrawingMode.FILL
 				|| drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE), materials);
 			
-		//note outlineModel visibility only set on showoutline
+		//hide the outline if showing but this is not visible
+		if(!visible && isShowOutline)
+			showOutline(false);
 	}
 
 	/**
