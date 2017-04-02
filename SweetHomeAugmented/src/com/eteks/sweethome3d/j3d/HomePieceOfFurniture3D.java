@@ -419,9 +419,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 */
 	private void updatePieceOfFurnitureModelNode(Node modelNode, TransformGroup normalization, boolean ignoreDrawingMode,
 			boolean waitTextureLoadingEnd)
-	{
+	{		
 		normalization.addChild(modelNode);
-		setModelCapabilities(normalization);
+		setModelCapabilities(normalization);			
+		
 		// Add model node to branch group
 		modelBranch = new BranchGroup();
 		modelBranch.setName("modelBranch");
@@ -703,7 +704,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			Iterator<Geometry> enumeration = shape.getAllGeometries();
 			while (enumeration.hasNext())
 			{
-				setGeometryCapabilities((Geometry) enumeration.next());
+				//TODO: I'm get live or compiled error at the geom level of this call,
+				// desperate catch perhaps?
+				try{setGeometryCapabilities((Geometry) enumeration.next());	
+				}catch(Exception e){e.printStackTrace();}				
 			}
 			node.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
 			node.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
