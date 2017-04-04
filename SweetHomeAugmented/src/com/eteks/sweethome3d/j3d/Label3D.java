@@ -137,16 +137,7 @@ public class Label3D extends Object3DBranch {
         g2D.dispose();
         
         //Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-        Rectangle2D textBounds = font.getStringBounds(text); 
-        //PJPJ on desktop the return should be say height +15, y -12
-        // on android this is returned as height -18, y +4, I'm not sure why
-        // so if we see android style swap to desktop style so the maths below is right
-        if (textBounds.getHeight() < 0)
-        {
-        	textBounds = new Rectangle2D.Float((float) textBounds.getX(),(float) (textBounds.getY()+textBounds.getHeight()), 
-        			(float) textBounds.getWidth(), (float) -textBounds.getHeight());
-        }
-        
+        Rectangle2D textBounds = font.getStringBounds(text);         
         
         float textWidth = (float)textBounds.getWidth();// stroke width is generally 0 -> + 2 * stroke.getLineWidth();
 //        if (style.isItalic()) {
