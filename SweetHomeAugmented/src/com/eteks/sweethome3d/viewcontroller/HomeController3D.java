@@ -494,8 +494,9 @@ public class HomeController3D implements Controller {
      */
     public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
       this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
-      if(this.topCamera != null)//PJPJ this throws an exception if we are not currently entered into this state
-    	  updateCameraFromHomeBounds(false);
+      if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+    	  enter();
+      updateCameraFromHomeBounds(false);
     }
     
     /**
@@ -515,6 +516,8 @@ public class HomeController3D implements Controller {
      * Returns the distance between the current camera location and home bounds center.
      */
     private float getCameraToAerialViewCenterDistance() {
+    	 if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+       	  enter();
       return (float)Math.sqrt(Math.pow((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 - this.topCamera.getX(), 2) 
           + Math.pow((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - this.topCamera.getY(), 2) 
           + Math.pow((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 - this.topCamera.getZ(), 2));
@@ -701,14 +704,16 @@ public class HomeController3D implements Controller {
     }
 
     public void placeCameraAt(float distanceToCenter, boolean firstPieceOfFurnitureAddedToEmptyHome) {
-      // Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
+    	if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+      	  enter();
+    	// Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
       distanceToCenter = Math.max(distanceToCenter, this.minDistanceToAerialViewCenter);
       // Check camera isn't too far
       distanceToCenter = Math.min(distanceToCenter, this.maxDistanceToAerialViewCenter);
       if (firstPieceOfFurnitureAddedToEmptyHome) {
         // Get closer to the first piece of furniture added to an empty home when that is small
         distanceToCenter = Math.min(distanceToCenter, 3 * this.minDistanceToAerialViewCenter);
-      }
+      }      
       double distanceToCenterAtGroundLevel = distanceToCenter * Math.cos(this.topCamera.getPitch());
       this.topCamera.setX((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 
           + (float)(Math.sin(this.topCamera.getYaw()) * distanceToCenterAtGroundLevel));
@@ -720,6 +725,8 @@ public class HomeController3D implements Controller {
 
     @Override
     public void rotateCameraYaw(float delta) {
+    	if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       float newYaw = this.topCamera.getYaw() + delta;
       double distanceToCenterAtGroundLevel = getCameraToAerialViewCenterDistance() * Math.cos(this.topCamera.getPitch());
       // Change camera yaw and location so user turns around home
@@ -728,10 +735,13 @@ public class HomeController3D implements Controller {
           + (float)(Math.sin(newYaw) * distanceToCenterAtGroundLevel));
       this.topCamera.setY((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 
           - (float)(Math.cos(newYaw) * distanceToCenterAtGroundLevel));
+
     }
     
     @Override
     public void rotateCameraPitch(float delta) {
+    	if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       float newPitch = this.topCamera.getPitch() + delta;
       // Check new pitch is between 0 and PI / 2  
       newPitch = Math.max(newPitch, (float)0);
@@ -751,6 +761,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void goToCamera(Camera camera) {
+    	if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       this.topCamera.setCamera(camera);
       this.topCamera.setTime(camera.getTime());
       this.topCamera.setLens(camera.getLens());
@@ -844,6 +856,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void moveCamera(float delta) {
+    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+      	  enter();
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta);
       // Select observer camera for user feedback
@@ -853,6 +867,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void moveCameraSideways(float delta) {
+    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.cos(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       // Select observer camera for user feedback
@@ -862,6 +878,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void elevateCamera(float delta) {
+    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       float newElevation = this.observerCamera.getZ() + delta; 
       newElevation = Math.min(Math.max(newElevation, getMinimumElevation()), preferences.getLengthUnit().getMaximumElevation());
       this.observerCamera.setZ(newElevation);
@@ -871,6 +889,8 @@ public class HomeController3D implements Controller {
     }
 
     private void updateCameraMinimumElevation() {
+    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       observerCamera.setZ(Math.max(observerCamera.getZ(), getMinimumElevation()));
     }
 
@@ -885,6 +905,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void rotateCameraYaw(float delta) {
+    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       this.observerCamera.setYaw(this.observerCamera.getYaw() + delta); 
       // Select observer camera for user feedback
     //PJ don't as this gets in teh way of 3d furniture selection
@@ -893,6 +915,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void rotateCameraPitch(float delta) {
+    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       float newPitch = this.observerCamera.getPitch() + delta; 
       // Check new angle is between -90° and 90°  
       newPitch = Math.max(newPitch, -(float)Math.PI / 2);
@@ -905,6 +929,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void goToCamera(Camera camera) {
+    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
+        	  enter();
       this.observerCamera.setCamera(camera);
       this.observerCamera.setTime(camera.getTime());
       this.observerCamera.setLens(camera.getLens());
