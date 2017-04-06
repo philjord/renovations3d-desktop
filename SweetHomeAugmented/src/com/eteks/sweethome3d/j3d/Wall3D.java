@@ -667,12 +667,12 @@ public class Wall3D extends Object3DBranch {
                     missingModels.remove(doorOrWindow);
                     if (missingModels.size() == 0 
                         && baseboard == null) {
-                      EventQueue.invokeLater(new Runnable() {
-                          public void run() {
+                      //EventQueue.invokeLater(new Runnable() {
+                      //    public void run() {
                             // Request a new update only once all missing models are loaded
                             updateWallSideGeometry(wallSide, waitDoorOrWindowModelsLoadingEnd);
-                          }
-                        });
+                      //    }
+                      //  });
                     }
                   }
                 }
