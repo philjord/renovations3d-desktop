@@ -566,7 +566,7 @@ public class ModelManager {
    *    or if an error happens. When the model is loaded synchronously, the observer will be notified
    *    in the same thread as the caller, otherwise the observer will be notified in the Event 
    *    Dispatch Thread and this method must be called in Event Dispatch Thread too.
-   * @throws IllegalStateException if synchronous is <code>false</code> and the current thread isn't 
+   * @throws IllegalStateException PJPJ see comments this is not true on android if synchronous is <code>false</code> and the current thread isn't 
    *    the Event Dispatch Thread.  
    */
   public void loadModel(final Content content,
@@ -590,8 +590,8 @@ public class ModelManager {
       } catch (IOException ex) {
         modelObserver.modelError(ex);
       }
-    } else if (!EventQueue.isDispatchThread()) {
-      throw new IllegalStateException("Asynchronous call out of Event Dispatch Thread");
+    //} else if (!EventQueue.isDispatchThread()) {
+    //  throw new IllegalStateException("Asynchronous call out of Event Dispatch Thread");
     } else {  
       if (this.modelsLoader == null) {
         this.modelsLoader = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -616,16 +616,16 @@ public class ModelManager {
                 // Update loaded models cache and notify registered observers
                 loadedModelNodes.put(content, loadedModel);
               }
-              EventQueue.invokeLater(new Runnable() {
-                  public void run() {
+              //EventQueue.invokeLater(new Runnable() {
+              //    public void run() {
                     List<ModelObserver> observers = loadingModelObservers.remove(content);
                     if (observers != null) {
                       for (final ModelObserver observer : observers) {
                         observer.modelUpdated((BranchGroup)cloneNode(loadedModel));
                       }
                     }
-                  }
-                });
+               //   }
+               // });
             } catch (final IOException ex) {
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
