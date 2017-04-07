@@ -162,7 +162,7 @@ public class TextureManager {
    * @param angle   the rotation angle applied to the image
    * @param synchronous if <code>true</code>, this method will return only once image content is loaded.
    * @param textureObserver the observer that will be notified once the texture is available
-   * @throws IllegalStateException PJ see comments! not true. if synchronous is <code>false</code> and the current thread isn't 
+   * @throws IllegalStateException if synchronous is <code>false</code> and the current thread isn't 
    *    the Event Dispatch Thread.  
    */
   public void loadTexture(final Content content,
@@ -185,10 +185,8 @@ public class TextureManager {
         texture = shareTexture(loadTexture(content, angle), angle, content);
         // Notify loaded texture to observer
         textureObserver.textureUpdated(texture);
-        
-        //PJPJPJ lord knows why these need to be on the EDT, but it kills plan rendering cos of ModelManager.ModelObserver
-      //} else if (!EventQueue.isDispatchThread()) {
-     //   throw new IllegalStateException("Asynchronous call out of Event Dispatch Thread");
+      } else if (!EventQueue.isDispatchThread()) {
+        throw new IllegalStateException("Asynchronous call out of Event Dispatch Thread");
       } else {
         // Notify wait texture to observer
         textureObserver.textureUpdated(this.waitTexture);
@@ -212,9 +210,8 @@ public class TextureManager {
           this.texturesLoader.execute(new Runnable () {
               public void run() {
                 final Texture texture = shareTexture(loadTexture(content, angle), angle, content);
-                //PJPJPJ TODO: does this need to be on the EDT now?
-                //EventQueue.invokeLater(new Runnable() {
-                //    public void run() {
+                EventQueue.invokeLater(new Runnable() {
+                    public void run() {
                       // Notify loaded texture to observer
                       List<TextureObserver> observers = loadingTextureObservers.remove(contentKey);
                       if (observers != null) {
@@ -222,8 +219,8 @@ public class TextureManager {
                           observer.textureUpdated(texture);
                         }
                       }
-                //    }
-                //  });
+                    }
+                  });
               }
             });
         }
