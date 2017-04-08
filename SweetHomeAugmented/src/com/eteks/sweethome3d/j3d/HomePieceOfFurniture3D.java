@@ -258,6 +258,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	{
 		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
 		Node filledModelNode = getFilledModelNode();
+		if(filledModelNode !=null )
+		{
 		if (piece.getColor() != null)
 		{
 			setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), null, false, null, null,
@@ -279,6 +281,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		{
 			// Set default material and texture of model
 			setColorAndTexture(filledModelNode, null, null, piece.getShininess(), null, false, null, null, new HashSet<Appearance>());
+		}
+		}
+		else
+		{
+			System.out.println("filledModelNode == null! " + this);
 		}
 	}
 
