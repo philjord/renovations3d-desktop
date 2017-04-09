@@ -434,7 +434,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		modelBranch = new BranchGroup();
 		modelBranch.setName("modelBranch");
 		modelBranch.setPickable(true);
-		//modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
+		modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
 		filledModelNode = normalization;
 		modelBranch.addChild(filledModelNode);
 		
@@ -1251,8 +1251,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			geometry.setCapability(GeometryArray.ALLOW_NORMAL_READ);
 			geometry.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
 			if (geometry instanceof IndexedGeometryArray)
-				geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-			
+				geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);					
 			
 			geometry.setCapability(Geometry.ALLOW_INTERSECT);
 		}
