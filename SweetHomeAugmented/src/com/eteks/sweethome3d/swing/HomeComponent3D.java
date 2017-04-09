@@ -1074,14 +1074,19 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	 */
 	private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures)
 	{
-		if (node instanceof Group)
+		if( node instanceof ViewingPlatform)
+		{
+			// obviously we skip this path
+			return;
+		}
+		else if (node instanceof Group)
 		{
 			// Enumerate children
-			Iterator<Node> enumeration = ((Group) node).getAllChildren();
+			Iterator<Node> enumeration = ((Group) node).getAllChildren();			
 			while (enumeration.hasNext())
 			{
 				cloneTexture((Node) enumeration.next(), replacedTextures);
-			}
+			}			
 		}
 		else if (node instanceof Link)
 		{
