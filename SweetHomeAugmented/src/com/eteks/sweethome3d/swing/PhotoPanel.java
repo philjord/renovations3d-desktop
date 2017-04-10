@@ -100,6 +100,9 @@ import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
+import javaawt.Image;
+import javaawt.image.ImageObserver;
+
 /**
  * A panel to edit photo creation. 
  * @author Emmanuel Puybaret
@@ -210,7 +213,8 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.photoComponent.setPreferredSize(new Dimension(getToolkit().getScreenSize().width <= 1024 ? 320 : 400, 400));
     // Under Mac OS X, set a transfer handler and a mouse listener on photo component 
     // to let the user drag and drop the created image (Windows support seems to fail) 
-    if (OperatingSystem.isMacOSX()
+    //PJPJ
+  /*  if (OperatingSystem.isMacOSX()
         && !OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
       this.photoComponent.setTransferHandler(new VisualTransferHandler() {
           @Override
@@ -268,7 +272,7 @@ public class PhotoPanel extends JPanel implements DialogView {
             }
           }
         });
-    }
+    }*/
 
     this.animatedWaitLabel = new JLabel(new ImageIcon(PhotoPanel.class.getResource("resources/animatedWait.gif")));
 
@@ -755,8 +759,6 @@ public class PhotoPanel extends JPanel implements DialogView {
       int imageWidth = this.controller.getWidth();
       int imageHeight = this.controller.getHeight();
       if (quality >= 2) {
-//PJPJPJPJPJ dumped
-    /*	  
         // Use photo renderer
         PhotoRenderer photoRenderer = new PhotoRenderer(home, this.object3dFactory, 
             quality == 2 
@@ -774,15 +776,33 @@ public class PhotoPanel extends JPanel implements DialogView {
         }
         if (photoCreationExecutor != null) {
           image = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
-          this.photoComponent.setImage(image);
+          //PJPJ
+          //this.photoComponent.setImage(image);
           EventQueue.invokeLater(new Runnable() {
             public void run() {
               photoCardLayout.show(photoPanel, PHOTO_CARD);
             }
           });
-          photoRenderer.render(image, camera, this.photoComponent);
+          //PJPJPJ
+          //photoRenderer.render(image, camera, this.photoComponent);
+          ImageObserver io =new ImageObserver(){
+
+  			@Override
+  			public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height)
+  			{
+  				System.out.println("Image update");
+  				return false;
+  			}
+
+  			@Override
+  			public Object getDelegate()
+  			{				 
+  				return null;
+  			}};
+  			//PJPJPJ
+          photoRenderer.render(new javaawt.image.VMBufferedImage(image), camera, io);
           photoRenderer.dispose();
-        }*/
+        }
       } else {
         // Compute 3D view offscreen image
         HomeComponent3D homeComponent3D = new HomeComponent3D(
@@ -795,8 +815,8 @@ public class PhotoPanel extends JPanel implements DialogView {
     } catch (IllegalStateException ex) {
       image = getErrorImage();
       throw ex;
- //   } catch (IOException ex) {
- //     image = getErrorImage();
+    } catch (IOException ex) {
+      image = getErrorImage();
     } finally {           
       final BufferedImage photoImage = this.photoCreationExecutor != null
           ? image

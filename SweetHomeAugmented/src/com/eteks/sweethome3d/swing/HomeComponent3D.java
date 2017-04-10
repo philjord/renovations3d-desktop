@@ -1017,11 +1017,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 			this.offscreenUniverse = createUniverse(this.displayShadowOnFloor, true, true);
 			// Replace textures by clones because Java 3D doesn't accept all the time 
 			// to share textures between offscreen and onscreen environments 
-			Map<Texture, Texture> replacedTextures = new HashMap<Texture, Texture>();
+			/*PJ I don't believe this Map<Texture, Texture> replacedTextures = new HashMap<Texture, Texture>();
 			for (Iterator<BranchGroup> it = this.offscreenUniverse.getLocale().getAllBranchGraphs(); it.hasNext();)
 			{
 				cloneTexture((Node) it.next(), replacedTextures);
-			}
+			}*/
 		}
 	}
 
@@ -1041,11 +1041,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 				view = offScreenImageUniverse.getViewer().getView();
 				// Replace textures by clones because Java 3D doesn't accept all the time 
 				// to share textures between offscreen and onscreen environments 
-				Map<Texture, Texture> replacedTextures = new HashMap<Texture, Texture>();
+				/*PJ I don't believe this Map<Texture, Texture> replacedTextures = new HashMap<Texture, Texture>();
 				for (Iterator<BranchGroup> it = offScreenImageUniverse.getLocale().getAllBranchGraphs(); it.hasNext();)
 				{
 					cloneTexture((Node) it.next(), replacedTextures);
-				}
+				}*/
 			}
 			else
 			{
@@ -1074,19 +1074,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	 */
 	private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures)
 	{
-		if( node instanceof ViewingPlatform)
-		{
-			// obviously we skip this path
-			return;
-		}
-		else if (node instanceof Group)
+		if (node instanceof Group)
 		{
 			// Enumerate children
 			Iterator<Node> enumeration = ((Group) node).getAllChildren();			
 			while (enumeration.hasNext())
 			{
 				cloneTexture((Node) enumeration.next(), replacedTextures);
-			}			
+			}				
 		}
 		else if (node instanceof Link)
 		{

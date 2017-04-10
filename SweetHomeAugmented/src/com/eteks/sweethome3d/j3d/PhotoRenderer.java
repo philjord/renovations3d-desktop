@@ -1504,15 +1504,17 @@ public class PhotoRenderer
 			verticesIndices[index + 2] = coordinateIndex3;
 			if (normalsIndices != null)
 			{
-				normalsIndices[index] = geometryArray.getNormalIndex(vertexIndex1);
-				normalsIndices[index + 1] = geometryArray.getNormalIndex(vertexIndex2);
-				normalsIndices[index + 2] = geometryArray.getNormalIndex(vertexIndex3);
+				//PJ coord index only now
+				normalsIndices[index] = coordinateIndex1;//geometryArray.getNormalIndex(vertexIndex1);
+				normalsIndices[index + 1] = coordinateIndex2;//geometryArray.getNormalIndex(vertexIndex2);
+				normalsIndices[index + 2] = coordinateIndex3;//geometryArray.getNormalIndex(vertexIndex3);
 			}
 			if (textureCoordinatesIndices != null)
 			{
-				textureCoordinatesIndices[index] = geometryArray.getTextureCoordinateIndex(0, vertexIndex1);
-				textureCoordinatesIndices[index + 1] = geometryArray.getTextureCoordinateIndex(0, vertexIndex2);
-				textureCoordinatesIndices[index + 2] = geometryArray.getTextureCoordinateIndex(0, vertexIndex3);
+				//PJ coord index only now
+				textureCoordinatesIndices[index] = coordinateIndex1;//geometryArray.getTextureCoordinateIndex(0, vertexIndex1);
+				textureCoordinatesIndices[index + 1] = coordinateIndex2;//geometryArray.getTextureCoordinateIndex(0, vertexIndex2);
+				textureCoordinatesIndices[index + 2] = coordinateIndex3;//geometryArray.getTextureCoordinateIndex(0, vertexIndex3);
 			}
 			return index + 3;
 		}
@@ -1597,23 +1599,23 @@ public class PhotoRenderer
 				{
 					ImageComponent2D imageComponent = (ImageComponent2D) texture.getImage(0);
 					//PJPJPJPJ
-					RenderedImage image = (RenderedImage) imageComponent.getRenderedImage().getDelegate();
+					RenderedImage image = imageComponent.getRenderedImage();
 					if (transparency < 1)
 					{
 						// Compute a partially transparent image
 						BufferedImage transparentImage = new BufferedImage(image.getWidth(), image.getHeight(),
 								BufferedImage.TYPE_INT_ARGB);
 						Graphics2D g2D = (Graphics2D) transparentImage.getGraphics();
-						//PJPJP dumped
+						//PJPJP 
 						//g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, transparency));
-						//g2D.drawRenderedImage(image, null);
-						//g2D.dispose();
+						g2D.drawRenderedImage(image, null);
+						g2D.dispose();
 						image = transparentImage;
 					}
-					File imageFile = OperatingSystem.createTemporaryFile("texture", ".png");
-					//PJPJP dumped
+					//PJPJP TODO: why was this creating a temp file??
+					//File imageFile = OperatingSystem.createTemporaryFile("texture", ".png");					
 					//ImageIO.write(image, "png", imageFile);
-					imagePath = imageFile.getAbsolutePath();
+					//imagePath = imageFile.getAbsolutePath();
 				}
 				this.textureImagesCache.put(key, imagePath);
 			}
