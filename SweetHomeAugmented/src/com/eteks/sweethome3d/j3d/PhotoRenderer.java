@@ -1588,7 +1588,8 @@ public class PhotoRenderer
 			}
 
 			TransparentTextureKey key = new TransparentTextureKey(texture, transparency);
-			String imagePath = this.textureImagesCache.get(key);
+			String imagePath = this.textureImagesCache.get(key);					
+			
 			if (imagePath == null)
 			{
 				if (texture.getUserData() instanceof URL && transparency == 1)
@@ -1606,16 +1607,19 @@ public class PhotoRenderer
 						BufferedImage transparentImage = new BufferedImage(image.getWidth(), image.getHeight(),
 								BufferedImage.TYPE_INT_ARGB);
 						Graphics2D g2D = (Graphics2D) transparentImage.getGraphics();
-						//PJPJP 
+												
+						//PJPJP TODO: I HAVE TO PUT BACK TRANSPARENCY HERE NOW!!						
+						// or in fact do I, possibly as all android images are RGBA I can just leave them alone?						
+						
 						//g2D.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, transparency));
 						g2D.drawRenderedImage(image, null);
 						g2D.dispose();
 						image = transparentImage;
 					}
-					//PJPJP TODO: why was this creating a temp file??
-					//File imageFile = OperatingSystem.createTemporaryFile("texture", ".png");					
-					//ImageIO.write(image, "png", imageFile);
-					//imagePath = imageFile.getAbsolutePath();
+					
+					File imageFile = OperatingSystem.createTemporaryFile("texture", ".png");					
+					ImageIO.write((BufferedImage)image, "png", imageFile);
+					imagePath = imageFile.getAbsolutePath();
 				}
 				this.textureImagesCache.put(key, imagePath);
 			}

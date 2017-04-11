@@ -13,12 +13,12 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-core-and"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils-and"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/vecmath"/>
-	<classpathentry kind="lib" path="lib/sunflow-0.07.3i.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils2-and"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/awtshim"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/awtshim-desktop"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/awtgeom"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/SweetHome3D"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sunflow"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

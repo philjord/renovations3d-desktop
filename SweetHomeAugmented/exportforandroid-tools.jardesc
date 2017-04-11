@@ -16,7 +16,6 @@
         <javaElement handleIdentifier="=awtshim-android/src"/>
         <javaElement handleIdentifier="=vecmath/src"/>
         <file path="/awtshim-android/.classpath"/>
-        <javaElement handleIdentifier="=sunflow/src&lt;org.sunflow.image.readers{JPGBitmapReader.java"/>
         <javaElement handleIdentifier="=java3d-utils-and/src\/classes\/share"/>
         <javaElement handleIdentifier="=java3d-core-and/build-tools"/>
         <file path="/awtshim-android/.gitignore"/>

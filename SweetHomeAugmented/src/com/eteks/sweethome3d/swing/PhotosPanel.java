@@ -85,6 +85,9 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.sunflow.system.UI;
+import org.sunflow.system.ui.ConsoleInterface;
+
 import com.eteks.sweethome3d.j3d.PhotoRenderer;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Home;
@@ -155,6 +158,8 @@ public class PhotosPanel extends JPanel implements DialogView {
     layoutComponents();    
 
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, new LanguageChangeListener(this));
+
+	UI.set(new ConsoleInterface());
   }
   
   /**
