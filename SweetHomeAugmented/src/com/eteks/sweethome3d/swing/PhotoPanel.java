@@ -31,16 +31,11 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
-import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -81,7 +76,6 @@ import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SwingUtilities;
-import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -775,9 +769,10 @@ public class PhotoPanel extends JPanel implements DialogView {
           bestImageHeight = imageHeight;
         }
         if (photoCreationExecutor != null) {
-          image = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
-          //PJPJ
-          //this.photoComponent.setImage(image);
+        	//PJPJPJ
+        final BufferedImage image2 = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
+        image = image2;
+          this.photoComponent.setImage(image);
           EventQueue.invokeLater(new Runnable() {
             public void run() {
               photoCardLayout.show(photoPanel, PHOTO_CARD);
@@ -786,11 +781,10 @@ public class PhotoPanel extends JPanel implements DialogView {
           //PJPJPJ
           //photoRenderer.render(image, camera, this.photoComponent);
           ImageObserver io =new ImageObserver(){
-
   			@Override
   			public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height)
   			{
-  				System.out.println("Image update");
+  				photoComponent.setImage(image2);
   				return false;
   			}
 
