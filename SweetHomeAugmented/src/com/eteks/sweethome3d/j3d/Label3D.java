@@ -236,8 +236,12 @@ public class Label3D extends Object3DBranch {
           Shape3D shape = box.getShape(Box.TOP);
           box.removeChild(shape);         
           makePickable(shape); //PJPJP for selection
-          shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ); 
-          shape.getGeometry().setCapability(GeometryArray.ALLOW_NORMAL_READ);
+          
+			shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+			if (!shape.getGeometry().isLive() && !shape.getGeometry().isCompiled())
+			{
+				shape.getGeometry().setCapability(GeometryArray.ALLOW_NORMAL_READ);
+			}
          
           
           // base shape outlining
