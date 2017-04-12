@@ -4069,7 +4069,11 @@ public class PlanController extends FurnitureController implements Controller {
     // Sort the deleted rooms in the ascending order of their index in home
     Map<Integer, Room> sortedMap = new TreeMap<Integer, Room>(); 
     for (Room room : deletedRooms) {
-      sortedMap.put(homeRooms.indexOf(room), room); 
+    	//PJ https://console.firebase.google.com/project/renovations-3d/monitoring/app/android:com.mindblowing.renovations3d/cluster/ca8eccf0?duration=2592000000
+    	// shows that the homeRooms.indexOf(room) can be -1, I have no idea how exactly  
+    	int index = homeRooms.indexOf(room);
+    	if(index != -1)
+    		sortedMap.put(homeRooms.indexOf(room), room); 
     }
     final Room [] rooms = sortedMap.values().toArray(new Room [sortedMap.size()]); 
     final int [] roomsIndices = new int [rooms.length];
@@ -4642,7 +4646,7 @@ public class PlanController extends FurnitureController implements Controller {
                           Level [] roomsLevels,
                           Level uniqueRoomsLevel,
                           boolean basePlanLocked) {
-    for (int i = 0; i < roomsIndices.length; i++) {
+    for (int i = 0; i < roomsIndices.length; i++) {    	
       this.home.addRoom (rooms [i], roomsIndices [i]);
       rooms [i].setLevel(roomsLevels != null 
           ? roomsLevels [i] 
