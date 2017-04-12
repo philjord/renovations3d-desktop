@@ -21,6 +21,7 @@ package com.eteks.sweethome3d.j3d;
 
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
 import org.jogamp.java3d.Node;
 import org.jogamp.java3d.OrderedGroup;
@@ -63,8 +64,13 @@ public class Label3D extends Object3DBranch {
   
   static {
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
+    MODULATE_TEXTURE_ATTRIBUTES.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
     
     DEFAULT_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_MODE_READ);
+    DEFAULT_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
+    DEFAULT_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_READ);
+    
+    DEFAULT_TRANSPARENCY_ATTRIBUTES.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
   }
 
   private String      text;
@@ -231,6 +237,7 @@ public class Label3D extends Object3DBranch {
           box.removeChild(shape);         
           makePickable(shape); //PJPJP for selection
           shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ); 
+          shape.getGeometry().setCapability(GeometryArray.ALLOW_NORMAL_READ);
          
           
           // base shape outlining
