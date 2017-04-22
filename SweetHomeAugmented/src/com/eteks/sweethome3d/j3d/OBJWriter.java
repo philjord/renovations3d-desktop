@@ -20,6 +20,8 @@
 package com.eteks.sweethome3d.j3d;
 
 import javaawt.image.RenderedImage;
+import javaawt.imageio.ImageIO;
+
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,7 +44,6 @@ import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -51,10 +52,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import javaawt.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.ColoringAttributes;
@@ -409,18 +406,19 @@ public class OBJWriter extends FilterWriter {
                 }
               }
               this.appearances.put(comparableAppearance, appearanceName);
-              //PJPJPJPJ
-             /* Texture texture = appearance.getTexture();
+
+              Texture texture = appearance.getTexture();
               if (texture != null) {
                 File textureFile = this.textures.get(texture);
                 if (textureFile == null) {
                   String fileExtension = "png";
                   URL textureUrl = (URL)texture.getUserData();
-                  if (textureUrl instanceof URL) {
-                    InputStream in = null;
-                    try {
+                  //if (textureUrl instanceof URL) {
+                  //  InputStream in = null;
+                 //   try {
                       // Find the format of the texture image
-                      in = openStream(textureUrl);
+                    	//PJPJ just don't find the format and default to a file extension of png and pray
+                     /* in = openStream(textureUrl);
                       ImageInputStream imageIn = ImageIO.createImageInputStream(in);
                       Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageIn);
                       if (imageReaders.hasNext()) {
@@ -428,19 +426,23 @@ public class OBJWriter extends FilterWriter {
                         fileExtension = reader.getFormatName().toLowerCase();
                         // Store the URL to copy its image content directly when appearances are saved 
                         this.copiedTextures.add(textureUrl);
-                      }
-                    } catch (IOException ex) {
-                      if (in != null) {
-                        in.close();
-                      }
-                    }
-                  }
+                      }*/
+                      
+                        // Store the URL to copy its image content directly when appearances are saved 
+                        this.copiedTextures.add(textureUrl);
+                     
+                 //   } catch (IOException ex) {
+                  //    if (in != null) {
+                  //      in.close();
+                   //   }
+                   // }
+                  //}
                   // Store texture
                   textureFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) 
                       + "_" + appearanceName + "." + fileExtension);
                   this.textures.put(texture, textureFile);
                 }
-              }*/
+              }
             } 
             this.out.write("usemtl " + appearanceName + "\n");
           }
@@ -1045,6 +1047,65 @@ public class OBJWriter extends FilterWriter {
       vertexIndex1 = vertexIndex3;
       vertexIndex3 = tmp;
     }
+    //PJPJP added the coords index only case
+    if((geometryArray.getVertexFormat() & GeometryArray.USE_COORD_INDEX_ONLY) != 0)
+    {
+    if (textureCoordinatesGenerated) {
+        if (normalsDefined) {
+          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
+        } else {
+          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
+        }
+      } else if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
+        if (normalsDefined) {
+          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
+        } else {
+          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
+        }
+      } else {
+        if (normalsDefined) {
+          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + "//" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + "//" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
+              + "//" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
+        } else {
+          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
+              + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
+              + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
+        }
+      }
+    
+    }
+    else
+    {
     
     if (textureCoordinatesGenerated) {
       if (normalsDefined) {
@@ -1097,6 +1158,7 @@ public class OBJWriter extends FilterWriter {
             + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
             + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
       }
+    }
     }
 
     if (cullFace == PolygonAttributes.CULL_NONE) {
