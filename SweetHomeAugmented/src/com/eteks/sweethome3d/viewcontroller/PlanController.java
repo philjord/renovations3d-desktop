@@ -9623,10 +9623,12 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void escape() {
-      if (this.newDimensionLine != null) {
+    	
+    	//PJPJPJ escaping from the drawing state should commit the drawing, surely?
+    //  if (this.newDimensionLine != null) {
         // Delete current created dimension line
-        home.deleteDimensionLine(this.newDimensionLine);
-      }
+     //   home.deleteDimensionLine(this.newDimensionLine);
+     // }
       // Change state to DimensionLineCreationState 
       setState(getDimensionLineCreationState());
     }
