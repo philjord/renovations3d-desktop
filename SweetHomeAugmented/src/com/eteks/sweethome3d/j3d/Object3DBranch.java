@@ -60,7 +60,7 @@ public abstract class Object3DBranch extends BranchGroup {
 	public static final int LABEL_STENCIL_MASK = 1<<4;
 	
 	public static int OUTLINE_WIDTH = 10;
-	public static Color3f OUTLINE_COLOR = new Color3f(1f,0.9f,0f);
+	public static Color3f OUTLINE_COLOR = new Color3f(0.0f,84f/255f,150f/255f); //PJ match plan new Color3f(1f,0.9f,0f);
   // The coloring attributes used for drawing outline 
   protected static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES = 
       new ColoringAttributes(OUTLINE_COLOR, ColoringAttributes.FASTEST);
