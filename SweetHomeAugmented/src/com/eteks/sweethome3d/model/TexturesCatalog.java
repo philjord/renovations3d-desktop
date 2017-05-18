@@ -36,7 +36,7 @@ public class TexturesCatalog {
    * Returns the categories list sorted by name.
    * @return an unmodifiable list of categories.
    */
-  public List<TexturesCategory> getCategories() {
+  public synchronized List<TexturesCategory> getCategories() {
     //PJ to avoid concurrent mod exceptions
     synchronized(this.categories)
     {
@@ -47,14 +47,14 @@ public class TexturesCatalog {
   /**
    * Returns the count of categories in this catalog.
    */
-  public int getCategoriesCount() {
+  public synchronized int getCategoriesCount() {
     return this.categories.size();
   }
 
   /**
    * Returns the category at a given <code>index</code>.
    */
-  public TexturesCategory getCategory(int index) {
+  public synchronized TexturesCategory getCategory(int index) {
     return this.categories.get(index);
   }
 
@@ -79,7 +79,7 @@ public class TexturesCatalog {
    * @param category the category of the texture.
    * @param texture  a texture.
    */
-  public void add(TexturesCategory category, CatalogTexture texture) {
+  public synchronized void add(TexturesCategory category, CatalogTexture texture) {
     int index = Collections.binarySearch(this.categories, category);
     // If category doesn't exist yet, add it to categories
     if (index < 0) {
@@ -106,7 +106,7 @@ public class TexturesCatalog {
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged} notification.
    * @param texture a texture.
    */
-  public void delete(CatalogTexture texture) {
+  public synchronized void delete(CatalogTexture texture) {
     TexturesCategory category = texture.getCategory();
     // Remove texture from its category
     if (category != null) {

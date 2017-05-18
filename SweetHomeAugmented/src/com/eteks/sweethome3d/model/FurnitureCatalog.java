@@ -36,7 +36,7 @@ public class FurnitureCatalog {
    * Returns the categories list sorted by name.
    * @return an unmodifiable list of categories.
    */
-  public List<FurnitureCategory> getCategories() {
+  public synchronized List<FurnitureCategory> getCategories() {
   //PJ to avoid concurrent mod exceptions
     synchronized(this.categories)
     {
@@ -47,14 +47,14 @@ public class FurnitureCatalog {
   /**
    * Returns the count of categories in this catalog.
    */
-  public int getCategoriesCount() {
+  public synchronized int getCategoriesCount() {
     return this.categories.size();
   }
 
   /**
    * Returns the category at a given <code>index</code>.
    */
-  public FurnitureCategory getCategory(int index) {
+  public synchronized FurnitureCategory getCategory(int index) {
     return this.categories.get(index);
   }
 
@@ -80,7 +80,7 @@ public class FurnitureCatalog {
    * @param category the category of the piece.
    * @param piece    a piece of furniture.
    */
-  public void add(FurnitureCategory category, CatalogPieceOfFurniture piece) {
+  public synchronized void add(FurnitureCategory category, CatalogPieceOfFurniture piece) {
     int index = Collections.binarySearch(this.categories, category);
     // If category doesn't exist yet, add it to categories
     if (index < 0) {
@@ -108,7 +108,7 @@ public class FurnitureCatalog {
    * notification.
    * @param piece a piece of furniture in that category.
    */
-  public void delete(CatalogPieceOfFurniture piece) {
+  public synchronized void delete(CatalogPieceOfFurniture piece) {
     FurnitureCategory category = piece.getCategory();
     // Remove piece from its category
     if (category != null) {
