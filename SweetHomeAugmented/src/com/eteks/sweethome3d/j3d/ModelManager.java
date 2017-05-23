@@ -53,6 +53,9 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.batik.parser.AWTPathProducer;
+import org.apache.batik.parser.ParseException;
+import org.apache.batik.parser.PathParser;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BoundingBox;
 import org.jogamp.java3d.Bounds;
@@ -1818,6 +1821,7 @@ public class ModelManager {
       try {
         shape = SVGPathSupport.parsePathShape(svgPathShape);
       } catch (LinkageError ex) {
+    	  ex.printStackTrace();
         // Fallback to default square shape if batik classes aren't in classpath
         shape = new Rectangle2D.Float(0, 0, 1, 1);
       }
@@ -1831,17 +1835,17 @@ public class ModelManager {
    */
   private static class SVGPathSupport {
     public static Shape parsePathShape(String svgPathShape) {
-    	//PJPJPJP AWTPathProducer is awt, but in fact I don't care!
-     /* try {
+      try {
         AWTPathProducer pathProducer = new AWTPathProducer();
         PathParser pathParser = new PathParser();
         pathParser.setPathHandler(pathProducer);
         pathParser.parse(svgPathShape);
         return pathProducer.getShape();
-      } catch (ParseException ex) {*/
+      } catch (ParseException ex) {
+    	  ex.printStackTrace();
         // Fallback to default square shape if shape is incorrect
         return new Rectangle2D.Float(0, 0, 1, 1);
-      //}
+      }
     }
   }
   
