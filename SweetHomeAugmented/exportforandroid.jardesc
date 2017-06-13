@@ -127,7 +127,6 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_de.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_zh_CN.properties"/>
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d.mouseover"/>
-        <javaElement handleIdentifier="=SweetHome3D/src&lt;com.eteks.sweethome3d.tools{URLContent.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_pl.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_sl.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_sl.properties"/>
