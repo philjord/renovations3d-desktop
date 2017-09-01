@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -75,7 +76,8 @@ public class TextureManager {
     this.waitTexture = getColoredImageTexture(Color.WHITE);
     this.contentTextures = new WeakHashMap<Content, List<ComparableTextureAngleTuple>>();
     this.textures = new WeakHashMap<Texture, ComparableTexture>();
-    this.loadingTextureObservers = new HashMap<RotatedContentKey, List<TextureObserver>>();
+    //PJ to try to avoid odd ArrayIndex bugs on Android sdk 16 and sdk 17
+    this.loadingTextureObservers = Collections.synchronizedMap(new HashMap<RotatedContentKey, List<TextureObserver>>());
   }
 
   /**
