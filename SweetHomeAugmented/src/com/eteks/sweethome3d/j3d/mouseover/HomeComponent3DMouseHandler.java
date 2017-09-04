@@ -41,7 +41,7 @@ public class HomeComponent3DMouseHandler extends MouseOverHandler
 			if (pickInfo != null)
 			{
 				SceneGraphPath sg = pickInfo.getSceneGraphPath();
-				Node pickedParent = sg.getNode(sg.nodeCount() - 1);
+				Node pickedParent = sg.getNode(0);
 				Object userData = pickedParent.getUserData();
 	
 				if (userData instanceof Selectable)
