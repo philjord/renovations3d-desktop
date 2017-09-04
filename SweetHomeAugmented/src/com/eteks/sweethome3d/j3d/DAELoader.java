@@ -162,8 +162,6 @@ public class DAELoader extends LoaderBase implements Loader {
    * Returns the scene described in the given DAE file.
    */
   private Scene load(InputStream in, URL baseUrl) throws FileNotFoundException {
-    System.out.println("DAELoader in use");
-	  
 	  try {
       return parseXMLStream(in, baseUrl);
     } catch (IOException ex) {
@@ -951,7 +949,7 @@ public class DAELoader extends LoaderBase implements Loader {
         new NormalGenerator(Math.PI / 2).generateNormals(geometryInfo);
       }
       //PJPJPJ make it nio
-      return geometryInfo.getGeometryArray(true, false, true);
+      return geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
     }
 
     /**

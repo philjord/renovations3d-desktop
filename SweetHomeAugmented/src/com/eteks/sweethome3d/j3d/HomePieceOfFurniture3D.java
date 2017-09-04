@@ -146,6 +146,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		pieceTransformGroup.setName("pieceTransformGroup " + piece.getName());
 		pieceTransformGroup.setPickable(true);
 		// Allow the change of the transformation that sets piece size and position
+		pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
 		pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
 		pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_READ);
 		pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
