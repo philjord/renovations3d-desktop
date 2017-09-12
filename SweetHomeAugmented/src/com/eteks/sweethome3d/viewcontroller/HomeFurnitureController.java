@@ -1413,7 +1413,7 @@ public class HomeFurnitureController implements Controller {
       if (visible != null) {
         piece.setVisible(visible);
       }
-      if (lightPower != null) {
+      if (lightPower != null && piece instanceof HomeLight) {
         ((HomeLight)piece).setPower(lightPower);
       }
     }
