@@ -211,6 +211,7 @@ public class TextureManager {
           // Load the image in a different thread
           this.texturesLoader.execute(new Runnable () {
               public void run() {
+            	  try{
                 final Texture texture = shareTexture(loadTexture(content, angle), angle, content);
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
@@ -223,6 +224,12 @@ public class TextureManager {
                       }
                     }
                   });
+            	  }catch(Exception e)
+            	  {
+            		  //Seen OutOfMemoryError and ArrayIndexOutOfBoundsException
+            		  // just print it and move on
+            		  e.printStackTrace();
+            	  }
               }
             });
         }
