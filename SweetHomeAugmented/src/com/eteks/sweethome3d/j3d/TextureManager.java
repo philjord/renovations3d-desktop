@@ -41,6 +41,8 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.swing.JPopupMenu.Separator;
+
 import javaawt.imageio.ImageIO;
 
 import org.jogamp.java3d.ImageComponent;
@@ -228,7 +230,27 @@ public class TextureManager {
             	  {
             		  //Seen OutOfMemoryError and ArrayIndexOutOfBoundsException
             		  // just print it and move on
+            		  System.err.println("Exception ignored");
             		  e.printStackTrace();
+            		  EventQueue.invokeLater(new Runnable() {
+                          public void run() {
+                            // Notify loaded texture to observer
+                            List<TextureObserver> observers = loadingTextureObservers.remove(contentKey);
+                          }
+            		  });
+            	  }
+            	  catch(OutOfMemoryError oom)
+            	  {
+            		//Seen OutOfMemoryError and ArrayIndexOutOfBoundsException
+            		  // just print it and move on
+            		  System.err.println("OutOfMemoryError ignored");
+            		  oom.printStackTrace();
+            		  EventQueue.invokeLater(new Runnable() {
+                          public void run() {
+                            // Notify loaded texture to observer
+                            List<TextureObserver> observers = loadingTextureObservers.remove(contentKey);
+                          }
+            		  });
             	  }
               }
             });

@@ -641,6 +641,18 @@ public class ModelManager {
                   }
                 });
             }
+            catch(OutOfMemoryError e)
+            {
+            	//PJ this gets OOMs constantly, trying catching everything here
+            	System.out.println("OutOfMemoryError ignored");
+            	 e.printStackTrace();
+              EventQueue.invokeLater(new Runnable() {
+                  public void run() {
+                    List<ModelObserver> observers = loadingModelObservers.remove(content);
+                    // don't bother notifying, we are dying under load
+                  }
+                });
+            }
             
           }
         });
