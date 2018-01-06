@@ -28,8 +28,6 @@ import java.io.ObjectInputStream;
  * @since  1.7
  */
 public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWindow {
-	
-  public static final String DEFAULT_CUT_OUT_SHAPE = "M0,0 v1 h1 v-1 z";
   private static final long serialVersionUID = 1L;
 
   private final float   wallThickness;
@@ -56,7 +54,7 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
    * and reads object from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.cutOutShape = DEFAULT_CUT_OUT_SHAPE;
+    this.cutOutShape = "M0,0 v1 h1 v-1 z";
     in.defaultReadObject();
   }
   

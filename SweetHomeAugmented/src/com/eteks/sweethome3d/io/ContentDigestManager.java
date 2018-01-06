@@ -162,7 +162,7 @@ public class ContentDigestManager {
                 && !zipEntryName.equals(entryDirectory)
                 && isSignificant(zipEntryName)) {
               Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
-                  + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20").replace("%2F", "/")));
+                  + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
               updateMessageDigest(messageDigest, siblingContent);
             }
           }
@@ -213,7 +213,7 @@ public class ContentDigestManager {
             && !zipEntryName.equals(entryDirectory)
             && isSignificant(zipEntryName)) {
           Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
-              + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20").replace("%2F", "/")));
+              + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
           updateMessageDigest(messageDigest, siblingContent);    
         }
       }
@@ -232,7 +232,7 @@ public class ContentDigestManager {
     for (String zipEntryName : ContentDigestManager.getInstance().getZipURLEntries(urlContent)) {
       if (isSignificant(zipEntryName)) {
         Content siblingContent = new URLContent(new URL("jar:" + urlContent.getJAREntryURL() + "!/" 
-            + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20").replace("%2F", "/")));
+            + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20")));
         updateMessageDigest(messageDigest, siblingContent);
       }
     }

@@ -19,11 +19,11 @@
  */
 package com.eteks.sweethome3d.model;
 
-import javaawt.Shape;
-import javaawt.geom.Area;
-import javaawt.geom.GeneralPath;
-import javaawt.geom.PathIterator;
-import javaawt.geom.Rectangle2D;
+import java.awt.Shape;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;

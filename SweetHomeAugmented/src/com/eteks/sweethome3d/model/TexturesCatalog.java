@@ -36,25 +36,21 @@ public class TexturesCatalog {
    * Returns the categories list sorted by name.
    * @return an unmodifiable list of categories.
    */
-  public synchronized List<TexturesCategory> getCategories() {
-    //PJ to avoid concurrent mod exceptions
-    synchronized(this.categories)
-    {
-      return Collections.unmodifiableList(new ArrayList<TexturesCategory>(this.categories));
-    }
+  public List<TexturesCategory> getCategories() {
+    return Collections.unmodifiableList(this.categories);
   }
 
   /**
    * Returns the count of categories in this catalog.
    */
-  public synchronized int getCategoriesCount() {
+  public int getCategoriesCount() {
     return this.categories.size();
   }
 
   /**
    * Returns the category at a given <code>index</code>.
    */
-  public synchronized TexturesCategory getCategory(int index) {
+  public TexturesCategory getCategory(int index) {
     return this.categories.get(index);
   }
 
@@ -79,16 +75,12 @@ public class TexturesCatalog {
    * @param category the category of the texture.
    * @param texture  a texture.
    */
-  public synchronized void add(TexturesCategory category, CatalogTexture texture) {
+  public void add(TexturesCategory category, CatalogTexture texture) {
     int index = Collections.binarySearch(this.categories, category);
     // If category doesn't exist yet, add it to categories
     if (index < 0) {
       category = new TexturesCategory(category.getName());
-    //PJ to avoid concurrent mod exceptions
-      synchronized(this.categories)
-      {
-        this.categories.add(-index - 1, category);
-      }
+      this.categories.add(-index - 1, category);
     } else {
       category = this.categories.get(index);
     }    
@@ -106,7 +98,7 @@ public class TexturesCatalog {
    * {@link CollectionListener#collectionChanged(CollectionEvent) collectionChanged} notification.
    * @param texture a texture.
    */
-  public synchronized void delete(CatalogTexture texture) {
+  public void delete(CatalogTexture texture) {
     TexturesCategory category = texture.getCategory();
     // Remove texture from its category
     if (category != null) {
@@ -116,12 +108,8 @@ public class TexturesCatalog {
         
         if (category.getTexturesCount() == 0) {
           //  Make a copy of the list to avoid conflicts in the list returned by getCategories
-        //PJ to avoid concurrent mod exceptions
-          synchronized(this.categories)
-          {
-            this.categories = new ArrayList<TexturesCategory>(this.categories);
-            this.categories.remove(category);
-          }
+          this.categories = new ArrayList<TexturesCategory>(this.categories);
+          this.categories.remove(category);
         }
         
         this.texturesChangeSupport.fireCollectionChanged(texture, textureIndex, CollectionEvent.Type.DELETE);

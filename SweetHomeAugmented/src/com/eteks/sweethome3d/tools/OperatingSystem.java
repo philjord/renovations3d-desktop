@@ -33,6 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+import com.apple.eio.FileManager;
 import com.eteks.sweethome3d.model.Home;
 
 /**
@@ -47,7 +48,7 @@ public class OperatingSystem {
   
   static {
     // Retrieve sub folders where is stored application data
-  /*  ResourceBundle resource = ResourceBundle.getBundle(OperatingSystem.class.getName());
+    ResourceBundle resource = ResourceBundle.getBundle(OperatingSystem.class.getName());
     if (OperatingSystem.isMacOSX()) {
       EDITOR_SUB_FOLDER = resource.getString("editorSubFolder.Mac OS X");
       APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder.Mac OS X");
@@ -57,13 +58,11 @@ public class OperatingSystem {
     } else {
       EDITOR_SUB_FOLDER = resource.getString("editorSubFolder");
       APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder");
-    }*/
-	  EDITOR_SUB_FOLDER = "editorSubFolder";
-    APPLICATION_SUB_FOLDER = "applicationSubFolder";
+    }
     
     String temporarySubFolder;
     try {
-      temporarySubFolder = "temporarySubFolder";//resource.getString("temporarySubFolder");
+      temporarySubFolder = resource.getString("temporarySubFolder");
       if (temporarySubFolder.trim().length() == 0) {
         temporarySubFolder = null;
       }
@@ -434,7 +433,7 @@ public class OperatingSystem {
   public static File getDefaultApplicationFolder() throws IOException {
     File userApplicationFolder; 
     if (isMacOSX()) {
-      userApplicationFolder = null;//new File(MacOSXFileManager.getApplicationSupportFolder());
+      userApplicationFolder = new File(MacOSXFileManager.getApplicationSupportFolder());
     } else if (isWindows()) {
       userApplicationFolder = new File(System.getProperty("user.home"), "Application Data");
       // If user Application Data directory doesn't exist, use user home
@@ -456,10 +455,10 @@ public class OperatingSystem {
    * This class requires some classes of <code>com.apple.eio</code> package  
    * to compile.
    */
- /* private static class MacOSXFileManager {
+  private static class MacOSXFileManager {
     public static String getApplicationSupportFolder() throws IOException {
       // Find application support folder (0x61737570) for user domain (-32763)
       return FileManager.findFolder((short)-32763, 0x61737570);
     }
-  }*/
+  }
 }

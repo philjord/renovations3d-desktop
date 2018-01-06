@@ -84,7 +84,7 @@ public abstract class UserPreferences {
     DEFAULT_SUPPORTED_LANGUAGES = defaultSupportedLanguages;
   }
   
-  private PropertyChangeSupport          propertyChangeSupport;
+  private final PropertyChangeSupport          propertyChangeSupport;
   private final Map<Class<?>, ResourceBundle>  classResourceBundles;
   private final Map<String, ResourceBundle>    resourceBundles;
 
@@ -155,12 +155,6 @@ public abstract class UserPreferences {
     updateDefaultLocale();
   }
 
-  //PJPJPJ to allow a singleton prefs to drop it's references to a loaded home on a reload of a new home
-  public void clearPropertyChangeListeners()
-  {
-	  this.propertyChangeSupport = new PropertyChangeSupport(this);
-  }
-  
   /**
    * Updates default locale from preferences language.
    */

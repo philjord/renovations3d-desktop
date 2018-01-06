@@ -19,14 +19,13 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import javaawt.BasicStroke;
-import javaawt.Shape;
-import javaawt.geom.Area;
-import javaawt.geom.GeneralPath;
-import javaawt.geom.Line2D;
-import javaawt.geom.PathIterator;
-import javaawt.geom.Point2D;
-
+import java.awt.BasicStroke;
+import java.awt.Shape;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -35,11 +34,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javaxswing.undo.AbstractUndoableEdit;
-import javaxswing.undo.CannotRedoException;
-import javaxswing.undo.CannotUndoException;
-import javaxswing.undo.UndoableEdit;
-import javaxswing.undo.UndoableEditSupport;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoableEdit;
+import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Baseboard;
 import com.eteks.sweethome3d.model.Home;
@@ -665,8 +664,6 @@ public class RoomController implements Controller {
    */
   private boolean isRoomItersectingWallSide(float [][] wallPoints, int wallSide, Area roomArea) {
     BasicStroke lineStroke = new BasicStroke(2);
-    
-    
     Shape wallSideShape = getWallSideShape(wallPoints, wallSide);
     Area wallSideTestArea = new Area(lineStroke.createStrokedShape(wallSideShape));
     float wallSideTestAreaSurface = getSurface(wallSideTestArea);

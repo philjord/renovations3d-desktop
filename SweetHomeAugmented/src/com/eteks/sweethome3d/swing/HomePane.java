@@ -61,7 +61,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import javaawt.geom.Rectangle2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
@@ -97,6 +97,8 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.media.j3d.Node;
+import javax.media.j3d.VirtualUniverse;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -158,9 +160,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import javax.swing.text.JTextComponent;
-
-import org.jogamp.java3d.Node;
-import org.jogamp.java3d.VirtualUniverse;
 
 import com.eteks.sweethome3d.j3d.Ground3D;
 import com.eteks.sweethome3d.j3d.OBJWriter;
@@ -860,7 +859,7 @@ public class HomePane extends JRootPane implements HomeView {
           planController.setMode(PlanController.Mode.PANNING);
           ev.consume();
         } else if (OperatingSystem.isMacOSX() 
-            && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+                   && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
           // Manage events with cmd key + special key from keyPressed because keyTyped won't be called
           keyTyped(ev);
         }
@@ -883,27 +882,27 @@ public class HomePane extends JRootPane implements HomeView {
       @Override
       public void keyTyped(KeyEvent ev) {
         if (ev.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
-        // This listener manages accelerator keys that may require the use of shift key 
-        // depending on keyboard layout (like + - or ?) 
-        ActionMap actionMap = getActionMap();
-        Action [] specialKeyActions = {actionMap.get(ActionType.ZOOM_IN), 
-                                       actionMap.get(ActionType.ZOOM_OUT), 
-                                       actionMap.get(ActionType.INCREASE_TEXT_SIZE), 
-                                       actionMap.get(ActionType.DECREASE_TEXT_SIZE), 
-                                       actionMap.get(ActionType.HELP)};
-        int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
-        for (Action specialKeyAction : specialKeyActions) {
-          KeyStroke actionKeyStroke = (KeyStroke)specialKeyAction.getValue(Action.ACCELERATOR_KEY);
-          if (actionKeyStroke != null
-              && ev.getKeyChar() == actionKeyStroke.getKeyChar()
-              && (ev.getModifiers() & modifiersMask) == (actionKeyStroke.getModifiers() & modifiersMask)
-              && specialKeyAction.isEnabled()) {
-            specialKeyAction.actionPerformed(new ActionEvent(HomePane.this, 
-                ActionEvent.ACTION_PERFORMED, (String)specialKeyAction.getValue(Action.ACTION_COMMAND_KEY)));
-            ev.consume();
+          // This listener manages accelerator keys that may require the use of shift key 
+          // depending on keyboard layout (like + - or ?) 
+          ActionMap actionMap = getActionMap();
+          Action [] specialKeyActions = {actionMap.get(ActionType.ZOOM_IN), 
+                                         actionMap.get(ActionType.ZOOM_OUT), 
+                                         actionMap.get(ActionType.INCREASE_TEXT_SIZE), 
+                                         actionMap.get(ActionType.DECREASE_TEXT_SIZE), 
+                                         actionMap.get(ActionType.HELP)};
+          int modifiersMask = KeyEvent.ALT_MASK | KeyEvent.CTRL_MASK | KeyEvent.META_MASK;
+          for (Action specialKeyAction : specialKeyActions) {
+            KeyStroke actionKeyStroke = (KeyStroke)specialKeyAction.getValue(Action.ACCELERATOR_KEY);
+            if (actionKeyStroke != null
+                && ev.getKeyChar() == actionKeyStroke.getKeyChar()
+                && (ev.getModifiers() & modifiersMask) == (actionKeyStroke.getModifiers() & modifiersMask)
+                && specialKeyAction.isEnabled()) {
+              specialKeyAction.actionPerformed(new ActionEvent(HomePane.this, 
+                  ActionEvent.ACTION_PERFORMED, (String)specialKeyAction.getValue(Action.ACTION_COMMAND_KEY)));
+              ev.consume();
+            }
           }
         }
-      }
       }
     };
 

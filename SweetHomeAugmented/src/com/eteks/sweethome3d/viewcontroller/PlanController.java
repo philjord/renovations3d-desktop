@@ -19,16 +19,15 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import javaawt.BasicStroke;
-import javaawt.Shape;
-import javaawt.geom.AffineTransform;
-import javaawt.geom.Area;
-import javaawt.geom.GeneralPath;
-import javaawt.geom.Line2D;
-import javaawt.geom.PathIterator;
-import javaawt.geom.Point2D;
-import javaawt.geom.Rectangle2D;
-
+import java.awt.BasicStroke;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -42,11 +41,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javaxswing.undo.AbstractUndoableEdit;
-import javaxswing.undo.CannotRedoException;
-import javaxswing.undo.CannotUndoException;
-import javaxswing.undo.UndoableEdit;
-import javaxswing.undo.UndoableEditSupport;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoableEdit;
+import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Baseboard;
@@ -118,9 +117,9 @@ public class PlanController extends FurnitureController implements Controller {
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
-  public static int PIXEL_MARGIN           = 4;
-  public static int INDICATOR_PIXEL_MARGIN = 5;//PJPJPJ 5 is waay too small on the phone, fat fingers needs to update this
-  public static int WALL_ENDS_PIXEL_MARGIN = 2;
+  private static final int PIXEL_MARGIN           = 4;
+  private static final int INDICATOR_PIXEL_MARGIN = 5;
+  private static final int WALL_ENDS_PIXEL_MARGIN = 2;
 
   private final Home                  home;
   private final UserPreferences       preferences;
@@ -4069,11 +4068,7 @@ public class PlanController extends FurnitureController implements Controller {
     // Sort the deleted rooms in the ascending order of their index in home
     Map<Integer, Room> sortedMap = new TreeMap<Integer, Room>(); 
     for (Room room : deletedRooms) {
-    	//PJ https://console.firebase.google.com/project/renovations-3d/monitoring/app/android:com.mindblowing.renovations3d/cluster/ca8eccf0?duration=2592000000
-    	// shows that the homeRooms.indexOf(room) can be -1, I have no idea how exactly  
-    	int index = homeRooms.indexOf(room);
-    	if(index != -1)
-    		sortedMap.put(homeRooms.indexOf(room), room); 
+      sortedMap.put(homeRooms.indexOf(room), room); 
     }
     final Room [] rooms = sortedMap.values().toArray(new Room [sortedMap.size()]); 
     final int [] roomsIndices = new int [rooms.length];
@@ -4646,7 +4641,7 @@ public class PlanController extends FurnitureController implements Controller {
                           Level [] roomsLevels,
                           Level uniqueRoomsLevel,
                           boolean basePlanLocked) {
-    for (int i = 0; i < roomsIndices.length; i++) {    	
+    for (int i = 0; i < roomsIndices.length; i++) {
       this.home.addRoom (rooms [i], roomsIndices [i]);
       rooms [i].setLevel(roomsLevels != null 
           ? roomsLevels [i] 
@@ -6859,7 +6854,7 @@ public class PlanController extends FurnitureController implements Controller {
         selectItem(getSelectableItemAt(getXLastMousePress(), getYLastMousePress(), false));
       }       
       List<Selectable> selectedItems = home.getSelectedItems();
-      this.movedItems = new ArrayList<Selectable>(selectedItems.size());      
+      this.movedItems = new ArrayList<Selectable>(selectedItems.size());
       this.basePlanModification = false;
       for (Selectable item : selectedItems) {
         if (isItemMovable(item)) {
@@ -6867,8 +6862,8 @@ public class PlanController extends FurnitureController implements Controller {
           if (!this.basePlanModification
               && isItemPartOfBasePlan(item)) {
             this.basePlanModification = true;
+          }
         }
-      }
       }
       if (this.movedItems.size() == 1
           && this.movedItems.get(0) instanceof HomePieceOfFurniture) {
@@ -7082,8 +7077,6 @@ public class PlanController extends FurnitureController implements Controller {
           }
 
           getView().setCursor(PlanView.CursorType.DUPLICATION);
-          //PJPJ only redo selection if something changes, expensive
-          selectItems(this.movedItems, home.isAllLevelsSelection());
         } else if (!duplicationActivated
                    && this.duplicatedItems != null) {
           // Delete moved items 
@@ -7098,12 +7091,10 @@ public class PlanController extends FurnitureController implements Controller {
           if (this.movedPieceOfFurniture != null) {
             this.movedPieceOfFurniture = (HomePieceOfFurniture)this.movedItems.get(0);
           }
-          getView().setCursor(PlanView.CursorType.MOVE);  
-          //PJPJ only redo selection if something changes, expensive
-          selectItems(this.movedItems, home.isAllLevelsSelection());
+          getView().setCursor(PlanView.CursorType.MOVE);
         }
-        //PJPJ only redo selection if something changes above, expensive
-        //selectItems(this.movedItems, home.isAllLevelsSelection());
+        
+        selectItems(this.movedItems, home.isAllLevelsSelection());
       }
     }
 
@@ -9623,12 +9614,10 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void escape() {
-    	
-    	//PJPJPJ escaping from the drawing state should commit the drawing, surely?
-    //  if (this.newDimensionLine != null) {
+      if (this.newDimensionLine != null) {
         // Delete current created dimension line
-     //   home.deleteDimensionLine(this.newDimensionLine);
-     // }
+        home.deleteDimensionLine(this.newDimensionLine);
+      }
       // Change state to DimensionLineCreationState 
       setState(getDimensionLineCreationState());
     }

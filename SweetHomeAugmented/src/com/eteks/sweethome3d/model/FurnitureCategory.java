@@ -55,10 +55,7 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * @return an unmodifiable list of furniture.
    */
   public List<CatalogPieceOfFurniture> getFurniture() {
-	  synchronized(furniture)
-	  {
-		  return Collections.unmodifiableList(new ArrayList<CatalogPieceOfFurniture>(this.furniture));
-	  }
+    return Collections.unmodifiableList(this.furniture);
   }
 
   /**
@@ -88,20 +85,12 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * @param piece the piece to add.
    */
   void add(CatalogPieceOfFurniture piece) {
-    
-	  if(piece !=null)
-	  {
-		  synchronized(furniture)
-		  {
-			  	piece.setCategory(this);
-		  
-			    int index = Collections.binarySearch(this.furniture, piece);
-			    if (index < 0) {
-			      index = -index - 1;
-			    } 
-			    this.furniture.add(index, piece);
-		  }
-	  }
+    piece.setCategory(this);
+    int index = Collections.binarySearch(this.furniture, piece);
+    if (index < 0) {
+      index = -index - 1;
+    } 
+    this.furniture.add(index, piece);    
   }
 
   /**
@@ -110,20 +99,14 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * @throws IllegalArgumentException if the piece doesn't exist in this category.
    */
   void delete(CatalogPieceOfFurniture piece) {
-	   if(piece != null)
-	   {
-		  synchronized(furniture)
-		  {
-			  int pieceIndex = this.furniture.indexOf(piece);
-		    if (pieceIndex == -1) {
-		      throw new IllegalArgumentException(
-		          this.name + " doesn't contain piece " + piece.getName());
-		    }
-		    //  Make a copy of the list to avoid conflicts in the list returned by getFurniture
-		    this.furniture = new ArrayList<CatalogPieceOfFurniture>(this.furniture);
-		    this.furniture.remove(pieceIndex);
-		  }
-	   }
+    int pieceIndex = this.furniture.indexOf(piece);
+    if (pieceIndex == -1) {
+      throw new IllegalArgumentException(
+          this.name + " doesn't contain piece " + piece.getName());
+    }
+    //  Make a copy of the list to avoid conflicts in the list returned by getFurniture
+    this.furniture = new ArrayList<CatalogPieceOfFurniture>(this.furniture);
+    this.furniture.remove(pieceIndex);
   }
   
   /**

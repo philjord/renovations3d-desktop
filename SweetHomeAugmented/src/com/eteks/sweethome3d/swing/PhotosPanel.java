@@ -85,9 +85,6 @@ import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.sunflow.system.UI;
-import org.sunflow.system.ui.ConsoleInterface;
-
 import com.eteks.sweethome3d.j3d.PhotoRenderer;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Home;
@@ -158,8 +155,6 @@ public class PhotosPanel extends JPanel implements DialogView {
     layoutComponents();    
 
     preferences.addPropertyChangeListener(UserPreferences.Property.LANGUAGE, new LanguageChangeListener(this));
-
-	UI.set(new ConsoleInterface());
   }
   
   /**
@@ -664,9 +659,7 @@ public class PhotosPanel extends JPanel implements DialogView {
             image = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
             this.photoComponent.setImage(image);
             updateProgressBar(photoIndex++, cameraFiles.size());
-            //photoRenderer.render(image, camera, this.photoComponent);
-            //PJPJPJPJ
-            System.out.println("photoRenderer.render(image, camera, this.photoComponent); dumped");
+            photoRenderer.render(image, camera, this.photoComponent);
           }
         } else {
           // Compute 3D view offscreen image

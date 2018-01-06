@@ -106,6 +106,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.media.j3d.AmbientLight;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.Background;
+import javax.media.j3d.BoundingBox;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Canvas3D;
+import javax.media.j3d.DirectionalLight;
+import javax.media.j3d.Group;
+import javax.media.j3d.ImageComponent2D;
+import javax.media.j3d.Light;
+import javax.media.j3d.Link;
+import javax.media.j3d.Node;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.Texture;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.ActionMap;
@@ -140,34 +156,14 @@ import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.InternationalFormatter;
 import javax.swing.text.JTextComponent;
 import javax.swing.text.NumberFormatter;
+import javax.vecmath.Color3f;
+import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 import org.freehep.graphicsio.ImageConstants;
 import org.freehep.graphicsio.svg.SVGGraphics2D;
 import org.freehep.util.UserProperties;
-import org.jogamp.java3d.AmbientLight;
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.Background;
-import org.jogamp.java3d.BoundingBox;
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.Canvas3D;
-import org.jogamp.java3d.DirectionalLight;
-import org.jogamp.java3d.Group;
-import org.jogamp.java3d.ImageComponent2D;
-import org.jogamp.java3d.Light;
-import org.jogamp.java3d.Link;
-import org.jogamp.java3d.Node;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.java3d.TransformGroup;
- 
-import org.jogamp.java3d.utils.universe.SimpleUniverse;
-import org.jogamp.java3d.utils.universe.Viewer;
-import org.jogamp.java3d.utils.universe.ViewingPlatform;
-import org.jogamp.vecmath.Color3f;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Vector3d;
-import org.jogamp.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
@@ -205,7 +201,9 @@ import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.viewcontroller.PlanController;
 import com.eteks.sweethome3d.viewcontroller.PlanView;
 import com.eteks.sweethome3d.viewcontroller.View;
- 
+import com.sun.j3d.utils.universe.SimpleUniverse;
+import com.sun.j3d.utils.universe.Viewer;
+import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
  * A component displaying the plan of a home.
@@ -286,6 +284,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
   private List<Selectable>      draggedItemsFeedback;
   private List<DimensionLine>   dimensionLinesFeedback;
   private boolean               selectionScrollUpdated;
+  private boolean               wallsDoorsOrWindowsModification;
   private JToolTip              toolTip;
   private JWindow               toolTipWindow;
   private boolean               resizeIndicatorVisible;
@@ -606,6 +605,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (controller != null) {
       addMouseListeners(controller);
       addFocusListener(controller);
+      addControllerListener(controller);
       createActions(controller);      
       installDefaultKeyboardActions();
       setFocusable(true);
@@ -1210,6 +1210,33 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           }
         });
     }
+  }
+  
+  /**
+   * Adds a listener to the controller to follow changes in base plan modification state.
+   */
+  private void addControllerListener(final PlanController controller) {
+    controller.addPropertyChangeListener(PlanController.Property.BASE_PLAN_MODIFICATION_STATE, 
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            boolean wallsDoorsOrWindowsModification = controller.isBasePlanModificationState();
+            if (wallsDoorsOrWindowsModification) {
+              // Limit base plan modification state to walls creation/handling and doors or windows handling
+              if (controller.getMode() != PlanController.Mode.WALL_CREATION) {
+                for (Selectable item : (draggedItemsFeedback != null ? draggedItemsFeedback : home.getSelectedItems())) {
+                  if (!(item instanceof Wall) 
+                      && !(item instanceof HomePieceOfFurniture && ((HomePieceOfFurniture)item).isDoorOrWindow())) {
+                    wallsDoorsOrWindowsModification = false;
+                  }
+                }
+              }
+            }
+            if (PlanComponent.this.wallsDoorsOrWindowsModification != wallsDoorsOrWindowsModification) {
+              PlanComponent.this.wallsDoorsOrWindowsModification = wallsDoorsOrWindowsModification;
+              repaint();
+            }
+          }
+        });
   }
   
   /**
@@ -2388,7 +2415,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setComposite(oldComposite);
       }
       
-      if (this.otherLevelsWallsCache != null && !this.otherLevelsWallsCache.isEmpty()) {
+      if (!this.otherLevelsWallsCache.isEmpty()) {
         Composite oldComposite = setTransparency(g2D, 
             this.preferences.isGridVisible() ? 0.2f : 0.1f);
         fillAndDrawWallsArea(g2D, this.otherLevelsWallAreaCache, planScale, 
@@ -2818,7 +2845,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                       new TextureManager.TextureObserver() {
                         public void textureUpdated(Texture texture) {
                           floorTextureImagesCache.put(floorRotatedTextureKey, 
-                              (BufferedImage) ((ImageComponent2D)texture.getImage(0)).getImage().getDelegate());
+                              ((ImageComponent2D)texture.getImage(0)).getImage());
                           if (!waitForTexture) {
                             repaint();
                           }
@@ -2942,7 +2969,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                      Color foregroundColor, PaintMode paintMode) {
     g2D.setPaint(foregroundColor);
     Font previousFont = g2D.getFont();
-    if(this.sortedLevelRooms != null )//PJ why can this be null
     for (Room room : this.sortedLevelRooms) { 
       boolean selectedRoom = selectedItems.contains(room);
       // In clipboard paint mode, paint room only if it is selected
@@ -3257,11 +3283,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float wallPaintScale = paintMode == PaintMode.PRINT 
         ? planScale / 72 * 150 // Adjust scale to 150 dpi for print
         : planScale;
+    Composite oldComposite = null;
+    if (paintMode == PaintMode.PAINT
+        && this.backgroundPainted 
+        && this.backgroundImageCache != null
+        && this.wallsDoorsOrWindowsModification) {
+      // Paint walls with half transparent paint when a wall or a door/window in the base plan is being handled
+      oldComposite = setTransparency(g2D, 0.5f);
+    }
     for (Map.Entry<Collection<Wall>, Area> areaEntry : wallAreas.entrySet()) {
       TextureImage wallPattern = areaEntry.getKey().iterator().next().getPattern();
       fillAndDrawWallsArea(g2D, areaEntry.getValue(), planScale, 
           getWallPaint(wallPaintScale, backgroundColor, foregroundColor, 
               wallPattern != null ? wallPattern : this.preferences.getWallPattern()), foregroundColor, paintMode);
+    }
+    if (oldComposite != null) {
+      g2D.setComposite(oldComposite);
     }
   }
 
@@ -3540,9 +3577,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                               List<? extends Selectable> selectedItems, float planScale, 
                               Color backgroundColor, Color foregroundColor, 
                               Color furnitureOutlineColor,
-                              PaintMode paintMode, boolean paintIcon) {
-	  //PJPJP note sure why furniture can be null here
-    if (furniture !=null && !furniture.isEmpty()) {
+                              PaintMode paintMode, boolean paintIcon) {    
+    if (!furniture.isEmpty()) {
       BasicStroke pieceBorderStroke = new BasicStroke(getStrokeWidth(HomePieceOfFurniture.class, paintMode) / planScale);
       Boolean allFurnitureViewedFromTop = null;
       // Draw furniture
@@ -3646,11 +3682,10 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float width = doorOrWindow.getWidth();
     float x;
     if (cutOutShape != null
-        && !HomeDoorOrWindow.DEFAULT_CUT_OUT_SHAPE.equals(cutOutShape)) {
-      // In case of a complex cut out, compute location and width of the window hole at wall intersection
-    	//PJPJPJPJ
-      javaawt.Shape shape = ModelManager.getInstance().getShape(cutOutShape);
-      Rectangle2D bounds = new Rectangle2D.Double(shape.getBounds2D().getX(),shape.getBounds2D().getY(),shape.getBounds2D().getWidth(),shape.getBounds2D().getHeight());
+        && !"M0,0 v1 h1 v-1 z".equals(cutOutShape)) {
+      // In case of a complex cut out, compute location and width of the window hole at wall intersection 
+      Shape shape = ModelManager.getInstance().getShape(cutOutShape);
+      Rectangle2D bounds = shape.getBounds2D();
       if (doorOrWindow.isModelMirrored()) {
         x = doorOrWindow.getX() + (float)(0.5 - bounds.getX() - bounds.getWidth()) * width;
       } else {
@@ -3721,7 +3756,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     Font previousFont = g2D.getFont();
     g2D.setPaint(foregroundColor);
     // Draw furniture name
-    if(furniture != null)//PJ how can this be null?
     for (HomePieceOfFurniture piece : furniture) {
       if (piece.isVisible()) {
         boolean selectedPiece = selectedItems.contains(piece);
@@ -6045,7 +6079,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
             TextureManager.getInstance().loadTexture(this.pieceTexture.getImage(), true,
                 new TextureManager.TextureObserver() {
                   public void textureUpdated(Texture texture) {
-                    setTexturedIcon(c, (BufferedImage) ((ImageComponent2D)texture.getImage(0)).getImage().getDelegate(), pieceTexture.getAngle());
+                    setTexturedIcon(c, ((ImageComponent2D)texture.getImage(0)).getImage(), pieceTexture.getAngle());
                   }
                 });
           } else { 
@@ -6114,8 +6148,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       viewPlatformTransform.setTransform(transform);
       // Use parallel projection
       Viewer viewer = viewingPlatform.getViewers() [0];      
-      org.jogamp.java3d.View view = viewer.getView();
-      view.setProjectionPolicy( org.jogamp.java3d.View.PARALLEL_PROJECTION);
+      javax.media.j3d.View view = viewer.getView();
+      view.setProjectionPolicy(javax.media.j3d.View.PARALLEL_PROJECTION);
       sceneRoot = new BranchGroup();
       // Prepare scene root
       sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
@@ -6213,14 +6247,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       background.setColor(1, 1, 1);
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
-      BufferedImage imageWithWhiteBackgound = (BufferedImage) canvas3D.getOffScreenBuffer().getImage().getDelegate();
+      BufferedImage imageWithWhiteBackgound = canvas3D.getOffScreenBuffer().getImage();
       int [] imageWithWhiteBackgoundPixels = getImagePixels(imageWithWhiteBackgound);
       
       // Render scene with a black background
       background.setColor(0, 0, 0);
       canvas3D.renderOffScreenBuffer();
       canvas3D.waitForOffScreenRendering();          
-      BufferedImage imageWithBlackBackgound = (BufferedImage) canvas3D.getOffScreenBuffer().getImage().getDelegate();
+      BufferedImage imageWithBlackBackgound = canvas3D.getOffScreenBuffer().getImage();
       int [] imageWithBlackBackgoundPixels = getImagePixels(imageWithBlackBackgound);
       
       // Create an image with transparent pixels where model isn't drawn
@@ -6244,9 +6278,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     private void cloneTexture(Node node, Map<Texture, Texture> replacedTextures) {
       if (node instanceof Group) {
         // Enumerate children
-        Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
-        while (enumeration.hasNext()) {
-          cloneTexture((Node)enumeration.next(), replacedTextures);
+        Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+        while (enumeration.hasMoreElements()) {
+          cloneTexture((Node)enumeration.nextElement(), replacedTextures);
         }
       } else if (node instanceof Link) {
         cloneTexture(((Link)node).getSharedGroup(), replacedTextures);

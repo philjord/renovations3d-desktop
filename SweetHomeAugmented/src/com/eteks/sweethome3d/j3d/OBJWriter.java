@@ -19,9 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import javaawt.image.RenderedImage;
-import javaawt.imageio.ImageIO;
-
+import java.awt.image.RenderedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -38,12 +36,12 @@ import java.net.JarURLConnection;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.FloatBuffer;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -53,44 +51,47 @@ import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.ColoringAttributes;
-import org.jogamp.java3d.Geometry;
-import org.jogamp.java3d.GeometryArray;
-import org.jogamp.java3d.GeometryStripArray;
-import org.jogamp.java3d.Group;
-import org.jogamp.java3d.ImageComponent2D;
-import org.jogamp.java3d.IndexedGeometryArray;
-import org.jogamp.java3d.IndexedGeometryStripArray;
-import org.jogamp.java3d.IndexedLineArray;
-import org.jogamp.java3d.IndexedLineStripArray;
-import org.jogamp.java3d.IndexedQuadArray;
-import org.jogamp.java3d.IndexedTriangleArray;
-import org.jogamp.java3d.IndexedTriangleFanArray;
-import org.jogamp.java3d.IndexedTriangleStripArray;
-import org.jogamp.java3d.LineArray;
-import org.jogamp.java3d.LineStripArray;
-import org.jogamp.java3d.Link;
-import org.jogamp.java3d.Material;
-import org.jogamp.java3d.Node;
-import org.jogamp.java3d.PolygonAttributes;
-import org.jogamp.java3d.QuadArray;
-import org.jogamp.java3d.RenderingAttributes;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.TexCoordGeneration;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.TextureAttributes;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.java3d.TransformGroup;
-import org.jogamp.java3d.TransparencyAttributes;
-import org.jogamp.java3d.TriangleArray;
-import org.jogamp.java3d.TriangleFanArray;
-import org.jogamp.java3d.TriangleStripArray;
-import org.jogamp.vecmath.Color3f;
-import org.jogamp.vecmath.Point3f;
-import org.jogamp.vecmath.TexCoord2f;
-import org.jogamp.vecmath.Vector3f;
-import org.jogamp.vecmath.Vector4f;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.Geometry;
+import javax.media.j3d.GeometryArray;
+import javax.media.j3d.GeometryStripArray;
+import javax.media.j3d.Group;
+import javax.media.j3d.ImageComponent2D;
+import javax.media.j3d.IndexedGeometryArray;
+import javax.media.j3d.IndexedGeometryStripArray;
+import javax.media.j3d.IndexedLineArray;
+import javax.media.j3d.IndexedLineStripArray;
+import javax.media.j3d.IndexedQuadArray;
+import javax.media.j3d.IndexedTriangleArray;
+import javax.media.j3d.IndexedTriangleFanArray;
+import javax.media.j3d.IndexedTriangleStripArray;
+import javax.media.j3d.LineArray;
+import javax.media.j3d.LineStripArray;
+import javax.media.j3d.Link;
+import javax.media.j3d.Material;
+import javax.media.j3d.Node;
+import javax.media.j3d.PolygonAttributes;
+import javax.media.j3d.QuadArray;
+import javax.media.j3d.RenderingAttributes;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.TexCoordGeneration;
+import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
+import javax.media.j3d.TransparencyAttributes;
+import javax.media.j3d.TriangleArray;
+import javax.media.j3d.TriangleFanArray;
+import javax.media.j3d.TriangleStripArray;
+import javax.vecmath.Color3f;
+import javax.vecmath.Point3f;
+import javax.vecmath.TexCoord2f;
+import javax.vecmath.Vector3f;
+import javax.vecmath.Vector4f;
 
 /**
  * An output stream that writes Java 3D nodes at OBJ + MTL format.
@@ -340,9 +341,9 @@ public class OBJWriter extends FilterWriter {
         parentTransformations.mul(transform);
       }
       // Write all children
-      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasNext()) {
-        writeNode((Node)enumeration.next(), nodeName, parentTransformations);
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        writeNode((Node)enumeration.nextElement(), nodeName, parentTransformations);
       }
     } else if (node instanceof Link) {
       writeNode(((Link)node).getSharedGroup(), nodeName, parentTransformations);
@@ -406,19 +407,18 @@ public class OBJWriter extends FilterWriter {
                 }
               }
               this.appearances.put(comparableAppearance, appearanceName);
-
+              
               Texture texture = appearance.getTexture();
               if (texture != null) {
                 File textureFile = this.textures.get(texture);
                 if (textureFile == null) {
                   String fileExtension = "png";
                   URL textureUrl = (URL)texture.getUserData();
-                  //if (textureUrl instanceof URL) {
-                  //  InputStream in = null;
-                 //   try {
+                  if (textureUrl instanceof URL) {
+                    InputStream in = null;
+                    try {
                       // Find the format of the texture image
-                    	//PJPJ just don't find the format and default to a file extension of png and pray
-                     /* in = openStream(textureUrl);
+                      in = openStream(textureUrl);
                       ImageInputStream imageIn = ImageIO.createImageInputStream(in);
                       Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageIn);
                       if (imageReaders.hasNext()) {
@@ -426,17 +426,13 @@ public class OBJWriter extends FilterWriter {
                         fileExtension = reader.getFormatName().toLowerCase();
                         // Store the URL to copy its image content directly when appearances are saved 
                         this.copiedTextures.add(textureUrl);
-                      }*/
-                      
-                        // Store the URL to copy its image content directly when appearances are saved 
-                        this.copiedTextures.add(textureUrl);
-                     
-                 //   } catch (IOException ex) {
-                  //    if (in != null) {
-                  //      in.close();
-                   //   }
-                   // }
-                  //}
+                      }
+                    } catch (IOException ex) {
+                      if (in != null) {
+                        in.close();
+                      }
+                    }
+                  }
                   // Store texture
                   textureFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) 
                       + "_" + appearanceName + "." + fileExtension);
@@ -570,121 +566,41 @@ public class OBJWriter extends FilterWriter {
 
       if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
         if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
-        	//PJPJPJ added support for nio style
-  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-  			{
-  			// Write vertices coordinates
-  	          FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
-  	          int vertexSize = vertexData.limit() / geometryArray.getVertexCount();
-	          // Write vertices coordinates 
-	          for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
-	               index < n; index++, i += vertexSize) {
-  	            Point3f vertex = new Point3f(vertexData.get(i), vertexData.get(i + 1), vertexData.get(i + 2));
-  	            writeVertex(parentTransformations, vertex, index,
-  	                vertexIndexSubstitutes);
-  	          }
-  	          // Write texture coordinates
-  	          if (texCoordGeneration != null) {
-  	            if (textureCoordinatesGenerated) {
-  	            	 for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
-  		                    index < n; index++, i += vertexSize) {
-  	                TexCoord2f textureCoordinates = generateTextureCoordinates(
-  	                		vertexData.get(i), vertexData.get(i + 1), vertexData.get(i + 2), planeS, planeT);
-  	                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
-  	              }
-  	            }
-  	          } else if (textureCoordinatesDefined) {
-  	        	for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
-  	                  index < n; index++, i += vertexSize) {
-  	              TexCoord2f textureCoordinates = new TexCoord2f(vertexData.get(i), vertexData.get(i + 1));
-  	              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
-  	            }
-  	          }
-  	          // Write normals
-  	          if (normalsDefined) {
-  	        	for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
-  		                 normalsDefined && index < n; index++, i += vertexSize) {
-  	              Vector3f normal = new Vector3f(vertexData.get(i), vertexData.get(i + 1), vertexData.get(i + 2));
-  	              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
-  	                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
-  	            }
-  	          }
-  			}
-  			else
-  			{
-	          float [] vertexData = geometryArray.getInterleavedVertices();
-	          int vertexSize = vertexData.length / geometryArray.getVertexCount();
-	          // Write vertices coordinates 
-	          for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
-	               index < n; index++, i += vertexSize) {
-	            Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-	            writeVertex(parentTransformations, vertex, index, vertexIndexSubstitutes);
-	          }
-	          // Write texture coordinates
-	          if (texCoordGeneration != null) {
-	            if (textureCoordinatesGenerated) {
-	              for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
-	                    index < n; index++, i += vertexSize) {
-	                TexCoord2f textureCoordinates = generateTextureCoordinates(
-	                    vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
-	                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
-	              }
-	            }
-	          } else if (textureCoordinatesDefined) {
-	            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
-	                  index < n; index++, i += vertexSize) {
-	              TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
-	              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
-	            }
-	          }
-	          // Write normals
-	          if (normalsDefined) {
-	            for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
-	                 normalsDefined && index < n; index++, i += vertexSize) {
-	              Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
-	              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
-	                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
-	            }
-	          }
-  			}
+          float [] vertexData = geometryArray.getInterleavedVertices();
+          int vertexSize = vertexData.length / geometryArray.getVertexCount();
+          // Write vertices coordinates 
+          for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+               index < n; index++, i += vertexSize) {
+            Point3f vertex = new Point3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
+            writeVertex(parentTransformations, vertex, index, vertexIndexSubstitutes);
+          }
+          // Write texture coordinates
+          if (texCoordGeneration != null) {
+            if (textureCoordinatesGenerated) {
+              for (int index = 0, i = vertexSize - 3, n = geometryArray.getVertexCount(); 
+                    index < n; index++, i += vertexSize) {
+                TexCoord2f textureCoordinates = generateTextureCoordinates(
+                    vertexData [i], vertexData [i + 1], vertexData [i + 2], planeS, planeT);
+                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
+              }
+            }
+          } else if (textureCoordinatesDefined) {
+            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); 
+                  index < n; index++, i += vertexSize) {
+              TexCoord2f textureCoordinates = new TexCoord2f(vertexData [i], vertexData [i + 1]);
+              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
+            }
+          }
+          // Write normals
+          if (normalsDefined) {
+            for (int index = 0, i = vertexSize - 6, n = geometryArray.getVertexCount(); 
+                 normalsDefined && index < n; index++, i += vertexSize) {
+              Vector3f normal = new Vector3f(vertexData [i], vertexData [i + 1], vertexData [i + 2]);
+              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
+                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
+            }
+          }
         } else {
-        	//PJPJPJ added support for nio style
-  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-  			{
-  			// Write vertices coordinates
-  	          FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
-  	          for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
-  	            Point3f vertex = new Point3f(vertexCoordinates.get(i), vertexCoordinates.get(i + 1), vertexCoordinates.get(i + 2));
-  	            writeVertex(parentTransformations, vertex, index,
-  	                vertexIndexSubstitutes);
-  	          }
-  	          // Write texture coordinates
-  	          if (texCoordGeneration != null) {
-  	            if (textureCoordinatesGenerated) {
-  	              for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
-  	                TexCoord2f textureCoordinates = generateTextureCoordinates(
-  	                    vertexCoordinates.get(i), vertexCoordinates.get(i + 1), vertexCoordinates.get(i + 2), planeS, planeT);
-  	                writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
-  	              }
-  	            }
-  	          } else if (textureCoordinatesDefined) {
-  	        	FloatBuffer textureCoordinatesArray = (FloatBuffer) geometryArray.getTexCoordRefBuffer(0).getBuffer();
-  	            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 2) {
-  	              TexCoord2f textureCoordinates = new TexCoord2f(textureCoordinatesArray.get(i), textureCoordinatesArray.get(i + 1));
-  	              writeTextureCoordinates(textureCoordinates, textureTransform, index, textureCoordinatesIndexSubstitutes);
-  	            }
-  	          }
-  	          // Write normals
-  	          if (normalsDefined) {
-  	        	FloatBuffer normalCoordinates = (FloatBuffer) geometryArray.getNormalRefBuffer().getBuffer();
-  	            for (int index = 0, i = 0, n = geometryArray.getVertexCount(); normalsDefined && index < n; index++, i += 3) {
-  	              Vector3f normal = new Vector3f(normalCoordinates.get(i), normalCoordinates.get(i + 1), normalCoordinates.get(i + 2));
-  	              normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
-  	                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
-  	            }
-  	          }
-  			}
-  			else{
           // Write vertices coordinates
           float [] vertexCoordinates = geometryArray.getCoordRefFloat();
           for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
@@ -716,7 +632,7 @@ public class OBJWriter extends FilterWriter {
               normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
                   oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
             }
-          }}
+          }
         }
       } else {
         // Write vertices coordinates
@@ -1047,65 +963,6 @@ public class OBJWriter extends FilterWriter {
       vertexIndex1 = vertexIndex3;
       vertexIndex3 = tmp;
     }
-    //PJPJP added the coords index only case
-    if((geometryArray.getVertexFormat() & GeometryArray.USE_COORD_INDEX_ONLY) != 0)
-    {
-    if (textureCoordinatesGenerated) {
-        if (normalsDefined) {
-          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
-              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
-        } else {
-          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
-        }
-      } else if ((geometryArray.getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) != 0) {
-        if (normalsDefined) {
-          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
-              + "/" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
-        } else {
-          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + " " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
-              + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
-        }
-      } else {
-        if (normalsDefined) {
-          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + "//" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + "//" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) 
-              + "//" + (normalIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
-        } else {
-          this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
-              + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
-              + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
-        }
-      }
-    
-    }
-    else
-    {
     
     if (textureCoordinatesGenerated) {
       if (normalsDefined) {
@@ -1158,7 +1015,6 @@ public class OBJWriter extends FilterWriter {
             + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex2)]) 
             + " "  + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex3)]) + "\n");
       }
-    }
     }
 
     if (cullFace == PolygonAttributes.CULL_NONE) {
@@ -1528,9 +1384,8 @@ public class OBJWriter extends FilterWriter {
           }
         } else {
           ImageComponent2D imageComponent = (ImageComponent2D)texture.getImage(0);
-          //PJPJPJPJ
           RenderedImage image = imageComponent.getRenderedImage();
-      //    ImageIO.write(image, "png", textureEntry.getValue());
+          ImageIO.write(image, "png", textureEntry.getValue());
         }
       }
     } finally {

@@ -19,37 +19,37 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.GeometryArray;
-import org.jogamp.java3d.Group;
-import org.jogamp.java3d.Node;
-import org.jogamp.java3d.OrderedGroup;
-import org.jogamp.java3d.PolygonAttributes;
-import org.jogamp.java3d.RenderingAttributes;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.TexCoordGeneration;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.TextureAttributes;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.java3d.TransformGroup;
-import org.jogamp.java3d.TransparencyAttributes;
-import org.jogamp.java3d.utils.geometry.Box;
-import org.jogamp.java3d.utils.image.TextureLoader;
-import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
-import org.jogamp.vecmath.Vector3d;
-import org.jogamp.vecmath.Vector4f;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
+
+import javax.media.j3d.Appearance;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Group;
+import javax.media.j3d.PolygonAttributes;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.TexCoordGeneration;
+import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
+import javax.media.j3d.TransparencyAttributes;
+import javax.swing.UIManager;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector4f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.TextStyle;
-
-import javaawt.Color;
-import javaawt.Font;
-import javaawt.Graphics2D;
-import javaawt.RenderingHints;
-import javaawt.geom.Rectangle2D;
-import javaawt.image.BufferedImage;
+import com.sun.j3d.utils.geometry.Box;
+import com.sun.j3d.utils.image.TextureLoader;
 
 /**
  * Root of a label branch.
@@ -64,13 +64,6 @@ public class Label3D extends Object3DBranch {
   
   static {
     MODULATE_TEXTURE_ATTRIBUTES.setTextureMode(TextureAttributes.MODULATE);
-    MODULATE_TEXTURE_ATTRIBUTES.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
-    
-    DEFAULT_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_MODE_READ);
-    DEFAULT_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
-    DEFAULT_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_READ);
-    
-    DEFAULT_TRANSPARENCY_ATTRIBUTES.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
   }
 
   private String      text;
@@ -89,11 +82,6 @@ public class Label3D extends Object3DBranch {
     setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
     
     update();
-    
-    //selection
-    setPickable(true);
-    setCapability(Node.ENABLE_PICK_REPORTING);
-    setUserData(label);
   }
 
   @Override
@@ -107,49 +95,40 @@ public class Label3D extends Object3DBranch {
             || label.getLevel().isViewableAndVisible())) {
       String text = label.getText();
       Integer color = label.getColor();
-//      Integer outlineColor = label.getOutlineColor();
+      Integer outlineColor = label.getOutlineColor();
       if (!text.equals(this.text)
           || (style == null && this.style != null)
           || (style != null && !style.equals(this.style))
           || (color == null && this.color != null)
           || (color != null && !color.equals(this.color))) {
         // If text, style and color changed, recompute label texture  
-    	 // TextPaint mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-         // mTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-         // mTextPaint.setTextSize(defaultTextSize);
-         // FontMetrics fm = mTextPaint.getFontMetrics();          
-          
-//        int fontStyle = Font.PLAIN;
-//        if (style.isBold()) {
-//          fontStyle = Font.BOLD;
-//        }
-//        if (style.isItalic()) {
-//          fontStyle |= Font.ITALIC;
-//        }
-//        Font defaultFont; 
-//        if (style.getFontName() != null) {
-//          defaultFont = new Font(style.getFontName(), fontStyle, 1);
-//        } else {
-//          defaultFont = UIManager.getFont("TextField.font");
-//        }
-//        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
-//        Font font = defaultFont.deriveFont(fontStyle, style.getFontSize() - stroke.getLineWidth());
-//  
+        int fontStyle = Font.PLAIN;
+        if (style.isBold()) {
+          fontStyle = Font.BOLD;
+        }
+        if (style.isItalic()) {
+          fontStyle |= Font.ITALIC;
+        }
+        Font defaultFont; 
+        if (style.getFontName() != null) {
+          defaultFont = new Font(style.getFontName(), fontStyle, 1);
+        } else {
+          defaultFont = UIManager.getFont("TextField.font");
+        }
+        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
+        Font font = defaultFont.deriveFont(fontStyle, style.getFontSize() - stroke.getLineWidth());
+  
         BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();
-//        FontMetrics fontMetrics = g2D.getFontMetrics(font);
-        Font font = g2D.getFont();// we get the system default font 
-        font.setSize((int) style.getFontSize());
+        FontMetrics fontMetrics = g2D.getFontMetrics(font);
         g2D.dispose();
         
-        //Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-        Rectangle2D textBounds = font.getStringBounds(text);         
-        
-        float textWidth = (float)textBounds.getWidth();// stroke width is generally 0 -> + 2 * stroke.getLineWidth();
-//        if (style.isItalic()) {
- //         textWidth += fontMetrics.getAscent() * 0.2;
- //       }
-        float textHeight = (float)textBounds.getHeight(); // stroke width is generally 0 -> + 2 * stroke.getLineWidth();
+        Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
+        float textWidth = (float)textBounds.getWidth() + 2 * stroke.getLineWidth();
+        if (style.isItalic()) {
+          textWidth += fontMetrics.getAscent() * 0.2;
+        }
+        float textHeight = (float)textBounds.getHeight() + 2 * stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
         int width;
         int height;
@@ -172,28 +151,21 @@ public class Label3D extends Object3DBranch {
           g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
           g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
           g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-          // PJ affines are used as save/restore points in android g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
-          g2D.scale(scale, scale);
-          // stroke width is generally 0 -> g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
-          g2D.translate(0, -(float)(textBounds.getY()));
-          
-         /* if (outlineColor != null) {
+          g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
+          g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
+          if (outlineColor != null) {
             g2D.setColor(new Color(outlineColor));
             g2D.setStroke(stroke);
             TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
             g2D.draw(textLayout.getOutline(null));
-          }*/
-          
+          }
           g2D.setFont(font);
-          //g2D.setColor(color != null ?  new Color(color) : new Color(0xff000000));//UIManager.getColor("TextField.foreground"));
-          //FIXME: my bit shifting on the setColor above is wrong somehow?, but setPaint gets it right
-          g2D.setPaint(color != null ?  new Color(color) : new Color(0xff000000));
-          
+          g2D.setColor(color != null ?  new Color(color) : UIManager.getColor("TextField.foreground"));
           g2D.drawString(text, 0f, 0f);
           g2D.dispose();
-          
+  
           Transform3D scaleTransform = new Transform3D();
-          scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));          
+          scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));
           // Move to the middle of base line
           this.baseLineTransform = new Transform3D();
           this.baseLineTransform.setTranslation(new Vector3d(0, 0, textHeight / 2 + textBounds.getY()));
@@ -213,18 +185,13 @@ public class Label3D extends Object3DBranch {
           group.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
           group.setCapability(BranchGroup.ALLOW_DETACH);
           
-          group.setPickable(true);
-          
           TransformGroup transformGroup = new TransformGroup();
           // Allow the change of the transformation that sets label size, position and orientation
           transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
           transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
           group.addChild(transformGroup);
   
-          transformGroup.setPickable(true);
-          
-          SimpleShaderAppearance appearance = new SimpleShaderAppearance();
-          appearance.setUpdatableCapabilities();
+          Appearance appearance = new Appearance();
           appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
           appearance.setPolygonAttributes(DEFAULT_POLYGON_ATTRIBUTES);
           appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
@@ -232,66 +199,13 @@ public class Label3D extends Object3DBranch {
           appearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
               TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
           appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+  
           Box box = new Box(0.5f, 0f, 0.5f, appearance);
           Shape3D shape = box.getShape(Box.TOP);
-          box.removeChild(shape);         
-          makePickable(shape); //PJPJP for selection
+          box.removeChild(shape);
+          transformGroup.addChild(shape);
           
-			shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-			if (!shape.getGeometry().isLive() && !shape.getGeometry().isCompiled())
-			{
-				shape.getGeometry().setCapability(GeometryArray.ALLOW_NORMAL_READ);
-			}
-         
-          
-          // base shape outlining
-          int outlineStencilMask = Object3DBranch.LABEL_STENCIL_MASK;
-          RenderingAttributes renderingAttributes = new RenderingAttributes();
-          renderingAttributes.setStencilEnable(false);
-          renderingAttributes.setStencilWriteMask(outlineStencilMask);
-          renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
-          renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_REPLACE, //
-    				RenderingAttributes.STENCIL_REPLACE, //
-    				RenderingAttributes.STENCIL_REPLACE);     
-          renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);          
-          appearance.setRenderingAttributes(renderingAttributes);
-          appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
-          
-          //Outlining                    
-          RenderingAttributes olRenderingAttributes = new RenderingAttributes();          
-          SimpleShaderAppearance outlineAppearance = new SimpleShaderAppearance(Object3DBranch.OUTLINE_COLOR);// special non auto build version for outlining
-          outlineAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
-          
-          outlineAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
-          outlineAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
-          outlineAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
-          
-          outlineAppearance.setTransparencyAttributes(DEFAULT_TRANSPARENCY_ATTRIBUTES);//put it in the transparent pass
-          olRenderingAttributes.setStencilEnable(true);
-          olRenderingAttributes.setStencilWriteMask(outlineStencilMask);
-          olRenderingAttributes.setStencilFunction(RenderingAttributes.NOT_EQUAL, outlineStencilMask, outlineStencilMask);
-          olRenderingAttributes.setStencilOp(RenderingAttributes.STENCIL_KEEP, //
-    				RenderingAttributes.STENCIL_KEEP, //
-    				RenderingAttributes.STENCIL_KEEP);
-    		//geoms often have colors in verts
-          olRenderingAttributes.setIgnoreVertexColors(true);
-    		// draw it even when hidden
-          olRenderingAttributes.setDepthBufferEnable(false);
-          olRenderingAttributes.setDepthTestFunction(RenderingAttributes.ALWAYS);	
-          olRenderingAttributes.setVisible(false);
-
-          olRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-          outlineAppearance.setRenderingAttributes(olRenderingAttributes);
-          
-          Shape3D olShape = new Shape3D();
-          olShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-          olShape.setAppearance(outlineAppearance);
-          olShape.setGeometry(shape.getGeometry());              
-
-          transformGroup.addChild(shape);    
-          transformGroup.addChild(olShape); // outline is child 1
           addChild(group);
-     
         }
         
         TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
@@ -307,8 +221,7 @@ public class Label3D extends Object3DBranch {
         transform.setTranslation(new Vector3d(label.getX(), label.getGroundElevation(), label.getY()));
         transform.mul(rotationY);
         transformGroup.setTransform(transform);
-        ((Shape3D)transformGroup.getChild(0)).getAppearance().setTexture(this.texture);        
-        
+        ((Shape3D)transformGroup.getChild(0)).getAppearance().setTexture(this.texture);
       }
     } else {
       clear();
@@ -326,23 +239,4 @@ public class Label3D extends Object3DBranch {
     this.texture = null;
     this.baseLineTransform = null;
   }
-  
-  	@Override
-	public void showOutline(boolean isSelected)
-	{
-  		isShowOutline = isSelected;
-  		// only if we haven't been cleared
-  		if (numChildren() > 0)
-  		{
-	  		 TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
-	         ((Shape3D)transformGroup.getChild(1)).getAppearance().getRenderingAttributes().setVisible(isSelected);
-	         ((Shape3D)transformGroup.getChild(0)).getAppearance().getRenderingAttributes().setStencilEnable(isSelected);
-	  	}
-	}
-	private boolean isShowOutline = false;
-	@Override
-	public boolean isShowOutline()
-	{
-		return isShowOutline;
-	}
 }

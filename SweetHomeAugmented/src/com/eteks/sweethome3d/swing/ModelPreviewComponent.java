@@ -27,8 +27,8 @@ import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import javaawt.GraphicsConfiguration;
-import javaawt.GraphicsEnvironment;
+import java.awt.GraphicsConfiguration;
+import java.awt.GraphicsEnvironment;
 import java.awt.GridLayout;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
@@ -46,11 +46,27 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.imageio.ImageIO;
+import javax.media.j3d.AmbientLight;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.Background;
+import javax.media.j3d.BoundingSphere;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Canvas3D;
+import javax.media.j3d.DirectionalLight;
+import javax.media.j3d.GraphicsConfigTemplate3D;
+import javax.media.j3d.Group;
+import javax.media.j3d.Light;
+import javax.media.j3d.Link;
+import javax.media.j3d.Node;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.Texture;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
+import javax.media.j3d.View;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -59,32 +75,11 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.event.AncestorEvent;
 import javax.swing.event.AncestorListener;
 import javax.swing.event.MouseInputAdapter;
-
-import org.jogamp.java3d.AmbientLight;
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.Background;
-import org.jogamp.java3d.BoundingSphere;
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.Canvas3D;
-import org.jogamp.java3d.DirectionalLight;
-import org.jogamp.java3d.GraphicsConfigTemplate3D;
-import org.jogamp.java3d.Group;
-import org.jogamp.java3d.Light;
-import org.jogamp.java3d.Link;
-import org.jogamp.java3d.Node;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.java3d.TransformGroup;
-import org.jogamp.java3d.View;
-import org.jogamp.java3d.utils.universe.SimpleUniverse;
-import org.jogamp.java3d.utils.universe.Viewer;
-import org.jogamp.java3d.utils.universe.ViewingPlatform;
-import org.jogamp.vecmath.Color3f;
-import org.jogamp.vecmath.Matrix3f;
-import org.jogamp.vecmath.Point3d;
-import org.jogamp.vecmath.Vector3d;
-import org.jogamp.vecmath.Vector3f;
+import javax.vecmath.Color3f;
+import javax.vecmath.Matrix3f;
+import javax.vecmath.Point3d;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.HomePieceOfFurniture3D;
@@ -95,6 +90,10 @@ import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
+import com.sun.j3d.exp.swing.JCanvas3D;
+import com.sun.j3d.utils.universe.SimpleUniverse;
+import com.sun.j3d.utils.universe.Viewer;
+import com.sun.j3d.utils.universe.ViewingPlatform;
 
 /**
  * Super class of 3D preview component for model. 
@@ -104,11 +103,7 @@ public class ModelPreviewComponent extends JComponent {
   
   private SimpleUniverse          universe;
   private JPanel                  component3DPanel;
-  
   private Component               component3D;
-//PJPJPJPJPJ
-  private Canvas3D               canvas3D;
-  
   private BranchGroup             sceneTree;
   private float                   viewYaw   = (float) Math.PI / 8;
   private float                   viewPitch = -(float) Math.PI / 16;
@@ -153,8 +148,7 @@ public class ModelPreviewComponent extends JComponent {
     if (graphicsEnvironment.getScreenDevices().length == 1) {
       // If only one screen device is available, create 3D component immediately, 
       // otherwise create it once the screen device of the parent is known
-    	//PJPJPJPJ
-      createComponent3D(null,//graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), 
+      createComponent3D(graphicsEnvironment.getDefaultScreenDevice().getDefaultConfiguration(), 
           yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
     }
 
@@ -236,8 +230,7 @@ public class ModelPreviewComponent extends JComponent {
     addAncestorListener(new AncestorListener() {
         public void ancestorAdded(AncestorEvent ev) {
           if (component3D == null) {
-        	  //PJPJPJPJPJ
-            createComponent3D(null,//ev.getAncestor().getGraphicsConfiguration(), 
+            createComponent3D(ev.getAncestor().getGraphicsConfiguration(), 
                 yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
           }
           if (universe == null) {
@@ -270,7 +263,6 @@ public class ModelPreviewComponent extends JComponent {
                                  boolean yawChangeSupported, 
                                  boolean pitchChangeSupported,
                                  boolean scaleChangeSupported) {
-	  //PJPJPJPJPJ
     if (Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
       GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
       gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
@@ -287,10 +279,7 @@ public class ModelPreviewComponent extends JComponent {
         throw ex2;
       }
     } else {
-    	//PJPJPJPJPJ seperate these 2 into 2
-      this.component3D = new JPanel();
-    		  
-      canvas3D =  Component3DManager.getInstance().getOnscreenCanvas3D(graphicsConfiguration,
+      this.component3D = Component3DManager.getInstance().getOnscreenCanvas3D(graphicsConfiguration,
           new Component3DManager.RenderingObserver() {
             public void canvas3DPreRendered(Canvas3D canvas3d) {
             }
@@ -310,14 +299,12 @@ public class ModelPreviewComponent extends JComponent {
     this.component3DPanel.add(this.component3D);
     this.component3D.setFocusable(false);      
     addMouseListeners(this.component3D, yawChangeSupported, pitchChangeSupported, scaleChangeSupported);
-    
   }
 
   /**
    * A <code>JCanvas</code> canvas that sends a notification when it's drawn.
    */
-  //PJPJPJPJ
-/*  private static class JCanvas3DWithNotifiedPaint extends JCanvas3D {
+  private static class JCanvas3DWithNotifiedPaint extends JCanvas3D {
     private final ModelPreviewComponent homeComponent3D;
 
     public JCanvas3DWithNotifiedPaint(ModelPreviewComponent component,
@@ -330,7 +317,7 @@ public class ModelPreviewComponent extends JComponent {
       super.paintComponent(g);
       this.homeComponent3D.canvas3DSwapped();
     }
-  }*/
+  }
   
   /**
    * Adds an AWT mouse listener to component that will update view platform transform.  
@@ -426,7 +413,7 @@ public class ModelPreviewComponent extends JComponent {
    * Creates universe bound to the 3D component.
    */
   private void createUniverse() {
-   /* Canvas3D canvas3D;
+    Canvas3D canvas3D;
     if (this.component3D instanceof Canvas3D) {
       canvas3D = (Canvas3D)this.component3D;
     } else {
@@ -438,7 +425,7 @@ public class ModelPreviewComponent extends JComponent {
         ex2.initCause(ex);
         throw ex2;
       }
-    } */   
+    }    
     // Create a universe bound to component 3D
     ViewingPlatform viewingPlatform = new ViewingPlatform();
     Viewer viewer = new Viewer(canvas3D);
@@ -606,7 +593,7 @@ public class ModelPreviewComponent extends JComponent {
    */
   public void setBackground(Color backgroundColor) {
     super.setBackground(backgroundColor);
-    ((Background)this.sceneTree.getChild(1)).setColor(new Color3f(backgroundColor.getRed() / 255f,backgroundColor.getGreen() / 255f,backgroundColor.getBlue() / 255f));
+    ((Background)this.sceneTree.getChild(1)).setColor(new Color3f(backgroundColor));
   }
   
   /**
@@ -844,9 +831,9 @@ public class ModelPreviewComponent extends JComponent {
   private void cloneTextures(Node node, Map<Texture, Texture> replacedTextures) {
     if (node instanceof Group) {
       // Enumerate children
-      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
-      while (enumeration.hasNext()) {
-        cloneTextures((Node)enumeration.next(), replacedTextures);
+      Enumeration<?> enumeration = ((Group)node).getAllChildren(); 
+      while (enumeration.hasMoreElements()) {
+        cloneTextures((Node)enumeration.nextElement(), replacedTextures);
       }
     } else if (node instanceof Link) {
       cloneTextures(((Link)node).getSharedGroup(), replacedTextures);

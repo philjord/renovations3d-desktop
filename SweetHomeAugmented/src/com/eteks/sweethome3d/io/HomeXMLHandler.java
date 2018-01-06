@@ -1041,7 +1041,7 @@ public class HomeXMLHandler extends DefaultHandler {
       if (cutOutShape == null
           && !"doorOrWindow".equals(elementName)) {
         // Set default cut out shape set on old HomePieceOfFurniture instances with doorOrWindow attribute set to true
-        cutOutShape = HomeDoorOrWindow.DEFAULT_CUT_OUT_SHAPE;
+        cutOutShape = "M0,0 v1 h1 v-1 z";
       }
       return new HomeDoorOrWindow(new CatalogDoorOrWindow(
           attributes.get("catalogId"), 

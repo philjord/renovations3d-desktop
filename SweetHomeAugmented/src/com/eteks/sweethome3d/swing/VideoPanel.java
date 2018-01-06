@@ -122,8 +122,7 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import org.jogamp.vecmath.Point3f;
+import javax.vecmath.Point3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
 import com.eteks.sweethome3d.j3d.PhotoRenderer;
@@ -1803,8 +1802,7 @@ public class VideoPanel extends JPanel implements DialogView {
     public BufferedImage renderImageAt(Camera frameCamera, boolean last) throws IOException {
       try {
         checkLaunchingThreadIsntInterrupted();
-        //this.renderer.render(this.image, frameCamera, null);   
-        //PJPJPJPJPJ dumped
+        this.renderer.render(this.image, frameCamera, null);   
         checkLaunchingThreadIsntInterrupted();
         return image;
       } catch(InterruptedIOException ex) {

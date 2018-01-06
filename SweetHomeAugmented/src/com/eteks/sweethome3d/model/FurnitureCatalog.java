@@ -36,25 +36,21 @@ public class FurnitureCatalog {
    * Returns the categories list sorted by name.
    * @return an unmodifiable list of categories.
    */
-  public synchronized List<FurnitureCategory> getCategories() {
-  //PJ to avoid concurrent mod exceptions
-    synchronized(this.categories)
-    {
-      return Collections.unmodifiableList(new ArrayList<FurnitureCategory>(this.categories));
-    }
+  public List<FurnitureCategory> getCategories() {
+    return Collections.unmodifiableList(this.categories);
   }
 
   /**
    * Returns the count of categories in this catalog.
    */
-  public synchronized int getCategoriesCount() {
+  public int getCategoriesCount() {
     return this.categories.size();
   }
 
   /**
    * Returns the category at a given <code>index</code>.
    */
-  public synchronized FurnitureCategory getCategory(int index) {
+  public FurnitureCategory getCategory(int index) {
     return this.categories.get(index);
   }
 
@@ -80,16 +76,12 @@ public class FurnitureCatalog {
    * @param category the category of the piece.
    * @param piece    a piece of furniture.
    */
-  public synchronized void add(FurnitureCategory category, CatalogPieceOfFurniture piece) {
+  public void add(FurnitureCategory category, CatalogPieceOfFurniture piece) {
     int index = Collections.binarySearch(this.categories, category);
     // If category doesn't exist yet, add it to categories
     if (index < 0) {
       category = new FurnitureCategory(category.getName());
-    //PJ to avoid concurrent mod exceptions
-      synchronized(this.categories)
-      {
-        this.categories.add(-index - 1, category);
-      }
+      this.categories.add(-index - 1, category);
     } else {
       category = this.categories.get(index);
     }    
@@ -108,7 +100,7 @@ public class FurnitureCatalog {
    * notification.
    * @param piece a piece of furniture in that category.
    */
-  public synchronized void delete(CatalogPieceOfFurniture piece) {
+  public void delete(CatalogPieceOfFurniture piece) {
     FurnitureCategory category = piece.getCategory();
     // Remove piece from its category
     if (category != null) {
@@ -118,12 +110,8 @@ public class FurnitureCatalog {
         
         if (category.getFurnitureCount() == 0) {
           //  Make a copy of the list to avoid conflicts in the list returned by getCategories
-        //PJ to avoid concurrent mod exceptions
-          synchronized(this.categories)
-          {
-            this.categories = new ArrayList<FurnitureCategory>(this.categories);
-            this.categories.remove(category);
-          }
+          this.categories = new ArrayList<FurnitureCategory>(this.categories);
+          this.categories.remove(category);
         }
         
         this.furnitureChangeSupport.fireCollectionChanged(piece, pieceIndex, CollectionEvent.Type.DELETE);

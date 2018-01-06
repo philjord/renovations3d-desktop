@@ -215,12 +215,12 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
         }
       });
     PropertyChangeListener scaleDistanceChangeListener = new PropertyChangeListener() {
-          public void propertyChange(PropertyChangeEvent ev) {
-            // If scale distance changes updates scale spinner
+        public void propertyChange(PropertyChangeEvent ev) {
+          // If scale distance changes updates scale spinner
           Float scaleDistance = controller.getScaleDistance();
           scaleDistanceSpinnerModel.setNullable(scaleDistance == null);
           scaleDistanceSpinnerModel.setLength(scaleDistance);
-          }
+        }
       };
     scaleDistanceChangeListener.propertyChange(null);
     controller.addPropertyChangeListener(BackgroundImageWizardController.Property.SCALE_DISTANCE, scaleDistanceChangeListener);
@@ -543,14 +543,14 @@ public class BackgroundImageWizardStepsPanel extends JPanel implements View {
                         referenceBackgroundImage.getScaleDistanceYEnd());
                     controller.setOrigin(referenceBackgroundImage.getXOrigin(), referenceBackgroundImage.getYOrigin());
                   } else {
-                  // Initialize distance and origin with default values
-                  controller.setScaleDistance(null);
-                  float scaleDistanceXStart = readImage.getWidth() * 0.1f;
-                  float scaleDistanceYStart = readImage.getHeight() / 2f;
-                  float scaleDistanceXEnd = readImage.getWidth() * 0.9f;
-                  controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
-                      scaleDistanceXEnd, scaleDistanceYStart);
-                  controller.setOrigin(0, 0);
+                    // Initialize distance and origin with default values
+                    controller.setScaleDistance(null);
+                    float scaleDistanceXStart = readImage.getWidth() * 0.1f;
+                    float scaleDistanceYStart = readImage.getHeight() / 2f;
+                    float scaleDistanceXEnd = readImage.getWidth() * 0.9f;
+                    controller.setScaleDistancePoints(scaleDistanceXStart, scaleDistanceYStart, 
+                        scaleDistanceXEnd, scaleDistanceYStart);
+                    controller.setOrigin(0, 0);
                   }
                 } else if (isShowing()){
                   controller.setImage(null);

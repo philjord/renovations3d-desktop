@@ -59,6 +59,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.Transform3D;
 import javax.swing.Action;
 import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultListCellRenderer;
@@ -86,19 +88,15 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.vecmath.Matrix3f;
-import org.jogamp.vecmath.Vector3d;
-import org.jogamp.vecmath.Vector3f;
+import javax.vecmath.Matrix3f;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.j3d.OBJWriter;
 import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.FurnitureCategory;
-import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -667,7 +665,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
     this.staircaseCheckBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
           controller.setStaircaseCutOutShape(staircaseCheckBox.isSelected() 
-              ? HomeDoorOrWindow.DEFAULT_CUT_OUT_SHAPE 
+              ? "M0,0 v1 h1 v-1 z" 
               : null);
         }
       });

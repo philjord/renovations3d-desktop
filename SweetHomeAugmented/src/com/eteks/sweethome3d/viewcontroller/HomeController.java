@@ -46,16 +46,15 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.Callable;
 
-import javaxswing.event.UndoableEditEvent;
-import javaxswing.event.UndoableEditListener;
-import javaxswing.undo.AbstractUndoableEdit;
-import javaxswing.undo.CannotRedoException;
-import javaxswing.undo.CannotUndoException;
-import javaxswing.undo.CompoundEdit;
-import javaxswing.undo.UndoManager;
-import javaxswing.undo.UndoableEdit;
-import javaxswing.undo.UndoableEditSupport;
-
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.CompoundEdit;
+import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
+import javax.swing.undo.UndoableEditSupport;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -354,7 +353,7 @@ public class HomeController implements Controller {
    */
   public HomeView getView() {
     if (this.homeView == null) {
-      this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, this);      
+      this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, this);
       enableDefaultActions(this.homeView);
       addListeners();
     }
@@ -2960,7 +2959,7 @@ public class HomeController implements Controller {
       }
     }
   }
- 
+
   /**
    * Reads the available updates from the XML stream contained in the given <code>url</code>.
    * Caution : this method is called from a separate thread.

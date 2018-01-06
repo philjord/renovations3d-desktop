@@ -43,6 +43,7 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Locale;
 
+import javax.media.j3d.BranchGroup;
 import javax.swing.AbstractButton;
 import javax.swing.AbstractListModel;
 import javax.swing.ButtonGroup;
@@ -69,8 +70,6 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import org.jogamp.java3d.BranchGroup;
 
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.model.HomeMaterial;

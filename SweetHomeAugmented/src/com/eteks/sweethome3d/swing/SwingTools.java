@@ -73,6 +73,9 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import javax.jnlp.BasicService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -836,15 +839,13 @@ public class SwingTools {
    * if it was done successfully.
    */
   public static boolean showDocumentInBrowser(URL url) {
-	  //PJPJPJPJ TODO:
-	  return false;
-//    return BrowserSupport.showDocumentInBrowser(url);
+    return BrowserSupport.showDocumentInBrowser(url);
   }
   
   /**
    * Separated static class to be able to exclude JNLP library from classpath. 
    */
-/*  private static class BrowserSupport {
+  private static class BrowserSupport {
     public static boolean showDocumentInBrowser(URL url) {
       try { 
         // Lookup the javax.jnlp.BasicService object 
@@ -861,7 +862,7 @@ public class SwingTools {
       }
       return false;
     }
-  }*/
+  }
 
   /**
    * Returns the children of a component of the given class.
