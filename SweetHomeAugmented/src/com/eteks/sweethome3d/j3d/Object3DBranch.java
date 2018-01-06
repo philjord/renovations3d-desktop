@@ -19,11 +19,11 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import javaawt.Shape;
-import javaawt.geom.Area;
-import javaawt.geom.GeneralPath;
-import javaawt.geom.PathIterator;
-import javaawt.geom.Point2D;
+import java.awt.Shape;
+import java.awt.geom.Area;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -32,19 +32,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.ColoringAttributes;
-import org.jogamp.java3d.Geometry;
-import org.jogamp.java3d.GeometryArray;
-import org.jogamp.java3d.IndexedGeometryArray;
-import org.jogamp.java3d.LineAttributes;
-import org.jogamp.java3d.Material;
-import org.jogamp.java3d.PolygonAttributes;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.TextureAttributes;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.vecmath.Color3f;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.LineAttributes;
+import javax.media.j3d.Material;
+import javax.media.j3d.PolygonAttributes;
+import javax.media.j3d.Texture;
+import javax.media.j3d.TextureAttributes;
+import javax.media.j3d.Transform3D;
+import javax.vecmath.Color3f;
+import javax.vecmath.Vector3d;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -54,31 +51,21 @@ import com.eteks.sweethome3d.model.Room;
  * Root of a branch that matches a home object. 
  */
 public abstract class Object3DBranch extends BranchGroup {
-	public static final int WALL_STENCIL_MASK = 1<<1;
-	public static final int FURN_STENCIL_MASK = 1<<2;
-	public static final int ROOM_STENCIL_MASK = 1<<3;
-	public static final int LABEL_STENCIL_MASK = 1<<4;
-	
-	public static int OUTLINE_WIDTH = 10;
-	public static Color3f OUTLINE_COLOR = new Color3f(0.0f,84f/255f,150f/255f); //PJ match plan new Color3f(1f,0.9f,0f);
   // The coloring attributes used for drawing outline 
   protected static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES = 
-      new ColoringAttributes(OUTLINE_COLOR, ColoringAttributes.FASTEST);
+      new ColoringAttributes(new Color3f(0.16f, 0.16f, 0.16f), ColoringAttributes.FASTEST);
   protected static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES = 
-      new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_NONE, 0.1f, true, 0.1f);
- 	
+      new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_BACK, 0);
   protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
-      new LineAttributes(OUTLINE_WIDTH, LineAttributes.PATTERN_SOLID, true);
+      new LineAttributes(0.5f, LineAttributes.PATTERN_SOLID, true);
 
   protected static final Integer  DEFAULT_COLOR         = 0xFFFFFF;
   protected static final Integer  DEFAULT_AMBIENT_COLOR = 0x333333;
   protected static final Material DEFAULT_MATERIAL      = new Material();
 
-  private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
-  private static final Map<Float, TextureAttributes>    textureAttributes = new HashMap<Float, TextureAttributes>();
-  private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
-
-
+  private static final Map<Long, Material>                materials = new HashMap<Long, Material>();
+  private static final Map<TextureKey, TextureAttributes> textureAttributes = new HashMap<TextureKey, TextureAttributes>();
+  private static final Map<Home, Map<Texture, Texture>>   homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
   
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
@@ -158,18 +145,81 @@ public abstract class Object3DBranch extends BranchGroup {
    * Returns shared texture attributes matching transformation applied to the given texture.
    */
   protected TextureAttributes getTextureAttributes(HomeTexture texture) {
-    TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(texture.getAngle());
+    return getTextureAttributes(texture, false);
+  }
+  
+  /**
+   * Returns shared texture attributes matching transformation applied to the given texture 
+   * and scaled if required.
+   */
+  protected TextureAttributes getTextureAttributes(HomeTexture texture, boolean scaled) {
+    float textureWidth = texture.getWidth();
+    float textureHeight = texture.getHeight();
+    if (textureWidth == -1 || textureHeight == -1) {
+      // Set a default value of 1m for textures with width and height equal to -1
+      // (this may happen for textures retrieved from 3D models)
+      textureWidth = 100;
+      textureHeight = 100;
+    }
+    float textureAngle = texture.getAngle();
+    float textureScale = 1 / texture.getScale();
+    TextureKey key = scaled
+        ? new TextureKey(textureWidth, textureHeight, textureAngle, textureScale)
+        : new TextureKey(-1f, -1f, textureAngle, textureScale);
+    TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(key);
     if (textureAttributes == null) {
       textureAttributes = new TextureAttributes();
       // Mix texture and color
       textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+      Transform3D rotation = new Transform3D();
+      rotation.rotZ(textureAngle);
       Transform3D transform = new Transform3D();
-      transform.rotZ(texture.getAngle());
+      // Change scale if required
+      if (scaled) {
+        transform.setScale(new Vector3d(textureScale / textureWidth, textureScale / textureHeight, textureScale));
+      } else {
+        transform.setScale(textureScale);
+      }
+      transform.mul(rotation);
       textureAttributes.setTextureTransform(transform);
       textureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
-      Object3DBranch.textureAttributes.put(texture.getAngle(), textureAttributes);
+      Object3DBranch.textureAttributes.put(key, textureAttributes);
     }
     return textureAttributes;
+  }
+
+  /**
+   * Key used to share texture attributes instances.
+   */
+  private static class TextureKey {
+    private final float width;
+    private final float height;
+    private final float angle;
+    private final float scale;
+    
+    public TextureKey(float width, float height, float angle, float scale) {
+      this.width = width;
+      this.height = height;
+      this.angle = angle;
+      this.scale = scale;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+      TextureKey key = (TextureKey)obj;
+      return this.width == key.width 
+          && this.height == key.height 
+          && this.angle == key.angle 
+          && this.scale == key.scale;
+    }
+    
+    @Override
+    public int hashCode() {
+      return Float.floatToIntBits(this.width) * 31 
+          + Float.floatToIntBits(this.height) * 31
+          + Float.floatToIntBits(this.angle) * 31
+          + Float.floatToIntBits(this.scale);
+    }
   }
 
   /**
@@ -354,48 +404,4 @@ public abstract class Object3DBranch extends BranchGroup {
     
     return areaPointsWithoutHoles;
   }
-
-  //PJPJPJPJ for outlining
-  public abstract void showOutline(boolean isSelected);
-  public abstract boolean isShowOutline();
-  
-  
-	public static Geometry makePickable(Geometry geometry)
-	{
-		if (geometry != null)
-		{
-			// set up for geometry picking
-			if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)
-			{
-				geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-				geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
-				geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
-				geometry.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-				if (geometry instanceof IndexedGeometryArray)
-					geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-
-				geometry.setCapability(Geometry.ALLOW_INTERSECT);
-			}
-		}
-		return geometry;
-	}
-
-	public static Shape3D makePickable(Shape3D shape3D)
-	{
-		// Note do NOT set Shape3D.ENABLE_PICK_REPORTING; or mouse over will not find the user data of the parent
-		if (shape3D != null)
-		{
-			// set up for geometry picking
-			if (!shape3D.isLive() && !shape3D.isCompiled())
-			{
-				shape3D.setPickable(true);
-
-				shape3D.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
-
-				for (int i = 0; i < shape3D.numGeometries(); i++)
-					makePickable(shape3D.getGeometry(i));
-			}
-		}
-		return shape3D;
-	}
 }

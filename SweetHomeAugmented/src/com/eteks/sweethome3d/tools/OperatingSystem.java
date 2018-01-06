@@ -33,6 +33,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
+import com.apple.eio.FileManager;
 import com.eteks.sweethome3d.model.Home;
 
 /**
@@ -47,7 +48,7 @@ public class OperatingSystem {
   
   static {
     // Retrieve sub folders where is stored application data
-  /*  ResourceBundle resource = ResourceBundle.getBundle(OperatingSystem.class.getName());
+    ResourceBundle resource = ResourceBundle.getBundle(OperatingSystem.class.getName());
     if (OperatingSystem.isMacOSX()) {
       EDITOR_SUB_FOLDER = resource.getString("editorSubFolder.Mac OS X");
       APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder.Mac OS X");
@@ -57,13 +58,11 @@ public class OperatingSystem {
     } else {
       EDITOR_SUB_FOLDER = resource.getString("editorSubFolder");
       APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder");
-    }*/
-	  EDITOR_SUB_FOLDER = "editorSubFolder";
-    APPLICATION_SUB_FOLDER = "applicationSubFolder";
+    }
     
     String temporarySubFolder;
     try {
-      temporarySubFolder = "temporarySubFolder";//resource.getString("temporarySubFolder");
+      temporarySubFolder = resource.getString("temporarySubFolder");
       if (temporarySubFolder.trim().length() == 0) {
         temporarySubFolder = null;
       }
@@ -172,8 +171,8 @@ public class OperatingSystem {
    * and a positive number if <code>version1</code> &gt; <code>version2</code>.
    * Version strings are first split into parts, each subpart ending at each punctuation, space 
    * or when a character of a different type is encountered (letter vs digit). Then each numeric 
-   * or string subparts are compared to each other, strings being considered greater than numbers
-   * except for pre release strings (i.e. alpha, beta, rc). Examples:<pre>
+   * or string subparts are compared to each other, strings being considered greater than null numbers
+   * and pre release strings (i.e. alpha, beta, rc). Examples:<pre>
    * "" < "1"
    * "0" < "1.0"
    * "1.2beta" < "1.2"
@@ -187,7 +186,9 @@ public class OperatingSystem {
    * "1.2rc" < "1.2"
    * "1.2rc" < "1.2a"
    * "1.2" < "1.2a"
+   * "1.2.0" < "1.2a"
    * "1.2a" < "1.2b"
+   * "1.2a" < "1.2.1"
    * "1.7.0_11" < "1.7.0_12"
    * "1.7.0_11rc1" < "1.7.0_11rc2"
    * "1.7.0_11rc" < "1.7.0_11"
@@ -219,11 +220,11 @@ public class OperatingSystem {
           return comparison;
         }
       } else if (version1Part instanceof String) {
-        // An integer subpart is smaller than a string (except for pre release strings)
-        return 1;
+        // An integer subpart < 0 is smaller than a string (except for pre release strings)
+        return ((BigInteger)version2Part).signum() > 0 ? -1 : 1;
       } else {
-        // A string subpart is greater than an integer 
-        return -1;
+        // A string subpart is greater than an integer >= 0
+        return ((BigInteger)version1Part).signum() > 0 ? 1 : -1;
       }
     }
     return 0;
@@ -434,7 +435,7 @@ public class OperatingSystem {
   public static File getDefaultApplicationFolder() throws IOException {
     File userApplicationFolder; 
     if (isMacOSX()) {
-      userApplicationFolder = null;//new File(MacOSXFileManager.getApplicationSupportFolder());
+      userApplicationFolder = new File(MacOSXFileManager.getApplicationSupportFolder());
     } else if (isWindows()) {
       userApplicationFolder = new File(System.getProperty("user.home"), "Application Data");
       // If user Application Data directory doesn't exist, use user home
@@ -456,10 +457,10 @@ public class OperatingSystem {
    * This class requires some classes of <code>com.apple.eio</code> package  
    * to compile.
    */
- /* private static class MacOSXFileManager {
+  private static class MacOSXFileManager {
     public static String getApplicationSupportFolder() throws IOException {
       // Find application support folder (0x61737570) for user domain (-32763)
       return FileManager.findFolder((short)-32763, 0x61737570);
     }
-  }*/
+  }
 }

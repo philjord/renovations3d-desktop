@@ -162,9 +162,9 @@ public class HomeFramePane extends JRootPane implements View {
    * Adds listeners to <code>frame</code> and model objects.
    */
   private void addListeners(final Home home,
-                                    final HomeApplication application,
-                                    final HomeController controller,
-                                    final JFrame frame) {
+                            final HomeApplication application,
+                            final HomeController controller,
+                            final JFrame frame) {
     // Add a listener that keeps track of window location and size
     final ComponentAdapter componentListener = new ComponentAdapter() {
         @Override
@@ -253,7 +253,7 @@ public class HomeFramePane extends JRootPane implements View {
     home.addPropertyChangeListener(Home.Property.RECOVERED, frameTitleChangeListener);
     home.addPropertyChangeListener(Home.Property.REPAIRED, frameTitleChangeListener);
   }
-
+    
   /**
    * Preferences property listener bound to this component with a weak reference to avoid
    * strong link between preferences and this component.  

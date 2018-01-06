@@ -108,18 +108,18 @@ public class NullableCheckBox extends JComponent {
    */
   public void setValue(Boolean value) {
     if (value != this.value) {
-    this.value = value;
-    if (value != null) {
-      this.checkBox.setSelected(value);
-    } else if (isNullable()) {
-      // Unselect check box to display a dash in its middle
-      this.checkBox.setSelected(false);
-    } else {
-      throw new IllegalArgumentException("Check box isn't nullable");
-    }
+      this.value = value;
+      if (value != null) {
+        this.checkBox.setSelected(value);
+      } else if (isNullable()) {
+        // Unselect check box to display a dash in its middle
+        this.checkBox.setSelected(false);
+      } else {
+        throw new IllegalArgumentException("Check box isn't nullable");
+      }
       this.checkBox.repaint();
-    fireStateChanged();
-  }
+      fireStateChanged();
+    }
   }
   
   /**

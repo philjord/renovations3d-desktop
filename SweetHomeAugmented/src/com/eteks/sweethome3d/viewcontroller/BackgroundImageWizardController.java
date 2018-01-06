@@ -25,11 +25,11 @@ import java.beans.PropertyChangeSupport;
 import java.net.URL;
 import java.util.List;
 
-import javaxswing.undo.AbstractUndoableEdit;
-import javaxswing.undo.CannotRedoException;
-import javaxswing.undo.CannotUndoException;
-import javaxswing.undo.UndoableEdit;
-import javaxswing.undo.UndoableEditSupport;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoableEdit;
+import javax.swing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
 import com.eteks.sweethome3d.model.Content;
@@ -59,16 +59,16 @@ public class BackgroundImageWizardController extends WizardController
   private final BackgroundImageWizardStepState imageOriginStepState;
   private View                                 stepsView;
   
-  private Step    step;
+  private Step            step;
   private BackgroundImage referenceBackgroundImage;
-  private Content image;
-  private Float   scaleDistance;
-  private float   scaleDistanceXStart;
-  private float   scaleDistanceYStart;
-  private float   scaleDistanceXEnd;
-  private float   scaleDistanceYEnd;
-  private float   xOrigin;
-  private float   yOrigin;
+  private Content         image;
+  private Float           scaleDistance;
+  private float           scaleDistanceXStart;
+  private float           scaleDistanceYStart;
+  private float           scaleDistanceXEnd;
+  private float           scaleDistanceYEnd;
+  private float           xOrigin;
+  private float           yOrigin;
   
   public BackgroundImageWizardController(Home home, 
                                          UserPreferences preferences,
@@ -77,7 +77,7 @@ public class BackgroundImageWizardController extends WizardController
                                          UndoableEditSupport undoSupport) {
     super(preferences, viewFactory);
     this.home = home;
-    this.preferences = preferences;
+    this.preferences = preferences; 
     this.viewFactory = viewFactory;
     this.contentManager = contentManager;
     this.undoSupport = undoSupport;
@@ -100,7 +100,7 @@ public class BackgroundImageWizardController extends WizardController
       // If no background image exists on previous level, search in upper levels 
       for (int i = levelIndex + 1; i < levels.size() && this.referenceBackgroundImage == null; i++) {
         this.referenceBackgroundImage = levels.get(i).getBackgroundImage();
-  }
+      }
     }
   }
 

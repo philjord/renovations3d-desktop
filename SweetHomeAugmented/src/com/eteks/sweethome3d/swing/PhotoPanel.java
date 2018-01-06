@@ -31,11 +31,16 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Window;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -76,6 +81,7 @@ import javax.swing.JSpinner;
 import javax.swing.KeyStroke;
 import javax.swing.SpinnerDateModel;
 import javax.swing.SwingUtilities;
+import javax.swing.TransferHandler;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -93,9 +99,6 @@ import com.eteks.sweethome3d.viewcontroller.DialogView;
 import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.PhotoController;
 import com.eteks.sweethome3d.viewcontroller.View;
-
-import javaawt.Image;
-import javaawt.image.ImageObserver;
 
 /**
  * A panel to edit photo creation. 
@@ -207,8 +210,7 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.photoComponent.setPreferredSize(new Dimension(getToolkit().getScreenSize().width <= 1024 ? 320 : 400, 400));
     // Under Mac OS X, set a transfer handler and a mouse listener on photo component 
     // to let the user drag and drop the created image (Windows support seems to fail) 
-    //PJPJ
-  /*  if (OperatingSystem.isMacOSX()
+    if (OperatingSystem.isMacOSX()
         && !OperatingSystem.isJavaVersionBetween("1.7", "1.7.0_60")) {
       this.photoComponent.setTransferHandler(new VisualTransferHandler() {
           @Override
@@ -266,7 +268,7 @@ public class PhotoPanel extends JPanel implements DialogView {
             }
           }
         });
-    }*/
+    }
 
     this.animatedWaitLabel = new JLabel(new ImageIcon(PhotoPanel.class.getResource("resources/animatedWait.gif")));
 
@@ -769,32 +771,14 @@ public class PhotoPanel extends JPanel implements DialogView {
           bestImageHeight = imageHeight;
         }
         if (photoCreationExecutor != null) {
-        	//PJPJPJ
-        final BufferedImage image2 = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
-        image = image2;
+          image = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
           this.photoComponent.setImage(image);
           EventQueue.invokeLater(new Runnable() {
             public void run() {
               photoCardLayout.show(photoPanel, PHOTO_CARD);
             }
           });
-          //PJPJPJ
-          //photoRenderer.render(image, camera, this.photoComponent);
-          ImageObserver io =new ImageObserver(){
-  			@Override
-  			public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height)
-  			{
-  				photoComponent.setImage(image2);
-  				return false;
-  			}
-
-  			@Override
-  			public Object getDelegate()
-  			{				 
-  				return null;
-  			}};
-  			//PJPJPJ
-          photoRenderer.render(new javaawt.image.VMBufferedImage(image), camera, io);
+          photoRenderer.render(image, camera, this.photoComponent);
           photoRenderer.dispose();
         }
       } else {

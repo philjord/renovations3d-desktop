@@ -19,6 +19,7 @@
  */
 package com.eteks.sweethome3d.j3d;
 
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.EOFException;
@@ -47,40 +48,36 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
 
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.GeometryArray;
-import org.jogamp.java3d.Group;
-import org.jogamp.java3d.Link;
-import org.jogamp.java3d.Material;
-import org.jogamp.java3d.PolygonAttributes;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.SharedGroup;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.Transform3D;
-import org.jogamp.java3d.TransformGroup;
-import org.jogamp.java3d.TransparencyAttributes;
-import org.jogamp.java3d.loaders.IncorrectFormatException;
-import org.jogamp.java3d.loaders.Loader;
-import org.jogamp.java3d.loaders.LoaderBase;
-import org.jogamp.java3d.loaders.ParsingErrorException;
-import org.jogamp.java3d.loaders.Scene;
-import org.jogamp.java3d.loaders.SceneBase;
-import org.jogamp.java3d.utils.geometry.GeometryInfo;
-import org.jogamp.java3d.utils.image.TextureLoader;
-import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
-import org.jogamp.vecmath.Color3f;
-import org.jogamp.vecmath.Point3f;
-import org.jogamp.vecmath.Quat4d;
-import org.jogamp.vecmath.SingularMatrixException;
-import org.jogamp.vecmath.TexCoord2f;
-import org.jogamp.vecmath.Vector3d;
-import org.jogamp.vecmath.Vector3f;
+import javax.imageio.ImageIO;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.BranchGroup;
+import javax.media.j3d.GeometryArray;
+import javax.media.j3d.Group;
+import javax.media.j3d.Link;
+import javax.media.j3d.Material;
+import javax.media.j3d.PolygonAttributes;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.SharedGroup;
+import javax.media.j3d.Texture;
+import javax.media.j3d.Transform3D;
+import javax.media.j3d.TransformGroup;
+import javax.media.j3d.TransparencyAttributes;
+import javax.vecmath.Color3f;
+import javax.vecmath.Point3f;
+import javax.vecmath.Quat4d;
+import javax.vecmath.SingularMatrixException;
+import javax.vecmath.TexCoord2f;
+import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
-import javaawt.image.BufferedImage;
-import javaawt.imageio.ImageIO;
-
- 
+import com.sun.j3d.loaders.IncorrectFormatException;
+import com.sun.j3d.loaders.Loader;
+import com.sun.j3d.loaders.LoaderBase;
+import com.sun.j3d.loaders.ParsingErrorException;
+import com.sun.j3d.loaders.Scene;
+import com.sun.j3d.loaders.SceneBase;
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.image.TextureLoader;
 
 /**
  * A loader for 3DS streams.<br> 
@@ -342,7 +339,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
   private final static Appearance DEFAULT_APPEARANCE;
   
   static {
-    DEFAULT_APPEARANCE = new SimpleShaderAppearance();
+    DEFAULT_APPEARANCE = new Appearance();
     DEFAULT_APPEARANCE.setMaterial(new Material(
         new Color3f(0.4000f, 0.4000f, 0.4000f), new Color3f(),
         new Color3f(0.7102f, 0.7020f, 0.6531f),
@@ -518,7 +515,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
     // Create appearances from 3DS materials
     Map<Material3DS, Appearance> appearances = new HashMap<Max3DSLoader.Material3DS, Appearance>();
     for (Material3DS material : this.materials.values()) {
-      Appearance appearance = new SimpleShaderAppearance();
+      Appearance appearance = new Appearance();
       try {
         appearance.setName(material.getName());
       } catch (NoSuchMethodError ex) {
@@ -741,8 +738,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             geometryInfo.setTextureCoordinates(0, textureCoordinates);
             geometryInfo.setTextureCoordinateIndices(0, coordinateIndices);
           }
-          //PJPJPJ make it nio
-          GeometryArray geometryArray = geometryInfo.getGeometryArray(true, false, true);
+          GeometryArray geometryArray = geometryInfo.getGeometryArray(true, true, false);
           
           if (shape == null || material != firstMaterial) {
             material = firstMaterial;
@@ -858,7 +854,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       switch (in.readChunkHeader().getID()) {
         case MESH_MATRIX :
           try { 
-            transform = new Transform3D(parseMatrix(in));
+            transform = parseMatrix(in);
             transform.invert();
           } catch (SingularMatrixException ex) {
             transform = null;
@@ -1605,8 +1601,9 @@ public class Max3DSLoader extends LoaderBase implements Loader {
       int b2 = this.in.read();
       int b3 = this.in.read();
       int b4 = this.in.read();
-      if (b2 == -1 || b3 == -1 || b4 == -1)
+      if (b2 == -1 || b3 == -1 || b4 == -1) {
         throw new IncorrectFormatException("Can't read int");
+      }
       if (incrementReadLength) {
         this.stack.peek().incrementReadLength(4);
       }

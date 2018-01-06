@@ -19,20 +19,19 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import javaawt.Color;
-import javaawt.EventQueue;
-import javaawt.Graphics;
-import javaawt.Graphics2D;
-import javaawt.RenderingHints;
-import javaawt.TexturePaint;
-import javaawt.geom.Rectangle2D;
-import javaawt.image.BufferedImage;
+import java.awt.Color;
+import java.awt.EventQueue;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.TexturePaint;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
@@ -41,18 +40,15 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import javax.swing.JPopupMenu.Separator;
-
-import javaawt.imageio.ImageIO;
-
-import org.jogamp.java3d.ImageComponent;
-import org.jogamp.java3d.ImageComponent2D;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.utils.image.TextureLoader;
+import javax.imageio.ImageIO;
+import javax.media.j3d.ImageComponent;
+import javax.media.j3d.ImageComponent2D;
+import javax.media.j3d.Texture;
 
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.tools.URLContent;
+import com.sun.j3d.utils.image.TextureLoader;
 
 /**
  * Singleton managing texture image cache.
@@ -78,8 +74,7 @@ public class TextureManager {
     this.waitTexture = getColoredImageTexture(Color.WHITE);
     this.contentTextures = new WeakHashMap<Content, List<ComparableTextureAngleTuple>>();
     this.textures = new WeakHashMap<Texture, ComparableTexture>();
-    //PJ to try to avoid odd ArrayIndex bugs on Android sdk 16 and sdk 17
-    this.loadingTextureObservers = Collections.synchronizedMap(new HashMap<RotatedContentKey, List<TextureObserver>>());
+    this.loadingTextureObservers = new HashMap<RotatedContentKey, List<TextureObserver>>();
   }
 
   /**
@@ -110,10 +105,9 @@ public class TextureManager {
   /**
    * Returns a texture image of one pixel of the given <code>color</code>. 
    */
-   
   private Texture getColoredImageTexture(Color color) {
-    BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D g = (Graphics2D) image.getGraphics();
+    BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
+    Graphics g = image.getGraphics();
     g.setColor(color);
     g.drawLine(0, 0, 0, 0);
     g.dispose();
@@ -213,7 +207,6 @@ public class TextureManager {
           // Load the image in a different thread
           this.texturesLoader.execute(new Runnable () {
               public void run() {
-            	  try{
                 final Texture texture = shareTexture(loadTexture(content, angle), angle, content);
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
@@ -226,32 +219,6 @@ public class TextureManager {
                       }
                     }
                   });
-            	  }catch(Exception e)
-            	  {
-            		  //Seen OutOfMemoryError and ArrayIndexOutOfBoundsException
-            		  // just print it and move on
-            		  System.err.println("Exception ignored");
-            		  e.printStackTrace();
-            		  EventQueue.invokeLater(new Runnable() {
-                          public void run() {
-                            // Notify loaded texture to observer
-                            List<TextureObserver> observers = loadingTextureObservers.remove(contentKey);
-                          }
-            		  });
-            	  }
-            	  catch(OutOfMemoryError oom)
-            	  {
-            		//Seen OutOfMemoryError and ArrayIndexOutOfBoundsException
-            		  // just print it and move on
-            		  System.err.println("OutOfMemoryError ignored");
-            		  oom.printStackTrace();
-            		  EventQueue.invokeLater(new Runnable() {
-                          public void run() {
-                            // Notify loaded texture to observer
-                            List<TextureObserver> observers = loadingTextureObservers.remove(contentKey);
-                          }
-            		  });
-            	  }
               }
             });
         }
@@ -291,7 +258,8 @@ public class TextureManager {
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         BufferedImage rotatedImage = new BufferedImage((int)Math.round(Math.abs(image.getWidth() * cos) + Math.abs(image.getHeight() * sin)), 
-            (int)Math.round(Math.abs(image.getWidth() * sin) + Math.abs(image.getHeight() * cos)), BufferedImage.TYPE_INT_ARGB);
+            (int)Math.round(Math.abs(image.getWidth() * sin) + Math.abs(image.getHeight() * cos)), 
+            image.getTransparency() == BufferedImage.TRANSLUCENT ? BufferedImage.TYPE_INT_ARGB : BufferedImage.TYPE_INT_RGB);
         Graphics2D g2D = (Graphics2D)rotatedImage.getGraphics();
         g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2D.setPaint(new TexturePaint(image, 
@@ -319,7 +287,7 @@ public class TextureManager {
     } catch (RuntimeException ex) {
       // Take into account exceptions of Java 3D 1.5 ImageException class
       // in such a way program can run in Java 3D 1.3.1
-      if (ex.getClass().getName().equals("org.jogamp.java3d.utils.image.ImageException")) {
+      if (ex.getClass().getName().equals("com.sun.j3d.utils.image.ImageException")) {
         // Images not supported by TextureLoader
         return this.errorTexture;
       } else {
@@ -376,13 +344,13 @@ public class TextureManager {
    * Sets the attributes and capabilities of a shared <code>texture</code>.
    */
   private void setSharedTextureAttributesAndCapabilities(Texture texture) {
-    if (!texture.isLive() && !texture.isCompiled()) {
+    if (!texture.isLive()) {
       texture.setMinFilter(Texture.NICEST);
       texture.setMagFilter(Texture.NICEST);
       texture.setCapability(Texture.ALLOW_FORMAT_READ);
       texture.setCapability(Texture.ALLOW_IMAGE_READ);
       for (ImageComponent image : texture.getImages()) {
-        if (!image.isLive() && !image.isCompiled()) {
+        if (!image.isLive()) {
           image.setCapability(ImageComponent.ALLOW_FORMAT_READ);
           image.setCapability(ImageComponent.ALLOW_IMAGE_READ);
         }
@@ -410,8 +378,8 @@ public class TextureManager {
   public float getRotatedTextureWidth(HomeTexture texture) {
     float angle = texture.getAngle();
     if (angle != 0) {
-      return (float)Math.rint(Math.abs(texture.getWidth() * Math.cos(angle)) 
-          + Math.abs(texture.getHeight() * Math.sin(angle)));
+      return (float)(texture.getWidth() * Math.cos(angle) 
+          + texture.getHeight() * Math.sin(angle));
     } else {
       return texture.getWidth();
     }
@@ -423,8 +391,8 @@ public class TextureManager {
   public float getRotatedTextureHeight(HomeTexture texture) {
     float angle = texture.getAngle();
     if (angle != 0) {
-      return (float)Math.rint(Math.abs(texture.getWidth() * Math.sin(angle)) 
-          + Math.abs(texture.getHeight() * Math.cos(angle)));
+      return (float)(texture.getWidth() * Math.sin(angle) 
+          + texture.getHeight() * Math.cos(angle));
     } else {
       return texture.getHeight();
     }

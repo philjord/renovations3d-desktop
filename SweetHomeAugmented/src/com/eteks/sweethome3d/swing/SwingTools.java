@@ -73,11 +73,15 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import javax.jnlp.BasicService;
+import javax.jnlp.ServiceManager;
+import javax.jnlp.UnavailableServiceException;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -582,7 +586,7 @@ public class SwingTools {
   
   /**
    * Displays the image referenced by <code>imageUrl</code> in an AWT window 
-   * disposed once an other AWT frame is created.
+   * disposed once an instance of <code>JFrame</code> or <code>JDialog</code> is displayed.
    * If the <code>imageUrl</code> is incorrect, nothing happens.
    */
   public static void showSplashScreenWindow(URL imageUrl) {
@@ -604,17 +608,30 @@ public class SwingTools {
             try {
               Thread.sleep(500);
               while (splashScreenWindow.isVisible()) {
-                // If an other frame is showing, dispose splash window
                 EventQueue.invokeLater(new Runnable() {
                     public void run() {
-                      for (Frame frame : Frame.getFrames()) {
-                        if (frame.isShowing()) {
-                          splashScreenWindow.dispose();
+                      // If a JFrame or JDialog is showing, dispose splash window
+                      try {
+                        for (Window window : (Window[])Window.class.getMethod("getWindows").invoke(null)) {
+                          if ((window instanceof JFrame || window instanceof JDialog)
+                              && window.isShowing()) {
+                            splashScreenWindow.dispose();
+                            break;
+                          }
+                        }
+                      } catch (Exception ex) {
+                        // Even if splash screen will disappear quicker,
+                        // use Frame#getFrames under Java 1.5 where Window#getWindows doesn't exist
+                        for (Frame frame : Frame.getFrames()) {
+                          if (frame.isShowing()) {
+                            splashScreenWindow.dispose();
+                            break;
+                          }
                         }
                       }
                     }
                   });
-                Thread.sleep(300);
+                Thread.sleep(200);
               }
             } catch (InterruptedException ex) {
               EventQueue.invokeLater(new Runnable() {
@@ -836,15 +853,13 @@ public class SwingTools {
    * if it was done successfully.
    */
   public static boolean showDocumentInBrowser(URL url) {
-	  //PJPJPJPJ TODO:
-	  return false;
-//    return BrowserSupport.showDocumentInBrowser(url);
+    return BrowserSupport.showDocumentInBrowser(url);
   }
   
   /**
    * Separated static class to be able to exclude JNLP library from classpath. 
    */
-/*  private static class BrowserSupport {
+  private static class BrowserSupport {
     public static boolean showDocumentInBrowser(URL url) {
       try { 
         // Lookup the javax.jnlp.BasicService object 
@@ -861,7 +876,7 @@ public class SwingTools {
       }
       return false;
     }
-  }*/
+  }
 
   /**
    * Returns the children of a component of the given class.

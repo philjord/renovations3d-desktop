@@ -43,6 +43,7 @@ import java.util.Dictionary;
 import java.util.Hashtable;
 import java.util.Locale;
 
+import javax.media.j3d.BranchGroup;
 import javax.swing.AbstractButton;
 import javax.swing.AbstractListModel;
 import javax.swing.ButtonGroup;
@@ -69,8 +70,6 @@ import javax.swing.event.ListDataEvent;
 import javax.swing.event.ListDataListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-import org.jogamp.java3d.BranchGroup;
 
 import com.eteks.sweethome3d.j3d.ModelManager;
 import com.eteks.sweethome3d.model.HomeMaterial;
@@ -655,12 +654,12 @@ public class ModelMaterialsComponent extends JButton implements View {
       private HomeMaterial [] defaultMaterials;
       private HomeMaterial [] materials;
 
-      public MaterialsListModel(ModelMaterialsController controller) {
+      public MaterialsListModel(final ModelMaterialsController controller) {
         this.materials = controller.getMaterials();
         ModelManager.getInstance().loadModel(controller.getModel(), 
           new ModelManager.ModelObserver() {
             public void modelUpdated(BranchGroup modelRoot) {
-              defaultMaterials = ModelManager.getInstance().getMaterials(modelRoot);
+              defaultMaterials = ModelManager.getInstance().getMaterials(modelRoot, controller.getModelCreator());
               if (materials != null) {
                 // Keep only materials that are defined in default materials set
                 // (the list can be different if the model loader interprets differently a 3D model file 

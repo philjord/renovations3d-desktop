@@ -19,26 +19,23 @@
  */
 package com.eteks.sweethome3d.j3d;
 
-import javaawt.geom.Area;
-import javaawt.geom.PathIterator;
-import javaawt.geom.Point2D;
-import javaawt.geom.Rectangle2D;
+import java.awt.geom.Area;
+import java.awt.geom.PathIterator;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
-import org.jogamp.java3d.Appearance;
-import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.Texture;
-import org.jogamp.java3d.TransparencyAttributes;
-import org.jogamp.java3d.utils.geometry.GeometryInfo;
-import org.jogamp.java3d.utils.geometry.NormalGenerator;
-import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
-import org.jogamp.vecmath.Point3f;
-import org.jogamp.vecmath.TexCoord2f;
+import javax.media.j3d.Appearance;
+import javax.media.j3d.Shape3D;
+import javax.media.j3d.Texture;
+import javax.media.j3d.TransparencyAttributes;
+import javax.vecmath.Point3f;
+import javax.vecmath.TexCoord2f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
@@ -46,6 +43,8 @@ import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Wall;
+import com.sun.j3d.utils.geometry.GeometryInfo;
+import com.sun.j3d.utils.geometry.NormalGenerator;
 
 /**
  * Root of a the 3D ground.
@@ -72,7 +71,7 @@ public class Ground3D extends Object3DBranch {
     this.width = width;
     this.depth = depth;
 
-    SimpleShaderAppearance groundAppearance = new SimpleShaderAppearance();
+    Appearance groundAppearance = new Appearance();
     groundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
@@ -80,9 +79,6 @@ public class Ground3D extends Object3DBranch {
     TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
     transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
     groundAppearance.setTransparencyAttributes(transparencyAttributes);
-    
-    //PJPJPJPJ allow updatable shader building
-    groundAppearance.setUpdatableCapabilities();
 
     final Shape3D groundShape = new Shape3D();
     groundShape.setAppearance(groundAppearance);
@@ -122,7 +118,7 @@ public class Ground3D extends Object3DBranch {
       groundAppearance.getTransparencyAttributes().setTransparencyMode(TransparencyAttributes.NONE);      
     } else {
       groundAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_COLOR, 0));
-      groundAppearance.setTextureAttributes(getTextureAttributes(groundTexture));
+      groundAppearance.setTextureAttributes(getTextureAttributes(groundTexture, true));
       final TextureManager textureManager = TextureManager.getInstance();
       textureManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
@@ -138,99 +134,109 @@ public class Ground3D extends Object3DBranch {
     }
     
     Area areaRemovedFromGround = new Area();
-    // Compute the union of the rooms, the underground walls and furniture areas 
-    Comparator<Level> levelComparator = new Comparator<Level>() {
-        public int compare(Level level1, Level level2) {
-          return -Float.compare(level1.getElevation(), level2.getElevation());
-        }
-      };
-    Map<Level, Area> undergroundAreas = new TreeMap<Level, Area>(levelComparator);
-    Map<Level, Area> roomAreas = new TreeMap<Level, Area>(levelComparator);
+    // Compute the union of the rooms, the underground walls and furniture areas
+    Map<Level, LevelAreas> undergroundLevelAreas = new HashMap<Level, LevelAreas>();
     for (Room room : home.getRooms()) {
       Level roomLevel = room.getLevel();
       if ((roomLevel == null || roomLevel.isViewable())
           && room.isFloorVisible()) {
         float [][] roomPoints = room.getPoints();
         if (roomPoints.length > 2) {
-          Area roomArea = null;
+          Area roomArea = new Area(getShape(roomPoints));
+          LevelAreas levelAreas = roomLevel != null && roomLevel.getElevation() < 0 
+              ? getUndergroundAreas(undergroundLevelAreas, roomLevel)
+              : null;
           if (roomLevel == null
               || (roomLevel.getElevation() <= 0
                   && roomLevel.isViewableAndVisible())) {
-            roomArea = new Area(getShape(roomPoints));
             areaRemovedFromGround.add(roomArea);
-            updateUndergroundAreas(roomAreas, room.getLevel(), roomPoints, roomArea);
+            if (levelAreas != null) {
+              levelAreas.getRoomArea().add(roomArea);
+            }
           }
-          updateUndergroundAreas(undergroundAreas, room.getLevel(), roomPoints, roomArea);
+          if (levelAreas != null) {
+            levelAreas.getUndergroundArea().add(roomArea);
+          }
         }
       }
     }
     
     // Search all items at negative levels that could dig the ground 
     for (HomePieceOfFurniture piece : home.getFurniture()) {
+      Level pieceLevel = piece.getLevel();
       if (piece.getGroundElevation() < 0
-          && (piece.getLevel() == null || piece.getLevel().isViewable())) {
+          && pieceLevel != null
+          && pieceLevel.isViewable()
+          && pieceLevel.getElevation() < 0) {
+        LevelAreas levelAreas = getUndergroundAreas(undergroundLevelAreas, pieceLevel);
         if (piece.getStaircaseCutOutShape() == null) {
-          updateUndergroundAreas(undergroundAreas, piece.getLevel(), piece.getPoints(), null);
+          levelAreas.getUndergroundArea().add(new Area(getShape(piece.getPoints())));
         } else {
-          updateUndergroundAreas(undergroundAreas, piece.getLevel(), null, ModelManager.getInstance().getAreaOnFloor(piece));
+          levelAreas.getUndergroundArea().add(ModelManager.getInstance().getAreaOnFloor(piece));
         }
       }
     }
-    Map<Level, Area> wallAreas = new HashMap<Level, Area>();
     for (Wall wall : home.getWalls()) {
-      if (wall.getLevel() == null || wall.getLevel().isViewable()) {
-        updateUndergroundAreas(wallAreas, wall.getLevel(), wall.getPoints(), null);
+      Level wallLevel = wall.getLevel();
+      if (wallLevel != null 
+          && wallLevel.isViewable()
+          && wallLevel.getElevation() < 0) {
+        LevelAreas levelAreas = getUndergroundAreas(undergroundLevelAreas, wallLevel);
+        levelAreas.getWallArea().add(new Area(getShape(wall.getPoints())));
       }
     }
     // Consider that walls around a closed area define a hole 
-    for (Map.Entry<Level, Area> wallAreaEntry : wallAreas.entrySet()) {
-      for (float [][] points : getAreaPoints(wallAreaEntry.getValue())) {
+    List<LevelAreas> undergroundAreas = new ArrayList<LevelAreas>(undergroundLevelAreas.values());
+    for (LevelAreas levelAreas : undergroundAreas) {
+      for (float [][] points : getPoints(levelAreas.getWallArea())) {
         if (!new Room(points).isClockwise()) {
-          updateUndergroundAreas(undergroundAreas, wallAreaEntry.getKey(), points, null);
+          levelAreas.getUndergroundArea().add(new Area(getShape(points)));
         }
       }
     }
     
-    Map<Level, Area> undergroundSideAreas = new TreeMap<Level, Area>(levelComparator);
-    Map<Level, Area> upperLevelAreas = new HashMap<Level, Area>();
-    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
-      Level level = undergroundAreaEntry.getKey();
-      Area area = undergroundAreaEntry.getValue();
+    // Sort underground areas in the reverse order of level elevation
+    Collections.sort(undergroundAreas, new Comparator<LevelAreas>() {
+        public int compare(LevelAreas levelAreas1, LevelAreas levelAreas2) {
+          return -Float.compare(levelAreas1.getLevel().getElevation(), levelAreas2.getLevel().getElevation());
+        }
+      });
+    for (LevelAreas levelAreas : undergroundAreas) {
+      Level level = levelAreas.getLevel();
+      Area area = levelAreas.getUndergroundArea();
       Area areaAtStart = (Area)area.clone();
-      undergroundSideAreas.put(level, (Area)area.clone());
-      upperLevelAreas.put(level, new Area());
+      levelAreas.getUndergroundSideArea().add((Area)area.clone());
       // Remove lower levels areas from the area at the current level
-      for (Map.Entry<Level, Area> otherUndergroundAreaEntry : undergroundAreas.entrySet()) {
-        if (otherUndergroundAreaEntry.getKey().getElevation() < level.getElevation()) {
-          for (float [][] points : getAreaPoints(otherUndergroundAreaEntry.getValue())) {
+      for (LevelAreas otherLevelAreas : undergroundAreas) {
+        if (otherLevelAreas.getLevel().getElevation() < level.getElevation()) {
+          for (float [][] points : getPoints(otherLevelAreas.getUndergroundArea())) {
             if (!new Room(points).isClockwise()) {
               Area pointsArea = new Area(getShape(points));
               area.subtract(pointsArea);
-              undergroundSideAreas.get(level).add(pointsArea);
+              levelAreas.getUndergroundSideArea().add(pointsArea);
             }
           }
         }
       }      
       // Add underground area to ground area at ground level
-      for (float [][] points : getAreaPoints(area)) {
+      for (float [][] points : getPoints(area)) {
         if (new Room(points).isClockwise()) {
           // Hole surrounded by a union of rooms that form a polygon  
           Area coveredHole = new Area(getShape(points));
           // Compute the missing hole area in the level area before other sublevels were subtracted from it 
           coveredHole.exclusiveOr(areaAtStart);
           coveredHole.subtract(areaAtStart);
-          upperLevelAreas.get(level).add(coveredHole);
+          levelAreas.getUpperLevelArea().add(coveredHole);
         } else {
           areaRemovedFromGround.add(new Area(getShape(points)));
         }
       }
     }
     // Remove room areas because they are displayed by Room3D instances
-    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
-      Level level = undergroundAreaEntry.getKey();
-      Area area = undergroundAreaEntry.getValue();
-      Area roomArea = roomAreas.get(level);
+    for (LevelAreas levelAreas : undergroundAreas) {
+      Area roomArea = levelAreas.getRoomArea();
       if (roomArea != null) {
+        Area area = levelAreas.getUndergroundArea();
         area.subtract(roomArea);
       }
     }
@@ -260,17 +266,17 @@ public class Ground3D extends Object3DBranch {
       addAreaGeometry(groundShape, groundTexture, outsideGroundArea, 0);
     }
     groundArea.subtract(areaRemovedFromGround);
-    undergroundAreas.put(new Level("Ground", 0, 0, 0), groundArea);
+    // Add level areas for ground level at index 0 because it's the highest level in the list 
+    undergroundAreas.add(0, new LevelAreas(new Level("Ground", 0, 0, 0), groundArea));
     float previousLevelElevation = 0;
-    for (Map.Entry<Level, Area> undergroundAreaEntry : undergroundAreas.entrySet()) {
-      Level level = undergroundAreaEntry.getKey();
-      float elevation = level.getElevation();
-      addAreaGeometry(groundShape, groundTexture, undergroundAreaEntry.getValue(), elevation);
+    for (LevelAreas levelAreas : undergroundAreas) {
+      float elevation = levelAreas.getLevel().getElevation();
+      addAreaGeometry(groundShape, groundTexture, levelAreas.getUndergroundArea(), elevation);
       if (previousLevelElevation - elevation > 0) {
-        for (float [][] points : getAreaPoints(undergroundSideAreas.get(level))) {
+        for (float [][] points : getPoints(levelAreas.getUndergroundSideArea())) {
           addAreaSidesGeometry(groundShape, groundTexture, points, elevation, previousLevelElevation - elevation);
         }
-        addAreaGeometry(groundShape, groundTexture, upperLevelAreas.get(level), previousLevelElevation);
+        addAreaGeometry(groundShape, groundTexture, levelAreas.getUpperLevelArea(), previousLevelElevation);
       }
       previousLevelElevation = elevation;
     }
@@ -284,7 +290,7 @@ public class Ground3D extends Object3DBranch {
   /**
    * Returns the list of points that defines the given area.
    */
-  private List<float [][]> getAreaPoints(Area area) {
+  private List<float [][]> getPoints(Area area) {
     List<float [][]> areaPoints = new ArrayList<float [][]>();
     List<float []>   areaPartPoints  = new ArrayList<float[]>();
     float [] previousRoomPoint = null;
@@ -313,23 +319,14 @@ public class Ground3D extends Object3DBranch {
   }
 
   /**
-   * Adds the given area to the underground areas for level below zero.
+   * Returns the {@link LevelAreas} instance matching the given level.
    */
-  private void updateUndergroundAreas(Map<Level, Area> undergroundAreas, 
-                                      Level      level, 
-                                      float [][] points, 
-                                      Area       area) {
-    if (level != null 
-        && level.getElevation() < 0) {
-      Area itemsArea = undergroundAreas.get(level);
-      if (itemsArea == null) {
-        itemsArea = new Area();
-        undergroundAreas.put(level, itemsArea);
-      }
-      itemsArea.add(area != null
-          ? area
-          : new Area(getShape(points)));
+  private LevelAreas getUndergroundAreas(Map<Level, LevelAreas> undergroundAreas, Level level) {
+    LevelAreas levelAreas = undergroundAreas.get(level);
+    if (levelAreas == null) {
+      undergroundAreas.put(level, levelAreas = new LevelAreas(level));
     }
+    return levelAreas;
   }
 
   /**
@@ -352,23 +349,13 @@ public class Ground3D extends Object3DBranch {
           ? new TexCoord2f [vertexCount]
           : null;
       
-      float textureWidth;
-      float textureHeight;
-      if (groundTexture != null) {
-        textureWidth = groundTexture.getWidth();
-        textureHeight = groundTexture.getHeight();
-      } else {
-        textureWidth = 0;
-        textureHeight = 0;
-      }
       int j = 0;
       for (float [][] areaPartPoints : areaPoints) {
         for (int i = 0; i < areaPartPoints.length; i++, j++) {
           float [] point = areaPartPoints [i];
           geometryCoords [j] = new Point3f(point [0], elevation, point [1]);
           if (groundTexture != null) {
-            geometryTextureCoords [j] = new TexCoord2f((point [0] - this.originX) / textureWidth, 
-                (this.originY - point [1]) / textureHeight);
+            geometryTextureCoords [j] = new TexCoord2f(point [0] - this.originX, this.originY - point [1]);
           }
         }
       }
@@ -381,8 +368,7 @@ public class Ground3D extends Object3DBranch {
       }
       geometryInfo.setStripCounts(stripCounts);
       new NormalGenerator(0).generateNormals(geometryInfo);
-      //new Stripifier().stripify(geometryInfo);
-      groundShape.addGeometry(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
+      groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
     }
   }
 
@@ -398,15 +384,6 @@ public class Ground3D extends Object3DBranch {
     TexCoord2f [] geometryTextureCoords = groundTexture != null 
         ? new TexCoord2f [geometryCoords.length]
         : null;
-    float textureWidth;
-    float textureHeight;
-    if (groundTexture != null) {
-      textureWidth = groundTexture.getWidth();
-      textureHeight = groundTexture.getHeight();
-    } else {
-      textureWidth = 0;
-      textureHeight = 0;
-    }
     for (int i = 0, j = 0; i < areaPoints.length; i++) {
       float [] point = areaPoints [i];
       float [] nextPoint = areaPoints [i < areaPoints.length - 1 ? i + 1 : 0];
@@ -416,10 +393,10 @@ public class Ground3D extends Object3DBranch {
       geometryCoords [j++] = new Point3f(nextPoint [0], elevation, nextPoint [1]);
       if (groundTexture != null) {
         float distance = (float)Point2D.distance(point [0], point [1], nextPoint [0], nextPoint [1]);
-        geometryTextureCoords [j - 4] = new TexCoord2f(point [0] / textureWidth, elevation / textureHeight);
-        geometryTextureCoords [j - 3] = new TexCoord2f(point [0] / textureWidth, (elevation + sideHeight) / textureHeight);
-        geometryTextureCoords [j - 2] = new TexCoord2f((point [0] - distance) / textureWidth, (elevation + sideHeight) / textureHeight);
-        geometryTextureCoords [j - 1] = new TexCoord2f((point [0] - distance) / textureWidth, elevation / textureHeight);
+        geometryTextureCoords [j - 4] = new TexCoord2f(point [0], elevation);
+        geometryTextureCoords [j - 3] = new TexCoord2f(point [0], elevation + sideHeight);
+        geometryTextureCoords [j - 2] = new TexCoord2f(point [0] - distance, elevation + sideHeight);
+        geometryTextureCoords [j - 1] = new TexCoord2f(point [0] - distance, elevation);
       }
     }
 
@@ -429,24 +406,52 @@ public class Ground3D extends Object3DBranch {
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, geometryTextureCoords);
     }
-    
-    //PJPJPJPJ
-    geometryInfo.convertToIndexedTriangles();
-    
     new NormalGenerator(0).generateNormals(geometryInfo);
-    //new Stripifier().stripify(geometryInfo);
-    groundShape.addGeometry(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
+    groundShape.addGeometry(geometryInfo.getIndexedGeometryArray());
   }
   
-  	@Override
-	public void showOutline(boolean isSelected)
-	{
-		//Never bad idea indeed
-	}
-  	
-  	public boolean isShowOutline()
-  	{
-  		return false;
-  	}
-}
+  /**
+   * Areas of underground levels.
+   */
+  private static class LevelAreas {
+    private Level level;
+    private Area undergroundArea;
+    private Area roomArea = new Area();
+    private Area wallArea = new Area();
+    private Area undergroundSideArea = new Area();
+    private Area upperLevelArea = new Area();
 
+    public LevelAreas(Level level) {
+      this(level, new Area());
+    }
+
+    public LevelAreas(Level level, Area undergroundArea) {
+      this.level = level;
+      this.undergroundArea = undergroundArea;
+    }
+
+    public Level getLevel() {
+      return this.level;
+    }
+
+    public Area getUndergroundArea() {
+      return this.undergroundArea;
+    }
+
+    public Area getRoomArea() {
+      return this.roomArea;
+    }
+
+    public Area getWallArea() {
+      return this.wallArea;
+    }
+
+    public Area getUndergroundSideArea() {
+      return this.undergroundSideArea;
+    }
+
+    public Area getUpperLevelArea() {
+      return this.upperLevelArea;
+    }    
+  }
+}
