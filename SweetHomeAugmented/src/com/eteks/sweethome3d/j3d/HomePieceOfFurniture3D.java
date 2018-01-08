@@ -23,7 +23,6 @@ import javaawt.Color;
 import javaawt.Rectangle;
 import javaawt.Shape;
 import java.lang.ref.WeakReference;
-import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -81,20 +80,19 @@ import com.eteks.sweethome3d.model.SelectionListener;
 /**
  * Root of piece of furniture branch.
  */
-public class HomePieceOfFurniture3D extends Object3DBranch
-{
-	private static final TransparencyAttributes DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES = new TransparencyAttributes(
-			TransparencyAttributes.NICEST, 0);
-	private static final PolygonAttributes DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = new PolygonAttributes(PolygonAttributes.POLYGON_FILL,
-			PolygonAttributes.CULL_FRONT, 0, false);
-	private static final PolygonAttributes NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = new PolygonAttributes(
-			PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_BACK, 0, true);
-	private static final Bounds DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), Double.POSITIVE_INFINITY);
+public class HomePieceOfFurniture3D extends Object3DBranch {
+	private static final TransparencyAttributes DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES = 
+		new TransparencyAttributes(TransparencyAttributes.NICEST, 0);
+	private static final PolygonAttributes 		DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
+		new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_FRONT, 0, false);
+	private static final PolygonAttributes 		NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES = 
+		new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_BACK, 0, true);
+	private static final Bounds 				DEFAULT_INFLUENCING_BOUNDS = new BoundingSphere(new Point3d(), Double.POSITIVE_INFINITY);
+	private static final Object                 DEFAULT_BOX = new Object();
 
 	private final Home home;
 
-	static
-	{
+	static {
 		DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
 		NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
 		
@@ -106,16 +104,17 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Creates the 3D piece matching the given home <code>piece</code>.
 	 */
-	public HomePieceOfFurniture3D(HomePieceOfFurniture piece, Home home)
-	{
+  public HomePieceOfFurniture3D(HomePieceOfFurniture piece, Home home) {
 		this(piece, home, false, false);
 	}
 
 	/**
 	 * Creates the 3D piece matching the given home <code>piece</code>.
 	 */
-	public HomePieceOfFurniture3D(HomePieceOfFurniture piece, Home home, boolean ignoreDrawingMode, boolean waitModelAndTextureLoadingEnd)
-	{
+	public HomePieceOfFurniture3D(HomePieceOfFurniture piece, 
+	                              Home home, 
+	                              boolean ignoreDrawingMode, 
+	                              boolean waitModelAndTextureLoadingEnd) {
 		setName(piece.getName());
 		setUserData(piece);
 		this.home = home;
@@ -139,9 +138,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Creates the piece node with its transform group and add it to the piece branch. 
 	 */
-	private void createPieceOfFurnitureNode(final HomePieceOfFurniture piece, final boolean ignoreDrawingMode,
-			final boolean waitModelAndTextureLoadingEnd)
-	{
+	private void createPieceOfFurnitureNode(final HomePieceOfFurniture piece, 
+	                                        final boolean ignoreDrawingMode,
+	                                        final boolean waitModelAndTextureLoadingEnd) {
 		
 		pieceTransformGroup.setName("pieceTransformGroup " + piece.getName());
 		pieceTransformGroup.setPickable(true);
@@ -153,8 +152,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		pieceTransformGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
 		addChild(pieceTransformGroup);
 
-		if (piece instanceof HomeLight)
-		{
+		if (piece instanceof HomeLight)	{
 			BoundingLeaf bounds = new BoundingLeaf();
 			bounds.setCapability(BoundingLeaf.ALLOW_REGION_WRITE);
 			addChild(bounds);
@@ -164,7 +162,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		final BranchGroup waitBranch = new BranchGroup();
 		waitBranch.setName("white loading box");
 		waitBranch.setCapability(BranchGroup.ALLOW_DETACH);
-		waitBranch.addChild(getModelBox(Color.WHITE));
+		TransformGroup normalization = new TransformGroup();
+	    normalization.addChild(getModelBox(Color.WHITE));
+	    setModelCapabilities(normalization);
+	    waitBranch.addChild(normalization);  
 		// Allow appearance change on all children
 		setModelCapabilities(waitBranch);
 
@@ -175,50 +176,42 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 
 		// Load piece real 3D model
 		Content model = piece.getModel();
-		ModelManager.getInstance().loadModel(model, waitModelAndTextureLoadingEnd, new ModelManager.ModelObserver() {
-			public void modelUpdated(BranchGroup modelRoot)
-			{
+		ModelManager.getInstance().loadModel(model, waitModelAndTextureLoadingEnd, 
+			new ModelManager.ModelObserver() {
+			public void modelUpdated(BranchGroup modelRoot)	{
 				float[][] modelRotation = piece.getModelRotation();
 				// Add piece model scene to a normalized transform group
-				TransformGroup modelTransformGroup = ModelManager.getInstance().getNormalizedTransformGroup(modelRoot, modelRotation, 1);
+	            TransformGroup modelTransformGroup = ModelManager.getInstance().
+	            		getNormalizedTransformGroup(modelRoot, modelRotation, 1, piece.isModelCenteredAtOrigin());
 				modelTransformGroup.setName("NormalizedTransformGroup");
 				cloneHomeTextures(modelRoot);
-				updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
+				updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, 
+						ignoreDrawingMode, waitModelAndTextureLoadingEnd);
 			}
 
-			public void modelError(Exception ex)
-			{
+			public void modelError(Exception ex) {
 				// In case of problem use a default red box
-				updatePieceOfFurnitureModelNode(getModelBox(Color.RED), new TransformGroup(), ignoreDrawingMode,
-						waitModelAndTextureLoadingEnd);
+				updatePieceOfFurnitureModelNode(getModelBox(Color.RED), new TransformGroup(), 
+						ignoreDrawingMode, waitModelAndTextureLoadingEnd);
 			}
 
 			/**
 			 * Replace the textures set on <code>node</code> shapes by clones. 
 			 */
-			private void cloneHomeTextures(Node node)
-			{
-				if (node instanceof Group)
-				{
+			private void cloneHomeTextures(Node node) {
+				if (node instanceof Group) {
 					// Enumerate children
 					Iterator<Node> enumeration = ((Group) node).getAllChildren();
-					while (enumeration.hasNext())
-					{
+					while (enumeration.hasNext()) {
 						cloneHomeTextures((Node) enumeration.next());
 					}
-				}
-				else if (node instanceof Link)
-				{
+				} else if (node instanceof Link) {
 					cloneHomeTextures(((Link) node).getSharedGroup());
-				}
-				else if (node instanceof Shape3D)
-				{
+				} else if (node instanceof Shape3D) {
 					Appearance appearance = ((Shape3D) node).getAppearance();
-					if (appearance != null)
-					{
+					if (appearance != null)	{
 						Texture texture = appearance.getTexture();
-						if (texture != null)
-						{
+						if (texture != null) {
 							appearance.setTexture(getHomeTextureClone(texture, home));
 						}
 					}
@@ -231,8 +224,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 * Updates this branch from the home piece it manages.
 	 */
 	@Override
-	public void update()
-	{
+	public void update() {
 		updatePieceOfFurnitureTransform();
 		updatePieceOfFurnitureModelMirrored();
 		updatePieceOfFurnitureColorAndTexture(false);
@@ -244,10 +236,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 * Sets the transformation applied to piece model to match
 	 * its location, its angle and its size.
 	 */
-	private void updatePieceOfFurnitureTransform()
-	{
-		Transform3D pieceTransform = ModelManager.getInstance()
-				.getPieceOFFurnitureNormalizedModelTransformation((HomePieceOfFurniture) getUserData());
+	private void updatePieceOfFurnitureTransform() {
+	   	Transform3D pieceTransform = ModelManager.getInstance().getPieceOfFurnitureNormalizedModelTransformation(
+	   		(HomePieceOfFurniture) getUserData(), pieceTransformGroup.getChild(0));
 		// Change model transformation      
 		pieceTransformGroup.setTransform(pieceTransform);
 	}
@@ -255,55 +246,46 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Sets the color and the texture applied to piece model.
 	 */
-	private void updatePieceOfFurnitureColorAndTexture(boolean waitTextureLoadingEnd)
-	{
+	private void updatePieceOfFurnitureColorAndTexture(boolean waitTextureLoadingEnd) {
 		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
 		Node filledModelNode = getFilledModelNode();
-		if(filledModelNode !=null )
-		{
-		if (piece.getColor() != null)
-		{
-			setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), null, false, null, null,
-					new HashSet<Appearance>());
-		}
-		else if (piece.getTexture() != null)
-		{
+		Node filledModelChild = ((Group)filledModelNode).getChild(0);
+	  if(filledModelNode != null && filledModelChild.getUserData() != DEFAULT_BOX) {
+		if (piece.getColor() != null) {
+			setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), null, false, 
+				null, null,	new HashSet<Appearance>());
+		} else if (piece.getTexture() != null) {
 			setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(), null, waitTextureLoadingEnd,
-					new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()),
-					ModelManager.getInstance().getBounds(((Group) filledModelNode).getChild(0)), new HashSet<Appearance>());
-		}
-		else if (piece.getModelMaterials() != null)
-		{
+				new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelNode), 
+				new HashSet<Appearance>());
+		} else if (piece.getModelMaterials() != null) {
 			setColorAndTexture(filledModelNode, null, null, null, piece.getModelMaterials(), waitTextureLoadingEnd,
-					new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()),
-					ModelManager.getInstance().getBounds(((Group) filledModelNode).getChild(0)), new HashSet<Appearance>());
-		}
-		else
-		{
+				new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelNode), 
+				new HashSet<Appearance>());
+		} else {
 			// Set default material and texture of model
-			setColorAndTexture(filledModelNode, null, null, piece.getShininess(), null, false, null, null, new HashSet<Appearance>());
+			setColorAndTexture(filledModelNode, null, null, piece.getShininess(), null, false, 
+				null, null, new HashSet<Appearance>());
 		}
-		}
-		else
-		{
-			System.out.println("filledModelNode == null! " + this);
-		}
+	  } else {
+		 System.out.println("filledModelNode == null! " + this);
+	  }
 	}
 
 	/**
 	 * Sets the light color if the piece is a light. 
 	 */
-	private void updateLight()
-	{
+	private void updateLight() {
 		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
-		if (piece instanceof HomeLight && this.home != null)
-		{
-			boolean enabled = this.home.getEnvironment().getSubpartSizeUnderLight() > 0 && piece.isVisible()
-					&& (piece.getLevel() == null || piece.getLevel().isViewableAndVisible());
+		if (piece instanceof HomeLight 
+				&& this.home != null) {
+			boolean enabled = this.home.getEnvironment().getSubpartSizeUnderLight() > 0 
+					&& piece.isVisible()
+					&& (piece.getLevel() == null 
+					  || piece.getLevel().isViewableAndVisible());
 			HomeLight light = (HomeLight) piece;
 			LightSource[] lightSources = light.getLightSources();
-			if (numChildren() > 2)
-			{
+			if (numChildren() > 2) {
 				Color homeLightColor = new Color(this.home.getEnvironment().getLightColor());
 				float homeLightColorRed = homeLightColor.getRed() / 3072f;
 				float homeLightColorGreen = homeLightColor.getGreen() / 3072f;
@@ -312,45 +294,45 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 				float cos = (float) Math.cos(angle);
 				float sin = (float) Math.sin(angle);
 				Group lightsBranch = (Group) getChild(2);
-				for (int i = 0; i < lightSources.length; i++)
-				{
+				for (int i = 0; i < lightSources.length; i++) {
 					LightSource lightSource = lightSources[i];
 					Color lightColor = new Color(lightSource.getColor());
 					float power = light.getPower();
 					PointLight pointLight = (PointLight) lightsBranch.getChild(i);
-					pointLight.setColor(new Color3f(lightColor.getRed() / 255f * power + (power > 0 ? homeLightColorRed : 0),
+					pointLight.setColor(new Color3f(
+							lightColor.getRed()   / 255f * power + (power > 0 ? homeLightColorRed : 0),
 							lightColor.getGreen() / 255f * power + (power > 0 ? homeLightColorGreen : 0),
-							lightColor.getBlue() / 255f * power + (power > 0 ? homeLightColorBlue : 0)));
+							lightColor.getBlue()  / 255f * power + (power > 0 ? homeLightColorBlue : 0)));
 					// Compute the position of the light instead of resizing/placing it with a transformation 
 					// that has some influence on attenuation
 					float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
 					float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
 					float lightElevation = light.getGroundElevation();
-					pointLight.setPosition(light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
+					pointLight.setPosition(
+							light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
 							lightElevation + (lightSource.getZ() * light.getHeight()),
 							light.getY() + xLightSourceInLight * sin + yLightSourceInLight * cos);
 					pointLight.setEnable(enabled);
 				}
 
-				if (enabled)
-				{
+				if (enabled) {
 					Bounds bounds = DEFAULT_INFLUENCING_BOUNDS;
-					for (Room room : this.home.getRooms())
-					{
+					for (Room room : this.home.getRooms()) {
 						Level roomLevel = room.getLevel();
-						if (light.isAtLevel(roomLevel))
-						{
+						if (light.isAtLevel(roomLevel)) {
 							Shape roomShape = getShape(room.getPoints());
-							if (roomShape.contains(light.getX(), light.getY()))
-							{
+							if (roomShape.contains(light.getX(), light.getY())) {
 								Rectangle roomBounds = roomShape.getBounds();
-								float minElevation = roomLevel != null ? roomLevel.getElevation() : 0;
-								float maxElevation = roomLevel != null ? minElevation + roomLevel.getHeight() : 1E7f;
+								float minElevation = roomLevel != null 
+										? roomLevel.getElevation() 
+										: 0;
+								float maxElevation = roomLevel != null 
+										? minElevation + roomLevel.getHeight() 
+										: 1E7f;
 								float epsilon = 0.1f;
 								bounds = new BoundingBox(
 										new Point3d(roomBounds.getMinX() - epsilon, minElevation - epsilon, roomBounds.getMinY() - epsilon),
-										new Point3d(roomBounds.getMaxX() + epsilon, maxElevation + epsilon,
-												roomBounds.getMaxY() + epsilon));
+										new Point3d(roomBounds.getMaxX() + epsilon, maxElevation + epsilon,	roomBounds.getMaxY() + epsilon));
 								break;
 							}
 						}
@@ -364,43 +346,43 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Returns the node of the filled model.
 	 */
-	private Node getFilledModelNode()
-	{
+	private Node getFilledModelNode() {
 		return filledModelNode;
 	}
 
 	/**
 	 * Returns the node of the outline model.
 	 */
-	private Node getOutlineModelNode()
-	{
+	private Node getOutlineModelNode() {
 		return outlineModelNode;
 	}
 
 	/**
 	 * Sets whether this piece model is visible or not.
 	 */
-	private void updatePieceOfFurnitureVisibility()
-	{
+	private void updatePieceOfFurnitureVisibility() {
 		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
 		Node outlineModelNode = getOutlineModelNode();
 		HomeEnvironment.DrawingMode drawingMode;
-		if (this.home != null && outlineModelNode != null)
-		{
+		if (this.home != null && outlineModelNode != null) {
 			drawingMode = this.home.getEnvironment().getDrawingMode();
-		}
-		else
-		{
+		} else {
 			drawingMode = null;
 		}
 		// Update visibility of filled model shapes
-		boolean visible = piece.isVisible() && (piece.getLevel() == null || piece.getLevel().isViewableAndVisible());
+		boolean visible = piece.isVisible() 
+			&& (piece.getLevel() == null 
+				|| piece.getLevel().isViewableAndVisible());
 		
 		//PJPJPJ only allow picking if we can see the object 
 		setPickable(visible);
 		  
-		HomeMaterial[] materials = piece.getColor() == null && piece.getTexture() == null ? piece.getModelMaterials() : null;
-		setVisible(getFilledModelNode(), visible && (drawingMode == null || drawingMode == HomeEnvironment.DrawingMode.FILL
+		HomeMaterial[] materials = piece.getColor() == null && piece.getTexture() == null 
+			? piece.getModelMaterials() 
+			: null;
+		setVisible(getFilledModelNode(), visible 
+			&& (drawingMode == null 
+				|| drawingMode == HomeEnvironment.DrawingMode.FILL
 				|| drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE), materials);
 			
 		//hide the outline if showing but this is not visible
@@ -411,8 +393,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Sets whether this piece model is mirrored or not.
 	 */
-	private void updatePieceOfFurnitureModelMirrored()
-	{
+	private void updatePieceOfFurnitureModelMirrored() {
 		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
 		// Cull front or back model faces whether its model is mirrored or not
 		setCullFace(getFilledModelNode(), piece.isModelMirrored(), piece.isBackFaceShown());
@@ -425,9 +406,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Updates transform group children with <code>modelMode</code>.
 	 */
-	private void updatePieceOfFurnitureModelNode(Node modelNode, TransformGroup normalization, boolean ignoreDrawingMode,
-			boolean waitTextureLoadingEnd)
-	{		
+	private void updatePieceOfFurnitureModelNode(Node modelNode, 
+	                                             TransformGroup normalization, 
+	                                             boolean ignoreDrawingMode,	
+	                                             boolean waitTextureLoadingEnd) {		
 		normalization.addChild(modelNode);
 		setModelCapabilities(normalization);			
 		
@@ -441,28 +423,28 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		
 		//PJPJ for outline
 		ignoreDrawingMode = false;
-		if (!ignoreDrawingMode)
-		{
+		if (!ignoreDrawingMode) {
 			// Add outline model node
 			outlineModelNode = createOutlineModelNode(normalization);
 			modelBranch.addChild(outlineModelNode);
-		}
-		else
-		{
+		} else {
 			outlineModelNode = null;
 		}
 		 
 		// Remove previous nodes    
-		pieceTransformGroup.removeAllChildren();		
+		pieceTransformGroup.removeAllChildren();
 		
 		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
-		if (piece instanceof HomeLight)
-		{
+		if (piece.isHorizontallyRotated()) {
+	      // Update piece transformation to ensure its center is correctly placed
+	      updatePieceOfFurnitureTransform();
+	    }
+	 
+		if (piece instanceof HomeLight) {
 			BranchGroup lightBranch = new BranchGroup();
 			lightBranch.setCapability(ALLOW_CHILDREN_READ);
 			HomeLight light = (HomeLight) piece;
-			for (int i = light.getLightSources().length; i > 0; i--)
-			{
+			for (int i = light.getLightSources().length; i > 0 ; i--) {
 				PointLight pointLight = new PointLight(new Color3f(), new Point3f(), new Point3f(0.25f, 0, 0.0000025f));
 				pointLight.setCapability(PointLight.ALLOW_POSITION_WRITE);
 				pointLight.setCapability(PointLight.ALLOW_COLOR_WRITE);
@@ -475,8 +457,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		}
 
 		// Flip normals if back faces of model are shown
-		if (piece.isBackFaceShown())
-		{
+		if (piece.isBackFaceShown()) {
 			setBackFaceNormalFlip(getFilledModelNode(), true);
 		}
 		// Update piece color, visibility and model mirror in dispatch thread as
@@ -487,8 +468,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		updatePieceOfFurnitureVisibility();
 
 		// Manage light sources visibility 
-		if (this.home != null && getUserData() instanceof Light)
-		{
+		if (this.home != null 
+			&& getUserData() instanceof Light) {
 			this.home.addSelectionListener(new LightSelectionListener(this));
 		}
 
@@ -501,26 +482,20 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 * Selection listener bound to this object with a weak reference to avoid
 	 * strong link between home and this tree.  
 	 */
-	private static class LightSelectionListener implements SelectionListener
-	{
+	private static class LightSelectionListener implements SelectionListener {
 		private WeakReference<HomePieceOfFurniture3D> piece;
 
-		public LightSelectionListener(HomePieceOfFurniture3D piece)
-		{
+		public LightSelectionListener(HomePieceOfFurniture3D piece) {
 			this.piece = new WeakReference<HomePieceOfFurniture3D>(piece);
 		}
 
-		public void selectionChanged(SelectionEvent ev)
-		{
+		public void selectionChanged(SelectionEvent ev) {
 			// If piece 3D was garbage collected, remove this listener from home
 			HomePieceOfFurniture3D piece3D = this.piece.get();
 			Home home = (Home) ev.getSource();
-			if (piece3D == null)
-			{
+			if (piece3D == null) {
 				home.removeSelectionListener(this);
-			}
-			else
-			{
+			} else {
 				piece3D.updatePieceOfFurnitureVisibility();
 			}
 		}
@@ -529,8 +504,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Returns a box that may replace model. 
 	 */
-	private Node getModelBox(Color color)
-	{
+	private Node getModelBox(Color color) {
 		Material material = new Material();
 		material.setDiffuseColor(new Color3f(color.getRed() / 255f, color.getGreen() / 255f, color.getBlue() / 255f));
 		material.setAmbientColor(
@@ -538,14 +512,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 
 		Appearance boxAppearance = new SimpleShaderAppearance();
 		boxAppearance.setMaterial(material);
-		return new Box(0.5f, 0.5f, 0.5f, boxAppearance);
+		Box box = new Box(0.5f, 0.5f, 0.5f, boxAppearance);
+	    box.setUserData(DEFAULT_BOX);
+	    return box;
 	}
 
 	/**
 	 * Returns a clone of the given node with an outline appearance on its shapes.
 	 */
-	private Node createOutlineModelNode(Node modelNode)
-	{
+	private Node createOutlineModelNode(Node modelNode) {
 		Node node = ModelManager.getInstance().cloneNode(modelNode);
 		setOutlineAppearance(node);
 		return node;
@@ -554,22 +529,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Sets the outline appearance on all the children of <code>node</code>.
 	 */
-	private void setOutlineAppearance(Node node)
-	{
-		if (node instanceof Group)
-		{
+	private void setOutlineAppearance(Node node) {
+		if (node instanceof Group) {
 			Iterator<Node> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasNext())
-			{
+			while (enumeration.hasNext()) {
 				setOutlineAppearance((Node) enumeration.next());
 			}
-		}
-		else if (node instanceof Link)
-		{
+		} else if (node instanceof Link) {
 			setOutlineAppearance(((Link) node).getSharedGroup());
-		}
-		else if (node instanceof Shape3D)
-		{
+		} else if (node instanceof Shape3D) {
 			//PJPJ for outlines
 			Appearance outlineAppearance = new SimpleShaderAppearance(Object3DBranch.OUTLINE_COLOR);
 			((Shape3D) node).setAppearance(outlineAppearance);
@@ -678,40 +646,30 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 * Sets the capabilities to change material and rendering attributes, and to read geometries
 	 * for all children of <code>node</code>.
 	 */
-	private void setModelCapabilities(Node node)
-	{
+	private void setModelCapabilities(Node node) {
 		//PJPJPJ let's get picking under way shall we?
 		node.setPickable(true);
 
-		if (node instanceof Group)
-		{
+		if (node instanceof Group) {
 			node.setCapability(Group.ALLOW_CHILDREN_READ);
-			if (node instanceof TransformGroup)
-			{
+			if (node instanceof TransformGroup) {
 				node.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
 			}
 			Iterator<Node> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasNext())
-			{
+			while (enumeration.hasNext()) {
 				setModelCapabilities((Node) enumeration.next());
 			}
-		}
-		else if (node instanceof Link)
-		{
+		} else if (node instanceof Link) {
 			node.setCapability(Link.ALLOW_SHARED_GROUP_READ);
 			setModelCapabilities(((Link) node).getSharedGroup());
-		}
-		else if (node instanceof Shape3D)
-		{
+		} else if (node instanceof Shape3D) {
 			Shape3D shape = (Shape3D) node;
 			Appearance appearance = shape.getAppearance();
-			if (appearance != null)
-			{
+			if (appearance != null) {
 				setAppearanceCapabilities(appearance);
 			}
 			Iterator<Geometry> enumeration = shape.getAllGeometries();
-			while (enumeration.hasNext())
-			{
+			while (enumeration.hasNext()) {
 				//TODO: I'm get live or compiled error at the geom level of this call,
 				// desperate catch perhaps?
 				try{setGeometryCapabilities((Geometry) enumeration.next());	
@@ -728,68 +686,66 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 * Sets the material and texture attribute of all <code>Shape3D</code> children nodes of <code>node</code> 
 	 * from the given <code>color</code> and <code>texture</code>. 
 	 */
-	private void setColorAndTexture(Node node, Integer color, HomeTexture texture, Float shininess, HomeMaterial[] materials,
-			boolean waitTextureLoadingEnd, Vector3f pieceSize, BoundingBox modelBounds, Set<Appearance> modifiedAppearances)
-	{
-		if (node instanceof Group)
-		{
+  private void setColorAndTexture(Node node, Integer color, HomeTexture texture, Float shininess, 
+                                  HomeMaterial [] materials, boolean waitTextureLoadingEnd, 
+                                  Vector3f pieceSize, BoundingBox modelBounds, 
+                                  Set<Appearance> modifiedAppearances) {
+	  	if (node instanceof Group) {
 			// Set material and texture of all children
 			Iterator<Node> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasNext())
-			{
-				setColorAndTexture((Node) enumeration.next(), color, texture, shininess, materials, waitTextureLoadingEnd, pieceSize,
-						modelBounds, modifiedAppearances);
-			}
-		}
-		else if (node instanceof Link)
-		{
-			setColorAndTexture(((Link) node).getSharedGroup(), color, texture, shininess, materials, waitTextureLoadingEnd, pieceSize,
+			while (enumeration.hasNext()) {
+				setColorAndTexture((Node) enumeration.next(), color, 
+					texture, shininess, materials, waitTextureLoadingEnd, pieceSize,
 					modelBounds, modifiedAppearances);
-		}
-		else if (node instanceof Shape3D)
-		{
+			}
+		} else if (node instanceof Link) {
+			setColorAndTexture(((Link) node).getSharedGroup(), color, 
+				texture, shininess, materials, waitTextureLoadingEnd, pieceSize,
+				modelBounds, modifiedAppearances);
+		} else if (node instanceof Shape3D) {
 			final Shape3D shape = (Shape3D) node;
 			String shapeName = (String) shape.getUserData();
 			Appearance appearance = shape.getAppearance();
-			if (appearance == null)
-			{
+			if (appearance == null) {
 				appearance = createAppearanceWithChangeCapabilities();
 				((Shape3D) node).setAppearance(appearance);
 			}
 
 			// Check appearance wasn't already changed
-			if (!modifiedAppearances.contains(appearance))
-			{
+			if (!modifiedAppearances.contains(appearance)) {
 				DefaultMaterialAndTexture defaultMaterialAndTexture = null;
 				boolean colorModified = color != null;
-				boolean textureModified = !colorModified && texture != null;
-				boolean materialModified = !colorModified && !textureModified && materials != null && materials.length > 0;
-				boolean appearanceModified = colorModified || textureModified || materialModified || shininess != null;
-				boolean windowPane = shapeName != null && shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX);
+				boolean textureModified = !colorModified 
+					&& texture != null;
+				boolean materialModified = !colorModified 
+					&& !textureModified 
+					&& materials != null && materials.length > 0;
+				boolean appearanceModified = colorModified 
+					|| textureModified 
+					|| materialModified 
+					|| shininess != null;
+				boolean windowPane = shapeName != null 
+						&& shapeName.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX);
 				float materialShininess = 0;
-				if (appearanceModified)
-				{
+				if (appearanceModified) {
 					// Use appearance user data to store shape default material 
 					defaultMaterialAndTexture = (DefaultMaterialAndTexture) appearance.getUserData();
-					if (defaultMaterialAndTexture == null)
-					{
+					if (defaultMaterialAndTexture == null) {
 						defaultMaterialAndTexture = new DefaultMaterialAndTexture(appearance);
 						appearance.setUserData(defaultMaterialAndTexture);
 					}
 
-					materialShininess = shininess != null ? shininess.floatValue()
+					materialShininess = shininess != null 
+							? shininess.floatValue()
 							: (defaultMaterialAndTexture.getMaterial() != null
-									? defaultMaterialAndTexture.getMaterial().getShininess() / 128f : 0);
+									? defaultMaterialAndTexture.getMaterial().getShininess() / 128f 
+									: 0);
 				}
-				if (colorModified)
-				{
+				if (colorModified) {
 					// Change color only of shapes that are not window panes
-					if (windowPane)
-					{
+					if (windowPane) {
 						restoreDefaultMaterialAndTexture(appearance, materialShininess);
-					}
-					else
-					{
+					} else {
 						// Change material if no default texture is displayed on the shape
 						// (textures always keep the colors of their image file)
 						appearance.setMaterial(getMaterial(color, color, materialShininess));
@@ -799,75 +755,68 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 						appearance.setTextureAttributes(defaultMaterialAndTexture.getTextureAttributes());
 						appearance.setTexture(null);
 					}
-				}
-				else if (textureModified)
-				{
+				} else if (textureModified) {
 					// Change texture only of shapes that are not window panes
-					if (windowPane)
-					{
+					if (windowPane) {
 						restoreDefaultMaterialAndTexture(appearance, materialShininess);
-					}
-					else
-					{
+					} else {
 						// Change material to white then texture
 						appearance.setTexCoordGeneration(getTextureCoordinates(texture, pieceSize, modelBounds));
+						appearance.setTextureAttributes(getTextureAttributes(texture, true));
 						appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
-						appearance.setTextureAttributes(getTextureAttributes(texture));
-						TextureManager.getInstance().loadTexture(texture.getImage(), waitTextureLoadingEnd, getTextureObserver(appearance));
+						TextureManager.getInstance().loadTexture(texture.getImage(), 
+								waitTextureLoadingEnd, getTextureObserver(appearance));
 					}
-				}
-				else if (materialModified)
-				{
-					boolean materialFound = false;
-					// Apply color, texture and shininess of the material named as appearance name
-					for (HomeMaterial material : materials)
-					{
-						if (material != null && (material.getKey() != null && material.getKey().equals(appearance.getName())
-								|| material.getKey() == null && material.getName().equals(appearance.getName())))
-						{
-							if (material.getShininess() != null)
-							{
-								materialShininess = material.getShininess();
-							}
-							color = material.getColor();
-							if (color != null && (color.intValue() & 0xFF000000) != 0)
-							{
-								appearance.setMaterial(getMaterial(color, color, materialShininess));
-								appearance.setTexture(null);
-								appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
-								appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
-							}
-							else if (color == null && material.getTexture() != null)
-							{
-								if (isTexturesCoordinatesDefined(shape))
-								{
-									restoreDefaultTextureCoordinatesGeneration(appearance);
-								}
-								else
-								{
-									appearance.setTexCoordGeneration(getTextureCoordinates(material.getTexture(), pieceSize, modelBounds));
-								}
-								appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
-								HomeTexture materialTexture = material.getTexture();
-								appearance.setTextureAttributes(getTextureAttributes(materialTexture));
-								TextureManager.getInstance().loadTexture(materialTexture.getImage(), waitTextureLoadingEnd,
-										getTextureObserver(appearance));
-							}
-							else
-							{
-								restoreDefaultMaterialAndTexture(appearance, material.getShininess());
-							}
-							materialFound = true;
-							break;
-						}
-					}
-					if (!materialFound)
-					{
-						restoreDefaultMaterialAndTexture(appearance, null);
-					}
-				}
-				else
-				{
+				} else if (materialModified) {
+					String appearanceName = null;
+			          try {
+			            appearanceName = appearance.getName();
+			          } catch (NoSuchMethodError ex) {
+			            // Don't support HomeMaterial with Java 3D < 1.4 where appearance name was added
+			          }
+			          boolean materialFound = false;
+			          if (appearanceName != null) {
+			            // Apply color, texture and shininess of the material named as appearance name
+			            for (HomeMaterial material : materials) {
+			              if (material != null
+			                  && (material.getKey() != null
+			                          && material.getKey().equals(appearanceName)
+			                      || material.getKey() == null
+			                          && material.getName().equals(appearanceName))) {
+			                if (material.getShininess() != null) {
+			                  materialShininess = material.getShininess();
+			                }
+			                color = material.getColor();                
+			                if (color != null 
+			                    && (color.intValue() & 0xFF000000) != 0) {
+			                  appearance.setMaterial(getMaterial(color, color, materialShininess));
+			                  appearance.setTexture(null);
+			                  appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
+			                  appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
+			                } else if (color == null && material.getTexture() != null) {
+			                  HomeTexture materialTexture = material.getTexture();
+			                  if (isTexturesCoordinatesDefined(shape)) {
+			                    restoreDefaultTextureCoordinatesGeneration(appearance);
+			                    appearance.setTextureAttributes(getTextureAttributes(materialTexture));
+			                  } else {
+			                    appearance.setTexCoordGeneration(getTextureCoordinates(material.getTexture(), pieceSize, modelBounds));
+			                    appearance.setTextureAttributes(getTextureAttributes(materialTexture, true));
+			                  }
+			                  appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, materialShininess));
+			                  TextureManager.getInstance().loadTexture(materialTexture.getImage(),  
+			                      waitTextureLoadingEnd, getTextureObserver(appearance));
+			                } else {
+			                  restoreDefaultMaterialAndTexture(appearance, material.getShininess());
+			                }
+			                materialFound = true;
+			                break;
+			              }
+			            }
+			          }
+			          if (!materialFound) {
+			            restoreDefaultMaterialAndTexture(appearance, null);
+			          }
+				} else {
 					restoreDefaultMaterialAndTexture(appearance, shininess);
 				}
 				// Store modified appearances to avoid changing their values more than once
@@ -879,37 +828,28 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Returns a texture observer that will update the given <code>appearance</code>.
 	 */
-	private TextureObserver getTextureObserver(final Appearance appearance)
-	{
+	private TextureObserver getTextureObserver(final Appearance appearance) {
 		return new TextureManager.TextureObserver() {
-			public void textureUpdated(Texture texture)
-			{
-				if (TextureManager.getInstance().isTextureTransparent(texture))
-				{
+			public void textureUpdated(Texture texture) {
+				if (TextureManager.getInstance().isTextureTransparent(texture)) {
 					appearance.setTransparencyAttributes(DEFAULT_TEXTURED_SHAPE_TRANSPARENCY_ATTRIBUTES);
 					DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture) appearance.getUserData();
-					if (defaultMaterialAndTexture != null && defaultMaterialAndTexture.getPolygonAttributes() != null
-							&& defaultMaterialAndTexture.getPolygonAttributes().getBackFaceNormalFlip())
-					{
+					if (defaultMaterialAndTexture != null 
+						&& defaultMaterialAndTexture.getPolygonAttributes() != null
+						&& defaultMaterialAndTexture.getPolygonAttributes().getBackFaceNormalFlip()){
 						appearance.setPolygonAttributes(NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES);
-					}
-					else
-					{
+					} else {
 						appearance.setPolygonAttributes(DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES);
 					}
-				}
-				else
-				{
+				} else {
 					DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture) appearance.getUserData();
-					if (defaultMaterialAndTexture != null)
-					{
+					if (defaultMaterialAndTexture != null) {
 						appearance.setTransparencyAttributes(defaultMaterialAndTexture.getTransparencyAttributes());
 						appearance.setPolygonAttributes(defaultMaterialAndTexture.getPolygonAttributes());
 					}
 				}
 				Texture homeTexture = getHomeTextureClone(texture, home);
-				if (appearance.getTexture() != homeTexture)
-				{
+				if (appearance.getTexture() != homeTexture) {
 					appearance.setTexture(homeTexture);
 				}
 			}
@@ -919,8 +859,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Returns a texture coordinates generator that wraps the given texture on front face.
 	 */
-	private TexCoordGeneration getTextureCoordinates(HomeTexture texture, Vector3f pieceSize, BoundingBox modelBounds)
-	{
+	private TexCoordGeneration getTextureCoordinates(HomeTexture texture, Vector3f pieceSize, 
+	                                                 BoundingBox modelBounds) {
 		Point3d lower = new Point3d();
 		modelBounds.getLower(lower);
 		Point3d upper = new Point3d();
@@ -929,25 +869,26 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		float textureWidth = texture.getWidth();
 		float textureHeight = texture.getHeight();
 		float sx = pieceSize.x / (float) Math.max(upper.x - lower.x, minimumSize) / textureWidth;
-		float sw = texture.isLeftToRightOriented() ? (float) -lower.x * sx : 0;
+		float sw = texture.isLeftToRightOriented() 
+			? (float) -lower.x * sx 
+			: 0;
 		float ty = pieceSize.y / (float) Math.max(upper.y - lower.y, minimumSize) / textureHeight;
 		float tz = pieceSize.z / (float) Math.max(upper.z - lower.z, minimumSize) / textureHeight;
-		float tw = texture.isLeftToRightOriented() ? (float) (-lower.y * ty + upper.z * tz) : 0;
-		return new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR, TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(sx, 0, 0, sw),
-				new Vector4f(0, ty, -tz, tw));
+		float tw = texture.isLeftToRightOriented() 
+			? (float) (-lower.y * ty + upper.z * tz) 
+			: 0;
+		return new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR, 
+				TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(sx, 0, 0, sw), new Vector4f(0, ty, -tz, tw));
 	}
 
 	/**
 	 * Returns <code>true</code> if all the geometries of the given <code>shape</code> define some texture coordinates.
 	 */
-	private boolean isTexturesCoordinatesDefined(Shape3D shape)
-	{
-		for (int i = 0, n = shape.numGeometries(); i < n; i++)
-		{
+	private boolean isTexturesCoordinatesDefined(Shape3D shape) {
+		for (int i = 0, n = shape.numGeometries(); i < n; i++) {
 			Geometry geometry = shape.getGeometry(i);
 			if (geometry instanceof GeometryArray
-					&& (((GeometryArray) geometry).getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) == 0)
-			{
+					&& (((GeometryArray) geometry).getVertexFormat() & GeometryArray.TEXTURE_COORDINATE_2) == 0) {
 				return false;
 			}
 		}
@@ -957,14 +898,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Restores default material and texture of the given <code>appearance</code>.
 	 */
-	private void restoreDefaultMaterialAndTexture(Appearance appearance, Float shininess)
-	{
+	private void restoreDefaultMaterialAndTexture(Appearance appearance, 
+	                                              Float shininess) {
 		DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture) appearance.getUserData();
-		if (defaultMaterialAndTexture != null)
-		{
+		if (defaultMaterialAndTexture != null) {
 			Material defaultMaterial = defaultMaterialAndTexture.getMaterial();
-			if (defaultMaterial != null && shininess != null)
-			{
+			if (defaultMaterial != null && shininess != null) {
 				defaultMaterial = (Material) defaultMaterial.cloneNodeComponent(true);
 				defaultMaterial.setSpecularColor(new Color3f(shininess, shininess, shininess));
 				defaultMaterial.setShininess(shininess * 128);
@@ -981,11 +920,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Restores default texture coordinates generation of the given <code>appearance</code>.
 	 */
-	private void restoreDefaultTextureCoordinatesGeneration(Appearance appearance)
-	{
+	private void restoreDefaultTextureCoordinatesGeneration(Appearance appearance) {
 		DefaultMaterialAndTexture defaultMaterialAndTexture = (DefaultMaterialAndTexture) appearance.getUserData();
-		if (defaultMaterialAndTexture != null)
-		{
+		if (defaultMaterialAndTexture != null) {
 			appearance.setTexCoordGeneration(defaultMaterialAndTexture.getTexCoordGeneration());
 		}
 	}
@@ -993,57 +930,59 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Sets the visible attribute of the <code>Shape3D</code> children nodes of <code>node</code>.
 	 */
-	private void setVisible(Node node, boolean visible, HomeMaterial[] materials)
-	{
-		if (node instanceof Group)
-		{
+	private void setVisible(Node node, boolean visible, HomeMaterial[] materials) {
+		if (node instanceof Group) {
 			// Set visibility of all children
 			Iterator<Node> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasNext())
-			{
+			while (enumeration.hasNext()) {
 				setVisible((Node) enumeration.next(), visible, materials);
 			}
-		}
-		else if (node instanceof Link)
-		{
+		} else if (node instanceof Link) {
 			setVisible(((Link) node).getSharedGroup(), visible, materials);
-		}
-		else if (node instanceof Shape3D)
-		{
+		} else if (node instanceof Shape3D) {
 			final Shape3D shape = (Shape3D) node;
 			Appearance appearance = shape.getAppearance();
-			if (appearance == null)
-			{
+			if (appearance == null) {
 				appearance = createAppearanceWithChangeCapabilities();
 				((Shape3D) node).setAppearance(appearance);
 			}
 			RenderingAttributes renderingAttributes = appearance.getRenderingAttributes();
-			if (renderingAttributes == null)
-			{
+			if (renderingAttributes == null) {
 				renderingAttributes = createRenderingAttributesWithOutline();
 				appearance.setRenderingAttributes(renderingAttributes);
 			}
 
 			String shapeName = (String) shape.getUserData();
-			if (visible && shapeName != null && (getUserData() instanceof Light) && shapeName.startsWith(ModelManager.LIGHT_SHAPE_PREFIX)
-					&& this.home != null && !isSelected(this.home.getSelectedItems()))
-			{
+			if (visible 
+					&& shapeName != null 
+					&& (getUserData() instanceof Light) 
+					&& shapeName.startsWith(ModelManager.LIGHT_SHAPE_PREFIX)
+					&& this.home != null 
+					&& !isSelected(this.home.getSelectedItems())) {
 				// Don't display light sources shapes of unselected lights
 				visible = false;
 			}
 
-			if (visible && materials != null)
-			{
-				// Check whether the material color used by this shape isn't invisible 
-				for (HomeMaterial material : materials)
-				{
-					if (material != null && material.getName().equals(appearance.getName()))
-					{
-						Integer color = material.getColor();
-						visible = color == null || (color.intValue() & 0xFF000000) != 0;
-						break;
+			if (visible 
+					&& materials != null){
+				String appearanceName = null;
+		        try {
+		          appearanceName = appearance.getName();
+		        } catch (NoSuchMethodError ex) {
+		          // Don't support HomeMaterial with Java 3D < 1.4 where appearance name was added
+		        }
+		        if (appearanceName != null) {
+					// Check whether the material color used by this shape isn't invisible 
+					for (HomeMaterial material : materials) {
+						if (material != null 
+								&& material.getName().equals(appearanceName)) {
+							Integer color = material.getColor();
+							visible = color == null 
+								|| (color.intValue() & 0xFF000000) != 0;
+							break;
+						}
 					}
-				}
+		        }
 			}
 			// Change visibility
 			renderingAttributes.setVisible(visible);
@@ -1053,13 +992,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * Returns <code>true</code> if this piece of furniture belongs to <code>selectedItems</code>.
 	 */
-	private boolean isSelected(List<? extends Selectable> selectedItems)
-	{
+	private boolean isSelected(List<? extends Selectable> selectedItems) {
 		Object piece = getUserData();
-		for (Selectable item : selectedItems)
-		{
-			if (item == piece || (item instanceof HomeFurnitureGroup && isSelected(((HomeFurnitureGroup) item).getFurniture())))
-			{
+		for (Selectable item : selectedItems) {
+			if (item == piece 
+				|| (item instanceof HomeFurnitureGroup 
+						&& isSelected(((HomeFurnitureGroup) item).getFurniture()))) {
 				return true;
 			}
 		}
@@ -1070,53 +1008,40 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 * Sets the cull face of all <code>Shape3D</code> children nodes of <code>node</code>.
 	 * @param cullFace <code>PolygonAttributes.CULL_FRONT</code> or <code>PolygonAttributes.CULL_BACK</code>
 	 */
-	private void setCullFace(Node node, boolean mirrored, boolean backFaceShown)
-	{
-		if (node instanceof Group)
-		{
+	private void setCullFace(Node node, boolean mirrored, boolean backFaceShown) {
+		if (node instanceof Group) {
 			// Set cull face of all children
 			Iterator<Node> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasNext())
-			{
+			while (enumeration.hasNext()) {
 				setCullFace((Node) enumeration.next(), mirrored, backFaceShown);
 			}
-		}
-		else if (node instanceof Link)
-		{
+		} else if (node instanceof Link) {
 			setCullFace(((Link) node).getSharedGroup(), mirrored, backFaceShown);
-		}
-		else if (node instanceof Shape3D)
-		{
+		} else if (node instanceof Shape3D) {
 			Appearance appearance = ((Shape3D) node).getAppearance();
-			if (appearance == null)
-			{
+			if (appearance == null) {
 				appearance = createAppearanceWithChangeCapabilities();
 				((Shape3D) node).setAppearance(appearance);
 			}
 			PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-			if (polygonAttributes == null)
-			{
+			if (polygonAttributes == null) {
 				polygonAttributes = createPolygonAttributesWithChangeCapabilities();
 				appearance.setPolygonAttributes(polygonAttributes);
 			}
 
 			// Change cull face 
-			try
-			{
+			try {
 				int cullFace = polygonAttributes.getCullFace();
-				if (cullFace != PolygonAttributes.CULL_NONE)
-				{
+				if (cullFace != PolygonAttributes.CULL_NONE) {
 					Integer defaultCullFace = (Integer) polygonAttributes.getUserData();
-					if (defaultCullFace == null)
-					{
+					if (defaultCullFace == null) {
 						polygonAttributes.setUserData(defaultCullFace = cullFace);
 					}
 					polygonAttributes.setCullFace((mirrored ^ backFaceShown ^ defaultCullFace == PolygonAttributes.CULL_FRONT)
-							? PolygonAttributes.CULL_FRONT : PolygonAttributes.CULL_BACK);
+						? PolygonAttributes.CULL_FRONT
+						: PolygonAttributes.CULL_BACK);
 				}
-			}
-			catch (CapabilityNotSetException ex)
-			{
+			} catch (CapabilityNotSetException ex) {
 				// Shouldn't happen since capability is set but happens though with Java 3D 1.3
 				ex.printStackTrace();
 			}
@@ -1129,43 +1054,34 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	 * Caution !!! Should be executed only once per instance 
 	 * @param backFaceNormalFlip <code>true</code> if normals should be flipped.
 	 */
-	private void setBackFaceNormalFlip(Node node, boolean backFaceNormalFlip)
-	{
-		if (node instanceof Group)
-		{
+	private void setBackFaceNormalFlip(Node node, boolean backFaceNormalFlip) {
+		if (node instanceof Group) {
 			// Set back face normal flip of all children
 			Iterator<Node> enumeration = ((Group) node).getAllChildren();
-			while (enumeration.hasNext())
-			{
+			while (enumeration.hasNext()) {
 				setBackFaceNormalFlip((Node) enumeration.next(), backFaceNormalFlip);
 			}
-		}
-		else if (node instanceof Link)
-		{
+		} else if (node instanceof Link) {
 			setBackFaceNormalFlip(((Link) node).getSharedGroup(), backFaceNormalFlip);
-		}
-		else if (node instanceof Shape3D)
-		{
+		} else if (node instanceof Shape3D) {
 			Appearance appearance = ((Shape3D) node).getAppearance();
-			if (appearance == null)
-			{
+			if (appearance == null) {
 				appearance = createAppearanceWithChangeCapabilities();
 				((Shape3D) node).setAppearance(appearance);
 			}
 			PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-			if (polygonAttributes == null)
-			{
+			if (polygonAttributes == null) {
 				polygonAttributes = createPolygonAttributesWithChangeCapabilities();
 				appearance.setPolygonAttributes(polygonAttributes);
 			}
 
 			// Change back face normal flip
-			polygonAttributes.setBackFaceNormalFlip(backFaceNormalFlip ^ polygonAttributes.getCullFace() == PolygonAttributes.CULL_FRONT);
+			polygonAttributes.setBackFaceNormalFlip(
+					backFaceNormalFlip ^ polygonAttributes.getCullFace() == PolygonAttributes.CULL_FRONT);
 		}
 	}
 
-	private PolygonAttributes createPolygonAttributesWithChangeCapabilities()
-	{
+	private PolygonAttributes createPolygonAttributesWithChangeCapabilities() {
 		PolygonAttributes polygonAttributes = new PolygonAttributes();
 		polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
 		polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
@@ -1195,8 +1111,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		return renderingAttributes;
 	}
 
-	private Appearance createAppearanceWithChangeCapabilities()
-	{
+	private Appearance createAppearanceWithChangeCapabilities() {
 		Appearance appearance = new SimpleShaderAppearance();
 		setAppearanceCapabilities(appearance);
 		//PJPJP
@@ -1205,14 +1120,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		return appearance;
 	}
 
-	private void setAppearanceCapabilities(Appearance appearance)
-	{
+	private void setAppearanceCapabilities(Appearance appearance) {
 		// Allow future material and rendering attributes changes
 		appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
 		appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
 		Material material = appearance.getMaterial();
-		if (material != null)
-		{
+		if (material != null) {
 			material.setCapability(Material.ALLOW_COMPONENT_READ);
 		}
 		appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
@@ -1228,8 +1141,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
 		appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
 		PolygonAttributes polygonAttributes = appearance.getPolygonAttributes();
-		if (polygonAttributes != null)
-		{
+		if (polygonAttributes != null) {
 			polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
 			polygonAttributes.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
 			polygonAttributes.setCapability(PolygonAttributes.ALLOW_NORMAL_FLIP_READ);
@@ -1240,11 +1152,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		
 	}
 
-	private void setGeometryCapabilities(Geometry geometry)
-	{
+	private void setGeometryCapabilities(Geometry geometry) {
 		// Sets the geometry capabilities needed to read attributes saved by OBJWriter
-		if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)
-		{
+		if (!geometry.isLive() 
+				&& !geometry.isCompiled() 
+				&& geometry instanceof GeometryArray) {
 			geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
 			geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
 			geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
@@ -1261,8 +1173,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 	/**
 	 * A class used to store the default material and texture of a shape.
 	 */
-	private static class DefaultMaterialAndTexture
-	{
+	private static class DefaultMaterialAndTexture {
 		private final Material material;
 		private final TransparencyAttributes transparencyAttributes;
 		private final PolygonAttributes polygonAttributes;
@@ -1270,8 +1181,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 		private final Texture texture;
 		private final TextureAttributes textureAttributes;
 
-		public DefaultMaterialAndTexture(Appearance appearance)
-		{
+		public DefaultMaterialAndTexture(Appearance appearance) {
 			this.material = appearance.getMaterial();
 			this.transparencyAttributes = appearance.getTransparencyAttributes();
 			this.polygonAttributes = appearance.getPolygonAttributes();
@@ -1280,33 +1190,27 @@ public class HomePieceOfFurniture3D extends Object3DBranch
 			this.textureAttributes = appearance.getTextureAttributes();
 		}
 
-		public Material getMaterial()
-		{
+		public Material getMaterial() {
 			return this.material;
 		}
 
-		public TransparencyAttributes getTransparencyAttributes()
-		{
+		public TransparencyAttributes getTransparencyAttributes() {
 			return this.transparencyAttributes;
 		}
 
-		public PolygonAttributes getPolygonAttributes()
-		{
+		public PolygonAttributes getPolygonAttributes() {
 			return this.polygonAttributes;
 		}
 
-		public TexCoordGeneration getTexCoordGeneration()
-		{
+		public TexCoordGeneration getTexCoordGeneration() {
 			return this.texCoordGeneration;
 		}
 
-		public Texture getTexture()
-		{
+		public Texture getTexture() {
 			return this.texture;
 		}
 
-		public TextureAttributes getTextureAttributes()
-		{
+		public TextureAttributes getTextureAttributes() {
 			return this.textureAttributes;
 		}
 	}

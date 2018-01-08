@@ -184,7 +184,7 @@ public class Renovations3D extends HomeApplication
 		// Initialize homeRecorder lazily
 		if (this.homeRecorder == null)
 		{
-			this.homeRecorder = new HomeFileRecorder(0, false, getUserPreferences(), false, true);
+			this.homeRecorder = new HomeFileRecorder(0, false, getUserPreferences(), false, true, true);
 		}
 		return this.homeRecorder;
 	}
@@ -197,7 +197,7 @@ public class Renovations3D extends HomeApplication
 			// Initialize compressedHomeRecorder lazily
 			if (this.compressedHomeRecorder == null)
 			{
-				this.compressedHomeRecorder = new HomeFileRecorder(9, false, getUserPreferences(), false, true);
+				this.compressedHomeRecorder = new HomeFileRecorder(9, false, getUserPreferences(), false, true, true);
 			}
 			return this.compressedHomeRecorder;
 		}

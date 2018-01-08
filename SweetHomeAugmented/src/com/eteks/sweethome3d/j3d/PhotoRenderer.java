@@ -47,6 +47,7 @@ import java.util.UUID;
 import javaawt.imageio.ImageIO;
 
 import org.jogamp.java3d.Appearance;
+import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.ColoringAttributes;
 import org.jogamp.java3d.Geometry;
 import org.jogamp.java3d.GeometryArray;
@@ -192,6 +193,7 @@ public class PhotoRenderer
 		homeEnvironment.setSubpartSizeUnderLight(0);
 
 		// Export to SunFlow the Java 3D shapes and appearance of the ground, the walls, the furniture and the rooms
+	    List<HomeLight> lights = new ArrayList<HomeLight>();
 		for (Selectable item : home.getSelectableViewableItems())
 		{
 			if (item instanceof HomeFurnitureGroup)
@@ -204,6 +206,9 @@ public class PhotoRenderer
 						if (node != null)
 						{
 							this.homeItemsNames.put(piece, exportNode(node, false, silk));
+							if (piece instanceof HomeLight) {
+				                lights.add((HomeLight)piece);
+				            }
 						}
 					}
 				}
@@ -215,6 +220,9 @@ public class PhotoRenderer
 				{
 					String[] itemNames = exportNode(node, item instanceof Wall || item instanceof Room, silk);
 					this.homeItemsNames.put(item, itemNames);
+					if (item instanceof HomeLight) {
+			            lights.add((HomeLight)item);
+			          }
 				}
 			}
 		}
@@ -319,37 +327,41 @@ public class PhotoRenderer
 			}
 		}
 
-		// Add visible and turned on lights
-		for (HomeLight light : getLights(home.getFurniture()))
-		{
-			float lightPower = light.getPower();
-			Level level = light.getLevel();
-			if (light.isVisible() && lightPower > 0f && (level == null || level.isViewableAndVisible()))
-			{
-				float angle = light.getAngle();
-				float cos = (float) Math.cos(angle);
-				float sin = (float) Math.sin(angle);
-				for (LightSource lightSource : ((HomeLight) light).getLightSources())
-				{
-					float lightRadius = lightSource.getDiameter() != null ? lightSource.getDiameter() * light.getWidth() / 2 : 3.25f; // Default radius compatible with most lights available before version 3.0
-					float power = 5 * lightPower * lightPower / (lightRadius * lightRadius);
-					int lightColor = lightSource.getColor();
-					this.sunflow.parameter("radiance", null, power * (lightColor >> 16) * (this.homeLightColor >> 16),
-							power * ((lightColor >> 8) & 0xFF) * ((this.homeLightColor >> 8) & 0xFF),
-							power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
-					float xLightSourceInLight = -light.getWidth() / 2 + (lightSource.getX() * light.getWidth());
-					float yLightSourceInLight = light.getDepth() / 2 - (lightSource.getY() * light.getDepth());
-					float lightElevation = light.getGroundElevation();
-					this.sunflow.parameter("center",
-							new Point3(light.getX() + xLightSourceInLight * cos - yLightSourceInLight * sin,
-									lightElevation + (lightSource.getZ() * light.getHeight()),
-									light.getY() + xLightSourceInLight * sin + yLightSourceInLight * cos));
-					this.sunflow.parameter("radius", lightRadius);
-					this.sunflow.parameter("samples", 4);
-					this.sunflow.light(UUID.randomUUID().toString(), "sphere");
-				}
-			}
-		}
+		final ModelManager modelManager = ModelManager.getInstance();
+	    // Add visible and turned on lights
+	    for (final HomeLight light : lights) {
+	      Level level = light.getLevel();
+	      if (light.getPower() > 0f
+	          && (level == null
+	              || level.isViewableAndVisible())) {
+	        if (light.isHorizontallyRotated()) {
+	          // Retrieve the 3D model of the light to get the transformation with horizontal rotation 
+	          modelManager.loadModel(light.getModel(), true,
+	              new ModelManager.ModelObserver() {
+	                public void modelUpdated(BranchGroup modelRoot) {
+	                  float [][] modelRotation = light.getModelRotation();
+	                  // Add light model to a normalized transform group
+	                  TransformGroup normalizedModel = modelManager.
+	                      getNormalizedTransformGroup(modelRoot, modelRotation, 1, light.isModelCenteredAtOrigin());
+	                  normalizedModel.addChild(modelRoot);
+	                  // Get the transformation applied to the light model 
+	                  Transform3D lightTransform = modelManager.getPieceOfFurnitureNormalizedModelTransformation(
+	                      light, normalizedModel);
+	                  exportLightSources(light, lightTransform);
+	                }
+	                    
+	                public void modelError(Exception ex) {
+	                  // In case of problem, ignore light
+	                }
+	              });
+	        } else {
+	          // Compute the light transformation without horizontal rotation
+	          Transform3D lightTransform = 
+	              modelManager.getPieceOfFurnitureNormalizedModelTransformation(light, null);
+	          exportLightSources(light, lightTransform);
+	        }
+	      }
+	    }
 
 		this.sunflow.parameter("depths.diffuse", Integer.parseInt(getRenderingParameterValue("diffusedBounces")));
 		this.sunflow.parameter("depths.reflection", 4);
@@ -422,14 +434,14 @@ public class PhotoRenderer
 			}
 		}
 
-		if (this.sunSkyLightName != null)
-		{
-			this.sunflow.remove(this.sunSkyLightName);
-		}
-		if (this.sunLightName != null)
-		{
-			this.sunflow.remove(this.sunLightName);
-		}
+		if (this.sunSkyLightName != null) {
+		      this.sunflow.remove(this.sunSkyLightName);
+		      this.sunSkyLightName = null;
+		    }
+		    if (this.sunLightName != null) {
+		      this.sunflow.remove(this.sunLightName);
+		      this.sunLightName = null;
+		    }
 		// Possible values: default, path
 		String globalIllumination = getRenderingParameterValue("globalIllumination");
 		float[] sunDirection = getSunDirection(this.compass, Camera.convertTimeToTimeZone(camera.getTime(), this.compass.getTimeZone()));
@@ -613,27 +625,7 @@ public class PhotoRenderer
 			return ResourceBundle.getBundle(baseName).getString(prefixedParameter);
 		}
 	}
-
-	/**
-	 * Returns all the light children of the given <code>furniture</code>.  
-	 */
-	private List<HomeLight> getLights(List<HomePieceOfFurniture> furniture)
-	{
-		List<HomeLight> lights = new ArrayList<HomeLight>();
-		for (HomePieceOfFurniture piece : furniture)
-		{
-			if (piece instanceof HomeLight)
-			{
-				lights.add((HomeLight) piece);
-			}
-			else if (piece instanceof HomeFurnitureGroup)
-			{
-				lights.addAll(getLights(((HomeFurnitureGroup) piece).getFurniture()));
-			}
-		}
-		return lights;
-	}
-
+	
 	/**
 	 * Returns sun direction at a given <code>time</code>. 
 	 * @author Frédéric Mantegazza
@@ -1731,7 +1723,38 @@ public class PhotoRenderer
 			}
 		}
 	}
-
+	
+	/**
+	   * Exports the given light sources as SunFlow lights placed at the right location 
+	   * with <code>lightTransform</code>.  
+	   */
+	  private void exportLightSources(HomeLight light, Transform3D lightTransform) {
+	    float lightPower = light.getPower();
+	    for (LightSource lightSource : ((HomeLight)light).getLightSources()) {
+	      float lightRadius = lightSource.getDiameter() != null 
+	              ? lightSource.getDiameter() * light.getWidth() / 2 
+	              : 3.25f; // Default radius compatible with most lights available before version 3.0
+	      float power = 5 * lightPower * lightPower / (lightRadius * lightRadius);
+	      int lightColor = lightSource.getColor();
+	      this.sunflow.parameter("radiance", null,
+	          power * (lightColor >> 16) * (this.homeLightColor >> 16),
+	          power * ((lightColor >> 8) & 0xFF) * ((this.homeLightColor >> 8) & 0xFF),
+	          power * (lightColor & 0xFF) * (this.homeLightColor & 0xFF));
+	      Point3f lightSourceLocation = new Point3f(
+	          lightSource.getX() - 0.5f, 
+	          lightSource.getZ() - 0.5f, 
+	          0.5f - lightSource.getY());
+	      lightTransform.transform(lightSourceLocation);
+	      this.sunflow.parameter("center",
+	          new Point3(lightSourceLocation.getX(),
+	              lightSourceLocation.getY(),
+	              lightSourceLocation.getZ())); 
+	      this.sunflow.parameter("radius", lightRadius);
+	      this.sunflow.parameter("samples", 4);
+	      this.sunflow.light(UUID.randomUUID().toString(), "sphere");
+	    }
+	  }
+	  
 	/**
 	 * Default factory for photo creation with no ceiling for rooms when top camera is used.
 	 */

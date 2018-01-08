@@ -45,6 +45,7 @@ import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.TextureAttributes;
 import org.jogamp.java3d.Transform3D;
 import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Vector3d;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -66,7 +67,6 @@ public abstract class Object3DBranch extends BranchGroup {
       new ColoringAttributes(OUTLINE_COLOR, ColoringAttributes.FASTEST);
   protected static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES = 
       new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_NONE, 0.1f, true, 0.1f);
- 	
   protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
       new LineAttributes(OUTLINE_WIDTH, LineAttributes.PATTERN_SOLID, true);
 
@@ -75,7 +75,7 @@ public abstract class Object3DBranch extends BranchGroup {
   protected static final Material DEFAULT_MATERIAL      = new Material();
 
   private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
-  private static final Map<Float, TextureAttributes>    textureAttributes = new HashMap<Float, TextureAttributes>();
+  private static final Map<TextureKey, TextureAttributes> textureAttributes = new HashMap<TextureKey, TextureAttributes>();
   private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
 
 
@@ -158,18 +158,81 @@ public abstract class Object3DBranch extends BranchGroup {
    * Returns shared texture attributes matching transformation applied to the given texture.
    */
   protected TextureAttributes getTextureAttributes(HomeTexture texture) {
-    TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(texture.getAngle());
+    return getTextureAttributes(texture, false);
+  }
+  
+  /**
+   * Returns shared texture attributes matching transformation applied to the given texture 
+   * and scaled if required.
+   */
+  protected TextureAttributes getTextureAttributes(HomeTexture texture, boolean scaled) {
+    float textureWidth = texture.getWidth();
+    float textureHeight = texture.getHeight();
+    if (textureWidth == -1 || textureHeight == -1) {
+      // Set a default value of 1m for textures with width and height equal to -1
+      // (this may happen for textures retrieved from 3D models)
+      textureWidth = 100;
+      textureHeight = 100;
+    }
+    float textureAngle = texture.getAngle();
+    float textureScale = 1 / texture.getScale();
+    TextureKey key = scaled
+        ? new TextureKey(textureWidth, textureHeight, textureAngle, textureScale)
+        : new TextureKey(-1f, -1f, textureAngle, textureScale);
+    TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(key);
     if (textureAttributes == null) {
       textureAttributes = new TextureAttributes();
       // Mix texture and color
       textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+      Transform3D rotation = new Transform3D();
+      rotation.rotZ(textureAngle);
       Transform3D transform = new Transform3D();
-      transform.rotZ(texture.getAngle());
+      // Change scale if required
+      if (scaled) {
+        transform.setScale(new Vector3d(textureScale / textureWidth, textureScale / textureHeight, textureScale));
+      } else {
+        transform.setScale(textureScale);
+      }
+      transform.mul(rotation);
       textureAttributes.setTextureTransform(transform);
       textureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
-      Object3DBranch.textureAttributes.put(texture.getAngle(), textureAttributes);
+      Object3DBranch.textureAttributes.put(key, textureAttributes);
     }
     return textureAttributes;
+  }
+  
+  /**
+   * Key used to share texture attributes instances.
+   */
+  private static class TextureKey {
+    private final float width;
+    private final float height;
+    private final float angle;
+    private final float scale;
+    
+    public TextureKey(float width, float height, float angle, float scale) {
+      this.width = width;
+      this.height = height;
+      this.angle = angle;
+      this.scale = scale;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+      TextureKey key = (TextureKey)obj;
+      return this.width == key.width 
+          && this.height == key.height 
+          && this.angle == key.angle 
+          && this.scale == key.scale;
+    }
+    
+    @Override
+    public int hashCode() {
+      return Float.floatToIntBits(this.width) * 31 
+          + Float.floatToIntBits(this.height) * 31
+          + Float.floatToIntBits(this.angle) * 31
+          + Float.floatToIntBits(this.scale);
+    }
   }
 
   /**

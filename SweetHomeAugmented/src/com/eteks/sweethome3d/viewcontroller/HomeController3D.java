@@ -332,6 +332,16 @@ public class HomeController3D implements Controller {
   public void rotateCameraPitch(float delta) {
     this.cameraState.rotateCameraPitch(delta);
   }
+  
+  /**
+   * Modifies home camera field of view of <code>delta</code>.
+   * @param delta  the value in rad that should be added the field of view 
+   *               to get a narrower view (with a negative delta) or a wider view (with a positive delta)
+   * @since 5.5 
+   */
+  public void modifyFieldOfView(float delta) {
+    this.cameraState.modifyFieldOfView(delta);
+  }
 
   /**
    * Returns the observer camera state.
@@ -370,6 +380,9 @@ public class HomeController3D implements Controller {
     }
 
     public void rotateCameraPitch(float delta) {
+    }
+    
+    public void modifyFieldOfView(float delta) {    
     }
 
     public void goToCamera(Camera camera) {
@@ -456,11 +469,12 @@ public class HomeController3D implements Controller {
         }
       };
 
-    public TopCameraState(UserPreferences preferences) {
-      this.aerialViewCenteredOnSelectionEnabled = preferences.isAerialViewCenteredOnSelectionEnabled();
-      preferences.addPropertyChangeListener(UserPreferences.Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
-          new UserPreferencesChangeListener(this));
-    }
+      private UserPreferencesChangeListener userPreferencesChangeListener;
+
+      public TopCameraState(UserPreferences preferences) {
+        this.aerialViewCenteredOnSelectionEnabled = preferences.isAerialViewCenteredOnSelectionEnabled();
+        this.userPreferencesChangeListener = new UserPreferencesChangeListener(this);
+      }
 
     @Override
     public void enter() {
@@ -487,6 +501,8 @@ public class HomeController3D implements Controller {
       }
       home.addLabelsListener(this.labelsListener);
       home.addSelectionListener(this.selectionListener);
+      preferences.addPropertyChangeListener(UserPreferences.Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
+              this.userPreferencesChangeListener);
     }
     
     /**
@@ -586,10 +602,10 @@ public class HomeController3D implements Controller {
           float maxZ;
           if (selectionEmpty) {
             minZ = Math.max(0, piece.getGroundElevation());
-            maxZ = Math.max(0, piece.getGroundElevation() + piece.getHeight());
+            maxZ = Math.max(0, piece.getGroundElevation() + piece.getHeightInPlan());
           } else {
             minZ = piece.getGroundElevation();
-            maxZ = piece.getGroundElevation() + piece.getHeight();
+            maxZ = piece.getGroundElevation() + piece.getHeightInPlan();
           }
           for (float [] point : piece.getPoints()) {        	  
             updateAerialViewBounds(point [0], point [1], minZ, maxZ);
@@ -793,6 +809,8 @@ public class HomeController3D implements Controller {
       }
       home.removeLevelsListener(this.levelsListener);
       home.removeSelectionListener(this.selectionListener);
+      preferences.removePropertyChangeListener(UserPreferences.Property.AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
+              this.userPreferencesChangeListener);
     }
   }
   
@@ -850,8 +868,10 @@ public class HomeController3D implements Controller {
       }
       home.addLevelsListener(this.levelsListener);
       // Select observer camera for user feedback
-      //PJ don't as this gets in teh way of 3d furniture selection
-      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      if (preferences.isObserverCameraSelectedAtChange()) {
+          // Select observer camera for user feedback      
+          home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+        }
     }
     
     @Override
@@ -860,9 +880,10 @@ public class HomeController3D implements Controller {
       	  enter();
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta);
-      // Select observer camera for user feedback
-    //PJ don't as this gets in teh way of 3d furniture selection
-      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      if (preferences.isObserverCameraSelectedAtChange()) {
+          // Select observer camera for user feedback      
+          home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+        }
     }
     
     @Override
@@ -871,9 +892,10 @@ public class HomeController3D implements Controller {
         	  enter();
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.cos(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
-      // Select observer camera for user feedback
-    //PJ don't as this gets in teh way of 3d furniture selection
-      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      if (preferences.isObserverCameraSelectedAtChange()) {
+          // Select observer camera for user feedback      
+          home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+        }
     }
     
     @Override
@@ -883,9 +905,10 @@ public class HomeController3D implements Controller {
       float newElevation = this.observerCamera.getZ() + delta; 
       newElevation = Math.min(Math.max(newElevation, getMinimumElevation()), preferences.getLengthUnit().getMaximumElevation());
       this.observerCamera.setZ(newElevation);
-      // Select observer camera for user feedback
-    //PJ don't as this gets in teh way of 3d furniture selection
-      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      if (preferences.isObserverCameraSelectedAtChange()) {
+          // Select observer camera for user feedback      
+          home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+        }
     }
 
     private void updateCameraMinimumElevation() {
@@ -908,9 +931,10 @@ public class HomeController3D implements Controller {
     	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
         	  enter();
       this.observerCamera.setYaw(this.observerCamera.getYaw() + delta); 
-      // Select observer camera for user feedback
-    //PJ don't as this gets in teh way of 3d furniture selection
-      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      if (preferences.isObserverCameraSelectedAtChange()) {
+          // Select observer camera for user feedback      
+          home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+        }
     }
     
     @Override
@@ -918,13 +942,25 @@ public class HomeController3D implements Controller {
     	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
         	  enter();
       float newPitch = this.observerCamera.getPitch() + delta; 
-      // Check new angle is between -90° and 90°  
-      newPitch = Math.max(newPitch, -(float)Math.PI / 2);
-      newPitch = Math.min(newPitch, (float)Math.PI / 2);
+   // Check new angle is between -90° and 90°  
+      newPitch = Math.min(Math.max(-(float)Math.PI / 2, newPitch), (float)Math.PI / 2);;
       this.observerCamera.setPitch(newPitch); 
-      // Select observer camera for user feedback
-    //PJ don't as this gets in teh way of 3d furniture selection
-      //home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      if (preferences.isObserverCameraSelectedAtChange()) {
+        // Select observer camera for user feedback      
+        home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      }
+    }
+    
+    @Override
+    public void modifyFieldOfView(float delta) {
+      float newFieldOfView = this.observerCamera.getFieldOfView() + delta; 
+      // Check new angle is between 2° and 120°  
+      newFieldOfView = (float)Math.min(Math.max(Math.toRadians(2), newFieldOfView), Math.toRadians(120));
+      this.observerCamera.setFieldOfView(newFieldOfView); 
+      if (preferences.isObserverCameraSelectedAtChange()) {
+        // Select observer camera for user feedback      
+        home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
+      }
     }
     
     @Override

@@ -156,6 +156,8 @@ public class ModelManager {
   private Map<Content, BranchGroup> loadedModelNodes;
   // Map storing model nodes being loaded
   private Map<Content, List<ModelObserver>> loadingModelObservers;
+  // Map storing the bounds of transformed model nodes
+  private Map<Content, Map<Transform3D, BoundingBox>> transformedModelNodeBounds;
   // Executor used to load models
   private ExecutorService           modelsLoader;
   // List of additional loader classes
@@ -167,6 +169,7 @@ public class ModelManager {
     // This class is a singleton
     this.loadedModelNodes = new WeakHashMap<Content, BranchGroup>();
     this.loadingModelObservers = new HashMap<Content, List<ModelObserver>>();
+    this.transformedModelNodeBounds = new WeakHashMap<Content, Map<Transform3D, BoundingBox>>();
     this.parsedShapes = new WeakHashMap<String, Shape>();
     // Load other optional Loader classes 
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
@@ -327,29 +330,59 @@ public class ModelManager {
   }
 
   private void computeBounds(Node node, BoundingBox bounds, 
-                             Transform3D parentTransformations, boolean transformShapeGeometry) {
+                             Transform3D parentTransformation, boolean transformShapeGeometry) {
     if (node instanceof Group) {
+      Map<Transform3D, BoundingBox> modelBounds = null;
+      BoundingBox transformationModelBounds = null; 
       if (node instanceof TransformGroup) {
-        parentTransformations = new Transform3D(parentTransformations);
+        parentTransformation = new Transform3D(parentTransformation);
         Transform3D transform = new Transform3D();
         ((TransformGroup)node).getTransform(transform);
-        parentTransformations.mul(transform);
+        parentTransformation.mul(transform);
+      } else if (transformShapeGeometry 
+                 && node instanceof BranchGroup
+                 && node.getUserData() instanceof Content) {
+        // Check if it's the node of a model 
+        modelBounds = transformedModelNodeBounds.get(node.getUserData());
+        if (modelBounds != null) {
+          // Retrieve the bounds that may have been previously computed for the requested transformation 
+          transformationModelBounds = modelBounds.get(parentTransformation);
+        }
       }
+      
+      if (transformationModelBounds == null) {
+        BoundingBox combinedBounds;
+        if (modelBounds != null) {
+          combinedBounds = new BoundingBox(
+              new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
+              new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
+         } else {
+           combinedBounds = bounds;
+         }
       // Compute the bounds of all the node children
       Iterator<Node> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasNext ()) {
-        computeBounds(enumeration.next(), bounds, parentTransformations, transformShapeGeometry);
+        computeBounds(enumeration.next(), combinedBounds, parentTransformation, transformShapeGeometry);
+      }
+      if (modelBounds != null) {
+          // Store the computed bounds of the model
+          modelBounds.put(parentTransformation, transformationModelBounds = combinedBounds);
+        }
+      }
+      
+      if (transformationModelBounds != null) {
+        bounds.combine(transformationModelBounds);
       }
     } else if (node instanceof Link) {
-      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformations, transformShapeGeometry);
+      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformation, transformShapeGeometry);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Bounds shapeBounds;
       if (transformShapeGeometry) {
-        shapeBounds = computeTransformedGeometryBounds(shape, parentTransformations);
+        shapeBounds = computeTransformedGeometryBounds(shape, parentTransformation);
       } else {
         shapeBounds = shape.getBounds();
-        shapeBounds.transform(parentTransformations);
+        shapeBounds.transform(parentTransformation);
       }
       bounds.combine(shapeBounds);
     }
@@ -456,13 +489,39 @@ public class ModelManager {
    * to let it fill a box of the given <code>width</code> centered on the origin.
    * @param node     the root of a model with any size and location
    * @param modelRotation the rotation applied to the model before normalization 
-   *                 or <code>null</code> if no transformation should be applied to node.
+   *                 or <code>null</code> if no transformation should be applied to node
    * @param width    the width of the box
    */
   public TransformGroup getNormalizedTransformGroup(Node node, float [][] modelRotation, float width) {
-    return new TransformGroup(getNormalizedTransform(node, modelRotation, width));
+    return new TransformGroup(getNormalizedTransform(node, modelRotation, width, true));
   }
   
+  /**
+   * Returns a transform group that will transform the model <code>node</code>
+   * to let it fill a box of the given <code>width</code> centered on the origin.
+   * @param node     the root of a model with any size and location
+   * @param modelRotation the rotation applied to the model before normalization 
+   *                 or <code>null</code> if no transformation should be applied to node
+   * @param width    the width of the box
+   * @param modelCenteredAtOrigin if <code>true</code> center will be moved to match the origin 
+   *                 after the model rotation is applied
+   */
+  public TransformGroup getNormalizedTransformGroup(Node node, float [][] modelRotation, float width, 
+                                                    boolean modelCenteredAtOrigin) {
+    return new TransformGroup(getNormalizedTransform(node, modelRotation, width, modelCenteredAtOrigin));
+  }
+  
+  /**
+   * Returns a transform that will transform the model <code>node</code>
+   * to let it fill a box of the given <code>width</code> centered on the origin.
+   * @param node     the root of a model with any size and location
+   * @param modelRotation the rotation applied to the model before normalization 
+   *                 or <code>null</code> if no transformation should be applied to node
+   * @param width    the width of the box
+   */
+  public Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width) {
+    return getNormalizedTransform(node, modelRotation, width, true);
+  }
   /**
    * Returns a transform that will transform the model <code>node</code>
    * to let it fill a box of the given <code>width</code> centered on the origin.
@@ -471,7 +530,8 @@ public class ModelManager {
    *                 or <code>null</code> if no transformation should be applied to node.
    * @param width    the width of the box
    */
-  public Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width) {
+  public Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width, 
+                                            boolean modelCenteredAtOrigin) {
     // Get model bounding box size 
     BoundingBox modelBounds = getBounds(node);
     Point3d lower = new Point3d();
@@ -480,19 +540,28 @@ public class ModelManager {
     modelBounds.getUpper(upper);
     // Translate model to its center
     Transform3D translation = new Transform3D();
-    translation.setTranslation(
-        new Vector3d(-lower.x - (upper.x - lower.x) / 2, 
+    translation.setTranslation(new Vector3d(
+    		-lower.x - (upper.x - lower.x) / 2, 
             -lower.y - (upper.y - lower.y) / 2, 
             -lower.z - (upper.z - lower.z) / 2));
     
     Transform3D modelTransform;
     if (modelRotation != null) {
       // Get model bounding box size with model rotation
-      modelTransform = getRotationTransformation(modelRotation);
-      modelTransform.mul(translation);
-      BoundingBox rotatedModelBounds = getBounds(node, modelTransform);
+      Transform3D rotationTransform = getRotationTransformation(modelRotation);
+      rotationTransform.mul(translation);
+      BoundingBox rotatedModelBounds = getBounds(node, rotationTransform);
       rotatedModelBounds.getLower(lower);
       rotatedModelBounds.getUpper(upper);
+      modelTransform = new Transform3D();
+      if (modelCenteredAtOrigin) {
+        // Move model back to its new center
+        modelTransform.setTranslation(new Vector3d(
+            -lower.x - (upper.x - lower.x) / 2, 
+            -lower.y - (upper.y - lower.y) / 2, 
+            -lower.z - (upper.z - lower.z) / 2));
+      }
+      modelTransform.mul(rotationTransform);
     } else {
       modelTransform = translation;
     }
@@ -522,8 +591,11 @@ public class ModelManager {
   /**
    * Returns a transformation able to place in the scene the normalized model 
    * of the given <code>piece</code>.
+   * @param piece a piece of furniture
+   * @param normalizedModelNode the node matching the normalized model of the piece. 
+   *            This parameter is required only if the piece is rotated horizontally.  
    */
-  Transform3D getPieceOFFurnitureNormalizedModelTransformation(HomePieceOfFurniture piece) {
+  Transform3D getPieceOfFurnitureNormalizedModelTransformation(HomePieceOfFurniture piece, Node normalizedModelNode) {
     // Set piece size
     Transform3D scale = new Transform3D();
     float pieceWidth = piece.getWidth();
@@ -532,18 +604,55 @@ public class ModelManager {
       pieceWidth *= -1;
     }
     scale.setScale(new Vector3d(pieceWidth, piece.getHeight(), piece.getDepth()));
-    // Change its angle around y axis
-    Transform3D orientation = new Transform3D();
-    orientation.rotY(-piece.getAngle());
-    orientation.mul(scale);
+    
+    Transform3D modelTransform;
+    float height;
+    if (piece.isHorizontallyRotated() && normalizedModelNode != null) {
+      Transform3D horizontalRotationAndScale = new Transform3D();
+      // Change its angle around horizontal axis
+      if (piece.getPitch() != 0) {
+        horizontalRotationAndScale.rotX(-piece.getPitch());
+      } else {
+        horizontalRotationAndScale.rotZ(-piece.getRoll());
+      }
+      horizontalRotationAndScale.mul(scale);
+
+      // Compute center location when the piece is rotated around horizontal axis
+      BoundingBox rotatedModelBounds = getBounds(normalizedModelNode, horizontalRotationAndScale);
+      Point3d lower = new Point3d();
+      rotatedModelBounds.getLower(lower);
+      Point3d upper = new Point3d();
+      rotatedModelBounds.getUpper(upper);
+      modelTransform = new Transform3D();
+      modelTransform.setTranslation(new Vector3d(
+          -lower.x - (upper.x - lower.x) / 2,
+          -lower.y - (upper.y - lower.y) / 2,
+          -lower.z - (upper.z - lower.z) / 2));      
+      modelTransform.mul(horizontalRotationAndScale);
+      height = (float)Math.max(getMinimumSize(), upper.y - lower.y);
+    } else {
+      modelTransform = scale;
+      height = piece.getHeight();
+    }
+
+    // Change its angle around vertical axis
+    Transform3D verticalRotation = new Transform3D();
+    verticalRotation.rotY(-piece.getAngle());
+    verticalRotation.mul(modelTransform);
+    
     // Translate it to its location
     Transform3D pieceTransform = new Transform3D();
-    float z = piece.getElevation() + piece.getHeight() / 2;
+    float levelElevation;
     if (piece.getLevel() != null) {
-      z += piece.getLevel().getElevation();
+      levelElevation = piece.getLevel().getElevation();
+    } else {
+      levelElevation = 0;
     }
-    pieceTransform.setTranslation(new Vector3f(piece.getX(), z, piece.getY()));      
-    pieceTransform.mul(orientation);
+    pieceTransform.setTranslation(new Vector3f(
+        piece.getX(), 
+        piece.getElevation() + height / 2 + levelElevation,
+        piece.getY()));      
+    pieceTransform.mul(verticalRotation);
     return pieceTransform;
   }
 
@@ -588,6 +697,7 @@ public class ModelManager {
         synchronized (this.loadedModelNodes) {
           // Store in cache model node for future copies 
           this.loadedModelNodes.put(content, (BranchGroup)modelRoot);
+          this.transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
         }
         modelObserver.modelUpdated((BranchGroup)cloneNode(modelRoot));
       } catch (IOException ex) {
@@ -618,6 +728,7 @@ public class ModelManager {
               synchronized (loadedModelNodes) {
                 // Update loaded models cache and notify registered observers
                 loadedModelNodes.put(content, loadedModel);
+                transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
               }
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
@@ -837,9 +948,7 @@ public class ModelManager {
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLightsShareAndModulateTextures(modelNode, new IdentityHashMap<Texture, Texture>());        
         checkAppearancesName(modelNode);
-        
-
-         
+        modelNode.setUserData(content);         
         return modelNode;
       } catch (IllegalArgumentException ex) {
         lastException = ex;
@@ -1016,7 +1125,15 @@ public class ModelManager {
    * Returns the materials used by the children shapes of the given <code>node</code>.
    */
   public HomeMaterial [] getMaterials(Node node) {
-    // Search appearances used by node shapes 
+    return getMaterials(node, null);
+  }
+  
+  /** 
+   * Returns the materials used by the children shapes of the given <code>node</code>,
+   * attributing their <code>creator</code> to them.
+   */
+  public HomeMaterial [] getMaterials(Node node, String creator) {
+   // Search appearances used by node shapes 
     Set<Appearance> appearances = new HashSet<Appearance>(); 
     searchAppearances(node, appearances);
     Set<HomeMaterial> materials = new TreeSet<HomeMaterial>(new Comparator<HomeMaterial>() {
@@ -1062,7 +1179,7 @@ public class ModelManager {
           if (lastPoint != -1) {
             textureImageName = textureImageName.substring(0, lastPoint);
           }
-          texture = new HomeTexture(new CatalogTexture(textureImageName, textureImage, -1, -1));
+          texture = new HomeTexture(new CatalogTexture(null, textureImageName, textureImage, -1, -1, creator));
         }
       }
       try {
@@ -1137,7 +1254,7 @@ public class ModelManager {
                 if (subRoom.getArea() > 0) {
                   if (!subRoom.isClockwise()) {
                     // Ignore clockwise points that match holes
-                    Path2D currentPath = new GeneralPath();
+                	GeneralPath currentPath = new GeneralPath();
                     currentPath.moveTo(pathPoints [0][0], pathPoints [0][1]);
                     for (int i = 1; i < pathPoints.length; i++) {
                       currentPath.lineTo(pathPoints [i][0], pathPoints [i][1]);
@@ -1177,13 +1294,13 @@ public class ModelManager {
       List<float []> vertices = new ArrayList<float[]>(vertexCount); 
       computeVerticesOnFloor(node, vertices, new Transform3D());
       float [][] surroundingPolygon = getSurroundingPolygon(vertices.toArray(new float [vertices.size()][]));
-      Path2D path2D = new GeneralPath(Path2D.WIND_NON_ZERO, surroundingPolygon.length);
-      path2D.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
+      GeneralPath generalPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, surroundingPolygon.length);
+      generalPath.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
       for (int i = 0; i < surroundingPolygon.length; i++) {
-        path2D.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
+    	  generalPath.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
       }
-      path2D.closePath();
-      modelAreaOnFloor = new Area(path2D);
+      generalPath.closePath();
+      modelAreaOnFloor = new Area(generalPath);
     }
     return modelAreaOnFloor;
   }
@@ -1369,14 +1486,14 @@ public class ModelManager {
       if (geometryArray instanceof IndexedGeometryArray) {
         if (geometryArray instanceof IndexedTriangleArray) {
           IndexedTriangleArray triangleArray = (IndexedTriangleArray)geometryArray;
-          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
           for (int i = 0, triangleIndex = 0, n = triangleArray.getIndexCount(); i < n; i += 3) {
             addIndexedTriangleToPath(triangleArray, i, i + 1, i + 2, vertices, 
                 geometryPath, triangleIndex++, nodeArea);
           }
         } else if (geometryArray instanceof IndexedQuadArray) {
           IndexedQuadArray quadArray = (IndexedQuadArray)geometryArray;
-          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
           for (int i = 0, quadrilateralIndex = 0, n = quadArray.getIndexCount(); i < n; i += 4) {
             addIndexedQuadrilateralToPath(quadArray, i, i + 1, i + 2, i + 3, vertices, 
                 geometryPath, quadrilateralIndex++, nodeArea); 
@@ -1385,7 +1502,7 @@ public class ModelManager {
           IndexedGeometryStripArray geometryStripArray = (IndexedGeometryStripArray)geometryArray;
           int [] stripIndexCounts = new int [geometryStripArray.getNumStrips()];
           geometryStripArray.getStripIndexCounts(stripIndexCounts);
-          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
           int initialIndex = 0; 
           
           if (geometryStripArray instanceof IndexedTriangleStripArray) {
@@ -1414,14 +1531,14 @@ public class ModelManager {
       } else {
         if (geometryArray instanceof TriangleArray) {
           TriangleArray triangleArray = (TriangleArray)geometryArray;
-          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
           for (int i = 0, triangleIndex = 0; i < vertexCount; i += 3) {
             addTriangleToPath(triangleArray, i, i + 1, i + 2, vertices, 
                 geometryPath, triangleIndex++, nodeArea);
           }
         } else if (geometryArray instanceof QuadArray) {
           QuadArray quadArray = (QuadArray)geometryArray;
-          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
           for (int i = 0, quadrilateralIndex = 0; i < vertexCount; i += 4) {
             addQuadrilateralToPath(quadArray, i, i + 1, i + 2, i + 3, vertices, 
                 geometryPath, quadrilateralIndex++, nodeArea);
@@ -1430,7 +1547,7 @@ public class ModelManager {
           GeometryStripArray geometryStripArray = (GeometryStripArray)geometryArray;
           int [] stripVertexCounts = new int [geometryStripArray.getNumStrips()];
           geometryStripArray.getStripVertexCounts(stripVertexCounts);
-          geometryPath = new GeneralPath(Path2D.WIND_NON_ZERO, 1000);
+          geometryPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, 1000);
           int initialIndex = 0;
           
           if (geometryStripArray instanceof TriangleStripArray) {
@@ -1465,26 +1582,26 @@ public class ModelManager {
   }
 
   /**
-   * Adds to <code>nodePath</code> the triangle joining vertices at 
+   * Adds to <code>geometryPath</code> the triangle joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3 indices.
    */
   private void addIndexedTriangleToPath(IndexedGeometryArray geometryArray, 
                                     int vertexIndex1, int vertexIndex2, int vertexIndex3, 
                                     float [] vertices, 
-                                    Path2D geometryPath, int triangleIndex, Area nodeArea) {
+                                    GeneralPath geometryPath, int triangleIndex, Area nodeArea) {
     addTriangleToPath(geometryArray, geometryArray.getCoordinateIndex(vertexIndex1), 
         geometryArray.getCoordinateIndex(vertexIndex2), 
         geometryArray.getCoordinateIndex(vertexIndex3), vertices, geometryPath, triangleIndex, nodeArea);
   }
   
   /**
-   * Adds to <code>nodePath</code> the quadrilateral joining vertices at 
+   * Adds to <code>geometryPath</code> the quadrilateral joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4 indices.
    */
   private void addIndexedQuadrilateralToPath(IndexedGeometryArray geometryArray, 
                                          int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
                                          float [] vertices, 
-                                         Path2D geometryPath, int quadrilateralIndex, Area nodeArea) {
+                                         GeneralPath geometryPath, int quadrilateralIndex, Area nodeArea) {
     addQuadrilateralToPath(geometryArray, geometryArray.getCoordinateIndex(vertexIndex1), 
         geometryArray.getCoordinateIndex(vertexIndex2), 
         geometryArray.getCoordinateIndex(vertexIndex3), 
@@ -1492,14 +1609,14 @@ public class ModelManager {
   }
   
   /**
-   * Adds to <code>nodePath</code> the triangle joining vertices at 
+   * Adds to <code>geometryPath</code> the triangle joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3 indices, 
    * only if the triangle has a positive orientation. 
    */
   private void addTriangleToPath(GeometryArray geometryArray, 
                              int vertexIndex1, int vertexIndex2, int vertexIndex3, 
                              float [] vertices, 
-                             Path2D geometryPath, int triangleIndex, Area nodeArea) {
+                             GeneralPath geometryPath, int triangleIndex, Area nodeArea) {
     float xVertex1 = vertices [2 * vertexIndex1];
     float yVertex1 = vertices [2 * vertexIndex1 + 1];
     float xVertex2 = vertices [2 * vertexIndex2];
@@ -1520,14 +1637,14 @@ public class ModelManager {
   }
   
   /**
-   * Adds to <code>nodePath</code> the quadrilateral joining vertices at 
+   * Adds to <code>geometryPath</code> the quadrilateral joining vertices at 
    * vertexIndex1, vertexIndex2, vertexIndex3, vertexIndex4 indices, 
    * only if the quadrilateral has a positive orientation. 
    */
   private void addQuadrilateralToPath(GeometryArray geometryArray, 
                                       int vertexIndex1, int vertexIndex2, int vertexIndex3, int vertexIndex4, 
                                       float [] vertices, 
-                                      Path2D geometryPath, int quadrilateralIndex, Area nodeArea) {
+                                      GeneralPath geometryPath, int quadrilateralIndex, Area nodeArea) {
     float xVertex1 = vertices [2 * vertexIndex1];
     float yVertex1 = vertices [2 * vertexIndex1 + 1];
     float xVertex2 = vertices [2 * vertexIndex2];
@@ -1693,6 +1810,7 @@ public class ModelManager {
       polygon [++top] = vertices [minMin];
       float [][] surroundingPolygon = new float [top + 1][];
       System.arraycopy(polygon, 0, surroundingPolygon, 0, surroundingPolygon.length);
+      return surroundingPolygon;
     }
 
     // Get the indices of points with max x-coord and min|max y-coord
@@ -1800,7 +1918,7 @@ public class ModelManager {
   private Area getMirroredArea(Area area) {
     // As applying a -1 scale transform reverses the holes / non holes interpretation of the points, 
     // we have to create a mirrored shape by parsing points
-    Path2D mirrorPath = new GeneralPath();
+	GeneralPath mirrorPath = new GeneralPath();
     float [] point = new float[6];
     for (PathIterator it = area.getPathIterator(null); !it.isDone(); it.next()) {
       switch (it.currentSegment(point)) {

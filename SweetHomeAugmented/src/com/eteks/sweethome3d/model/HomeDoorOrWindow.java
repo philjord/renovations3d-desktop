@@ -28,12 +28,12 @@ import java.io.ObjectInputStream;
  * @since  1.7
  */
 public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWindow {
-	
-  public static final String DEFAULT_CUT_OUT_SHAPE = "M0,0 v1 h1 v-1 z";
   private static final long serialVersionUID = 1L;
 
   private final float   wallThickness;
   private final float   wallDistance;
+  private boolean       wallCutOutOnBothSides; // false for version < 5.5
+  private boolean       widthDepthDeformable;
   private final Sash [] sashes;
   private String  cutOutShape;
   private boolean boundToWall;
@@ -47,6 +47,8 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     super(doorOrWindow);
     this.wallThickness = doorOrWindow.getWallThickness();
     this.wallDistance = doorOrWindow.getWallDistance();
+    this.wallCutOutOnBothSides = doorOrWindow.isWallCutOutOnBothSides();
+    this.widthDepthDeformable = doorOrWindow.isWidthDepthDeformable();
     this.sashes = doorOrWindow.getSashes();
     this.cutOutShape = doorOrWindow.getCutOutShape();
   }
@@ -56,8 +58,9 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
    * and reads object from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.cutOutShape = DEFAULT_CUT_OUT_SHAPE;
-    in.defaultReadObject();
+	this.cutOutShape = "M0,0 v1 h1 v-1 z";
+    this.widthDepthDeformable = true;
+     in.defaultReadObject();
   }
   
   /**
@@ -95,7 +98,28 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   public String getCutOutShape() {
     return this.cutOutShape;
   }
-
+  
+  /**
+   * Returns <code>true</code> if this door or window should cut out the both sides
+   * of the walls it intersects, even if its front or back side are within the wall thickness.
+   * @since 5.5 
+   */
+  public boolean isWallCutOutOnBothSides() {
+    return this.wallCutOutOnBothSides;
+  }
+  
+  /**
+   * Returns <code>false</code> if the width and depth of the new door or window may 
+   * not be changed independently from each other. When <code>false</code>, this door or window
+   * will also make a hole in the wall when it's placed whatever its depth if its 
+   * {@link #isBoundToWall() bouldToWall} flag is <code>true</code>.
+   * @since 5.5
+   */
+  @Override
+  public boolean isWidthDepthDeformable() {
+    return this.widthDepthDeformable;
+  }
+ 
   /**
    * Returns <code>true</code> if the location and the size of this door or window 
    * were bound to a wall, last time they were updated. 

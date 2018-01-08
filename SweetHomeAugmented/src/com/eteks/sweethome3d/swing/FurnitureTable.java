@@ -39,6 +39,8 @@ import java.awt.print.PrinterException;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.ref.WeakReference;
@@ -57,6 +59,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
@@ -105,6 +108,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
+import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.LengthUnit;
@@ -115,14 +119,15 @@ import com.eteks.sweethome3d.model.SelectionListener;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.ResourceURLContent;
+import com.eteks.sweethome3d.viewcontroller.ExportableView;
 import com.eteks.sweethome3d.viewcontroller.FurnitureController;
-import com.eteks.sweethome3d.viewcontroller.View;
+import com.eteks.sweethome3d.viewcontroller.TransferableView;
 
 /**
  * A table displaying home furniture.
  * @author Emmanuel Puybaret
  */
-public class FurnitureTable extends JTable implements View, Printable {
+public class FurnitureTable extends JTable implements TransferableView, ExportableView, Printable {
   private static final String EXPANDED_ROWS_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.ExpandedGroups";
 
   private UserPreferences        preferences;
@@ -845,6 +850,29 @@ public class FurnitureTable extends JTable implements View, Printable {
   }
   
   /**
+   * Returns <code>true</code> if the given format is CSV.
+   */
+  public boolean isFormatTypeSupported(FormatType formatType) {
+    return formatType == FormatType.CSV;
+  }
+
+  /**
+   * Writes in the given stream the content of the table at CSV format if this is the requested format.
+   */
+  public void exportData(OutputStream out, FormatType formatType, Properties settings) throws IOException {
+    if  (formatType == FormatType.CSV) {
+      OutputStreamWriter writer = new OutputStreamWriter(out);
+      char fieldSeparator = settings != null
+          ? settings.getProperty("fieldSeparator", "\t").charAt(0)
+          : '\t';
+      exportToCSV(writer, fieldSeparator);
+      writer.flush();
+    } else {
+      throw new UnsupportedOperationException("Unsupported format " + formatType);
+    }
+  }
+
+  /**
    * Writes in the given stream the content of the table at CSV format.
    */
   public void exportToCSV(Writer writer, char fieldSeparator) throws IOException {
@@ -895,6 +923,14 @@ public class FurnitureTable extends JTable implements View, Printable {
             // Copy piece name
             writer.write(copiedPiece.getName());
             break;
+          case CREATOR :
+            // Copy piece creators
+            String creators = ((JLabel)column.getCellRenderer().getTableCellRendererComponent(
+                this, copiedPiece, false, false, rowIndex, columnIndex)).getText();
+            if (creators != null) {
+              writer.write(creators);
+            }
+            break;
           case LEVEL :
             // Copy level name
             writer.write(copiedPiece.getLevel() != null 
@@ -931,6 +967,7 @@ public class FurnitureTable extends JTable implements View, Printable {
             writer.write(sizeFormat.format(copiedPiece.getElevation()));
             break;
           case ANGLE :
+          case MODEL_SIZE :
           case PRICE : 
           case VALUE_ADDED_TAX_PERCENTAGE : 
           case VALUE_ADDED_TAX :
@@ -970,7 +1007,18 @@ public class FurnitureTable extends JTable implements View, Printable {
   }
   
   /**
-   * Returns a CSV formatted text describing the selected pieces of <code>furniture</code>.  
+   * Returns a CSV formatted text describing the selected pieces for transfer purpose.
+   */
+  public Object createTransferData(DataType dataType) {
+    if (dataType == DataType.FURNITURE_LIST) {
+      return getClipboardCSV();
+    } else {
+      return null;
+    }
+  }
+
+  /**
+   * Returns a CSV formatted text describing the selected pieces of furniture.
    */
   public String getClipboardCSV() {
     StringWriter writer = new StringWriter();
@@ -1124,6 +1172,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return preferences.getLocalizedString(FurnitureTable.class, "catalogIdColumn");
         case NAME :
           return preferences.getLocalizedString(FurnitureTable.class, "nameColumn");
+        case CREATOR :
+          return preferences.getLocalizedString(FurnitureTable.class, "creatorColumn");
         case WIDTH :
           return preferences.getLocalizedString(FurnitureTable.class, "widthColumn");
         case DEPTH :
@@ -1140,6 +1190,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return preferences.getLocalizedString(FurnitureTable.class, "angleColumn");
         case LEVEL :
           return preferences.getLocalizedString(FurnitureTable.class, "levelColumn");
+        case MODEL_SIZE :
+          return preferences.getLocalizedString(FurnitureTable.class, "modelSizeColumn");
         case COLOR :
           return preferences.getLocalizedString(FurnitureTable.class, "colorColumn");
         case TEXTURE :
@@ -1171,12 +1223,15 @@ public class FurnitureTable extends JTable implements View, Printable {
         case CATALOG_ID :
         case NAME :
           return 120; 
+        case CREATOR :
+          return 80;
         case WIDTH :
         case DEPTH :
         case HEIGHT : 
         case X : 
         case Y :
         case ELEVATION : 
+        case MODEL_SIZE :
           return 50;
         case ANGLE :
           return 35;        
@@ -1209,6 +1264,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return getCatalogIdRenderer(); 
         case NAME :
           return getNameWithIconRenderer(); 
+        case CREATOR :
+          return getCreatorRenderer();
         case WIDTH :
           return getSizeRenderer(HomePieceOfFurniture.SortableProperty.WIDTH, preferences);
         case DEPTH :
@@ -1225,6 +1282,8 @@ public class FurnitureTable extends JTable implements View, Printable {
           return getAngleRenderer();        
         case LEVEL :
           return getLevelRenderer();        
+        case MODEL_SIZE :
+          return getModelSizeRenderer();
         case COLOR :
           return getColorRenderer();        
         case TEXTURE :
@@ -1288,6 +1347,51 @@ public class FurnitureTable extends JTable implements View, Printable {
      */
     private TableCellRenderer getNameWithIconRenderer() {
       return new TreeTableNameCellRenderer();
+    }
+
+    /**
+     * Returns a renderer that displays the creator of a piece of furniture and its textures if any.
+     */
+    private TableCellRenderer getCreatorRenderer() {
+      return new DefaultTableCellRenderer() {
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+             Object value, boolean isSelected, boolean hasFocus,
+             int row, int column) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
+          String creator = piece.getCreator();
+          if (creator != null) {
+            HomeTexture texture = piece.getTexture();
+            if (texture != null) {
+              String textureCreator = texture.getCreator();
+              if (textureCreator != null
+                  && !creator.equals(textureCreator)) {
+                creator += ", " + textureCreator;
+              }
+            } else {
+              String modelCreator = creator;
+              HomeMaterial [] materials = piece.getModelMaterials();
+              if (materials != null) {
+                for (HomeMaterial material : materials) {
+                  if (material != null) {
+                    HomeTexture materialTexture = material.getTexture();
+                    if (materialTexture != null) {
+                      String textureCreator = materialTexture.getCreator();
+                      if (textureCreator != null
+                          && !modelCreator.equals(textureCreator)
+                          && creator.indexOf(", " + textureCreator) == -1) {
+                        creator += ", " + textureCreator;
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return super.getTableCellRendererComponent(
+              table, creator, isSelected, hasFocus, row, column);
+        }
+      };
     }
 
     /**
@@ -1489,6 +1593,29 @@ public class FurnitureTable extends JTable implements View, Printable {
     }
 
     /**
+     * Returns a renderer that displays the model size property of a piece of furniture.
+     */
+    private TableCellRenderer getModelSizeRenderer() {
+      return new DefaultTableCellRenderer() {
+        private TableCellRenderer integerRenderer;
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table,
+             Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+          if (this.integerRenderer == null) {
+            this.integerRenderer = table.getDefaultRenderer(Integer.class);
+          }
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)value;
+          Integer modelSize = piece != null && piece.getModelSize() != null && piece.getModelSize() > 0
+              ? Math.max(1, (int)Math.round(piece.getModelSize() / 1000.))
+              : null;
+          return this.integerRenderer.getTableCellRendererComponent(
+              table, modelSize, isSelected, hasFocus, row, column);
+        }
+      };
+    }
+
+    /**
      * Returns a renderer that displays the value added tax percentage property of a piece of furniture. 
      */
     private TableCellRenderer getValueAddedTaxPercentageRenderer() {
@@ -1551,7 +1678,7 @@ public class FurnitureTable extends JTable implements View, Printable {
               table, color, isSelected, hasFocus, row, column);
           if (color != null) {
             label.setText(null);
-            label.setIcon(squareIcon);
+            label.setIcon(this.squareIcon);
             label.setForeground(new Color(color));
           } else {
             if (value != null) {
@@ -1688,9 +1815,9 @@ public class FurnitureTable extends JTable implements View, Printable {
             if (getColumn(column).getIdentifier().equals(home.getFurnitureSortedProperty())) {
               label.setHorizontalTextPosition(JLabel.LEADING);
               if (home.isFurnitureDescendingSorted()) {
-                label.setIcon(descendingSortIcon);
+                label.setIcon(this.descendingSortIcon);
               } else {
-                label.setIcon(ascendingSortIcon);
+                label.setIcon(this.ascendingSortIcon);
               }
             } else {
               label.setIcon(null);

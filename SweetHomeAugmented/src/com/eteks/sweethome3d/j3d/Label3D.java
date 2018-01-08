@@ -24,7 +24,6 @@ import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
 import org.jogamp.java3d.Node;
-import org.jogamp.java3d.OrderedGroup;
 import org.jogamp.java3d.PolygonAttributes;
 import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;

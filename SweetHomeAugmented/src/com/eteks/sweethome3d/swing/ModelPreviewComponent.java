@@ -287,7 +287,7 @@ public class ModelPreviewComponent extends JComponent {
         throw ex2;
       }
     } else {
-    	//PJPJPJPJPJ seperate these 2 into 2
+    	//PJPJPJPJPJ separate these 2 into 2
       this.component3D = new JPanel();
     		  
       canvas3D =  Component3DManager.getInstance().getOnscreenCanvas3D(graphicsConfiguration,

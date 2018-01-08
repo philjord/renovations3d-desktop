@@ -317,11 +317,9 @@ public class Wall3D extends Object3DBranch {
     for (int i = 0; i < wallSideGroups.length; i++) { 
       for (int j = currentGeometriesCounts [i] - 1; j >= 0; j--) {
 		// sometimes null
-		if (wallFilledShapes[i].getGeometry(j) != null)
-		{
+		if (wallFilledShapes[i].getGeometry(j) != null) {
 			wallFilledShapes[i].removeGeometry(j);
-			if (wallOutlineShapes[i] != null)
-			{
+			if (wallOutlineShapes[i] != null) {
 				wallOutlineShapes[i].removeGeometry(j);
 			}
 		}
@@ -342,13 +340,14 @@ public class Wall3D extends Object3DBranch {
                                     final HomeTexture texture, 
                                     final boolean waitDoorOrWindowModelsLoadingEnd) {
     final Wall wall = (Wall)getUserData();
+    Shape wallShape = getShape(wall.getPoints()); 
     final float [][] wallSidePoints = getWallSidePoints(wallSide);
-    Shape wallShape = getShape(wallSidePoints);
+    Shape wallSideShape = getShape(wallSidePoints);
     final float [][] wallSideOrBaseboardPoints = baseboard == null 
         ? wallSidePoints
         : getWallBaseboardPoints(wallSide);
-    Shape wallOrBaseboardShape = getShape(wallSideOrBaseboardPoints);
-    Area wallOrBaseboardArea = new Area(wallOrBaseboardShape);
+    Shape wallSideOrBaseboardShape = getShape(wallSideOrBaseboardPoints);
+    Area wallSideOrBaseboardArea = new Area(wallSideOrBaseboardShape);
     final float [] textureReferencePoint = wallSide == WALL_LEFT_SIDE
         ? wallSideOrBaseboardPoints [0].clone()
         : wallSideOrBaseboardPoints [wallSideOrBaseboardPoints.length - 1].clone();
@@ -403,25 +402,40 @@ public class Wall3D extends Object3DBranch {
 	        
 	        
 	        if (!intersectionArea.isEmpty()) {
-	          if (baseboard != null) {
-	            double pieceWallAngle = Math.abs(wallYawAngle - piece.getAngle()) % Math.PI;
-	            if (pieceWallAngle < 1E-5 || (Math.PI - pieceWallAngle) < 1E-5) {
-	              // Increase piece depth to ensure baseboard will be cut even if the window is as thick as the wall 
-	              HomePieceOfFurniture deeperPiece = piece.clone();
-	              deeperPiece.setDepth(deeperPiece.getDepth() + 2 * baseboard.getThickness());
-	              pieceArea = new Area(getShape(deeperPiece.getPoints()));
-	            } 
-	            intersectionArea = new Area(wallOrBaseboardShape);
-	            intersectionArea.intersect(pieceArea);
-	            if (intersectionArea.isEmpty()) {
-	              continue;
+	            HomePieceOfFurniture deeperPiece = null;
+	            if (piece.isParallelToWall(wall)) {
+	              if (baseboard != null) {
+	                // Increase piece depth to ensure baseboard will be cut even if the window is as thick as the wall 
+	                deeperPiece = piece.clone();
+	                deeperPiece.setDepthInPlan(deeperPiece.getDepth() + 2 * baseboard.getThickness());
+	              } 
+	              if (piece instanceof HomeDoorOrWindow) {
+	                HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
+	                if (doorOrWindow.isWallCutOutOnBothSides()) {
+	                  if (deeperPiece == null) {
+	                    deeperPiece = piece.clone();
+	                  }
+	                  // Increase piece depth to ensure the wall will be cut on both sides 
+	                  deeperPiece.setDepthInPlan(deeperPiece.getDepth() + 4 * wall.getThickness());
+	                }
+	              }
 	            }
-	          }
-	          windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
-	          intersectingDoorOrWindows.add(piece);
-	          // Remove from wall area the piece shape
-	          wallOrBaseboardArea.subtract(pieceArea);
-	        }
+	            // Recompute intersection on wall side shape only
+	            if (deeperPiece != null) {
+	              pieceArea = new Area(getShape(deeperPiece.getPoints()));
+	              intersectionArea = new Area(wallSideOrBaseboardShape);
+	              intersectionArea.intersect(pieceArea);
+	            } else {
+	              intersectionArea = new Area(wallSideShape);
+	              intersectionArea.intersect(pieceArea);
+	            }
+	            if (!intersectionArea.isEmpty()) {
+	              windowIntersections.add(new DoorOrWindowArea(intersectionArea, Arrays.asList(new HomePieceOfFurniture [] {piece})));
+	              intersectingDoorOrWindows.add(piece);
+	              // Remove from wall area the piece shape
+	              wallSideOrBaseboardArea.subtract(pieceArea);
+	            }
+	        }	    
 	    }
       }
     }
@@ -456,7 +470,7 @@ public class Wall3D extends Object3DBranch {
     List<float[]> points = new ArrayList<float[]>(4);
     // Generate geometry for each wall part that doesn't contain a window
     float [] previousPoint = null;
-    for (PathIterator it = wallOrBaseboardArea.getPathIterator(null); !it.isDone(); it.next()) {
+    for (PathIterator it = wallSideOrBaseboardArea.getPathIterator(null); !it.isDone(); it.next()) {
       float [] wallPoint = new float[2];
       if (it.currentSegment(wallPoint) == PathIterator.SEG_CLOSE) {
         if (points.size() > 2) {
@@ -611,7 +625,7 @@ public class Wall3D extends Object3DBranch {
       // Compute geometry for doors or windows that have a known front area
       for (final HomePieceOfFurniture doorOrWindow : intersectingDoorOrWindows) {
         if (doorOrWindow instanceof DoorOrWindow
-            && !HomeDoorOrWindow.DEFAULT_CUT_OUT_SHAPE.equals(((DoorOrWindow)doorOrWindow).getCutOutShape())) {
+            && !"M0,0 v1 h1 v-1 z".equals(((DoorOrWindow)doorOrWindow).getCutOutShape())) {
           double angleDifference = Math.abs(wallYawAngle - doorOrWindow.getAngle()) % (2 * Math.PI);
           if (angleDifference < epsilon
               || angleDifference > 2 * Math.PI - epsilon
@@ -692,18 +706,18 @@ public class Wall3D extends Object3DBranch {
         }
       }
     }
-		for (Geometry g : bottomGeometries)
-		{
-			makePickable(g);
-		}
-		for (Geometry g : sideGeometries)
-		{
-			 makePickable(g);
-		}
-		for (Geometry g : topGeometries)
-		{
-			 makePickable(g);
-		}
+	for (Geometry g : bottomGeometries)
+	{
+		makePickable(g);
+	}
+	for (Geometry g : sideGeometries)
+	{
+		 makePickable(g);
+	}
+	for (Geometry g : topGeometries)
+	{
+		 makePickable(g);
+	}
   }
 
   /**
@@ -999,10 +1013,9 @@ public class Wall3D extends Object3DBranch {
     if (arcExtent > 0) {
       if ((referencePointAngle > 0 
           && (pointAngle < 0
-              || referencePointAngle > pointAngle))
+              || pointAngle < referencePointAngle))
         || (referencePointAngle < 0 
-            && pointAngle < 0 
-            && referencePointAngle > pointAngle)) {
+            && pointAngle < referencePointAngle)) {
         pointAngle += 2 * (float)Math.PI;
       }
     } else {
@@ -1010,7 +1023,6 @@ public class Wall3D extends Object3DBranch {
             && (pointAngle > 0
                 || referencePointAngle < pointAngle))
           || (referencePointAngle > 0 
-              && pointAngle > 0 
               && referencePointAngle < pointAngle)) {
         pointAngle -= 2 * (float)Math.PI;
       }
@@ -1101,7 +1113,7 @@ public class Wall3D extends Object3DBranch {
       float depthTranslation = frontOrBackSide * (0.5f - position * frontSideToWallDistance / doorOrWindowDepth);
       
       // Compute surrounding part transformation matrix
-      Transform3D frontAreaTransform = ModelManager.getInstance().getPieceOFFurnitureNormalizedModelTransformation(doorOrWindow);       
+      Transform3D frontAreaTransform = ModelManager.getInstance().getPieceOfFurnitureNormalizedModelTransformation(doorOrWindow, null);       
       Transform3D frontAreaTranslation = new Transform3D();
       frontAreaTranslation.setTranslation(new Vector3f(0, 0, depthTranslation));
       frontAreaTransform.mul(frontAreaTranslation);
@@ -1456,7 +1468,7 @@ public class Wall3D extends Object3DBranch {
     } else {
       // Update material and texture of wall side
       wallSideAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess));
-      wallSideAppearance.setTextureAttributes(getTextureAttributes(wallSideTexture));
+      wallSideAppearance.setTextureAttributes(getTextureAttributes(wallSideTexture, true));
       final TextureManager textureManager = TextureManager.getInstance();
       textureManager.loadTexture(wallSideTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
@@ -1488,7 +1500,6 @@ public class Wall3D extends Object3DBranch {
     // Update wall side visibility
     RenderingAttributes renderingAttributes = wallSideAppearance.getRenderingAttributes();
     HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
-    //PJ outline
     renderingAttributes.setVisible(drawingMode == HomeEnvironment.DrawingMode.OUTLINE 
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
   }
