@@ -24,7 +24,6 @@ import javaawt.Shape;
 import javaawt.geom.AffineTransform;
 import javaawt.geom.Area;
 import javaawt.geom.GeneralPath;
-import javaawt.geom.Path2D;
 import javaawt.geom.PathIterator;
 import javaawt.geom.Rectangle2D;
 import java.io.File;
@@ -343,7 +342,7 @@ public class ModelManager {
                  && node instanceof BranchGroup
                  && node.getUserData() instanceof Content) {
         // Check if it's the node of a model 
-        modelBounds = transformedModelNodeBounds.get(node.getUserData());
+        modelBounds = this.transformedModelNodeBounds.get(node.getUserData());
         if (modelBounds != null) {
           // Retrieve the bounds that may have been previously computed for the requested transformation 
           transformationModelBounds = modelBounds.get(parentTransformation);
@@ -527,10 +526,12 @@ public class ModelManager {
    * to let it fill a box of the given <code>width</code> centered on the origin.
    * @param node     the root of a model with any size and location
    * @param modelRotation the rotation applied to the model before normalization 
-   *                 or <code>null</code> if no transformation should be applied to node.
+   *                 or <code>null</code> if no transformation should be applied to node
    * @param width    the width of the box
+   * @param modelCenteredAtOrigin if <code>true</code> center will be moved to match the origin
+   *                 after the model rotation is applied
    */
-  public Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width, 
+  private Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width,
                                             boolean modelCenteredAtOrigin) {
     // Get model bounding box size 
     BoundingBox modelBounds = getBounds(node);
@@ -725,14 +726,14 @@ public class ModelManager {
           public void run() {
             try {
               final BranchGroup loadedModel = loadModel(content);
-              synchronized (loadedModelNodes) {
+              synchronized (ModelManager.this.loadedModelNodes) {
                 // Update loaded models cache and notify registered observers
-                loadedModelNodes.put(content, loadedModel);
-                transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
+                ModelManager.this.loadedModelNodes.put(content, loadedModel);
+                ModelManager.this.transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
               }
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    List<ModelObserver> observers = loadingModelObservers.remove(content);
+                    List<ModelObserver> observers = ModelManager.this.loadingModelObservers.remove(content);
                     if (observers != null) {
                       for (final ModelObserver observer : observers) {
                         observer.modelUpdated((BranchGroup)cloneNode(loadedModel));
@@ -743,7 +744,7 @@ public class ModelManager {
             } catch (final IOException ex) {
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    List<ModelObserver> observers = loadingModelObservers.remove(content);
+                    List<ModelObserver> observers = ModelManager.this.loadingModelObservers.remove(content);
                     if (observers != null) {
                       for (final ModelObserver observer : observers) {
                         observer.modelError(ex);
@@ -756,9 +757,9 @@ public class ModelManager {
             {
             	//PJ this gets OOMs constantly, trying catching everything here
             	System.out.println("OutOfMemoryError ignored");
-            	 e.printStackTrace();
-              EventQueue.invokeLater(new Runnable() {
-                  public void run() {
+            	e.printStackTrace();
+            	EventQueue.invokeLater(new Runnable() {
+                public void run() {
                     List<ModelObserver> observers = loadingModelObservers.remove(content);
                     // don't bother notifying, we are dying under load
                   }
@@ -920,7 +921,7 @@ public class ModelManager {
         // Return the first scene that can be loaded from model URL content
         Scene scene;
         if (loadSynchronously) {
-          synchronized (this.modelsLoader) {
+          synchronized (this) {
             URLConnection connection = urlContent.getURL().openConnection();
             try {
               connection.setDefaultUseCaches(useCaches);
@@ -1836,10 +1837,12 @@ public class ModelManager {
       while (top > 0) // There are at least 2 points on the stack
       {
         // Test if points [i] is left of the line at the stack top
-        if (isLeft(polygon [top - 1], polygon [top], vertices [i]) > 0)
+        if (isLeft(polygon [top - 1], polygon [top], vertices [i]) > 0) {
           break; // points [i] is a new hull vertex
-        else
+        }
+        else {
           top--; // pop top point off stack
+      }
       }
       polygon [++top] = vertices [i]; // push points [i] onto stack
     }

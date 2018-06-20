@@ -1,35 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src" />
-	<classpathentry kind="lib" path="lib/iText-2.1.7.jar" />
-	<classpathentry kind="lib"
-		path="lib/freehep-vectorgraphics-svg-2.1.1b.jar" />
-	<classpathentry kind="lib" path="lib/jmf.jar" />
-	<classpathentry kind="lib" path="libtest/abbot.jar" />
-	<classpathentry kind="lib" path="libtest/jdom-1.0.jar" />
-	<classpathentry kind="lib" path="libtest/gnu-regexp-1.1.0.jar" />
-	<classpathentry kind="lib" path="libtest/jdepend-2.9.jar" />
-	<classpathentry kind="con"
-		path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/awtgeom" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/awtshim" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/awtshim-desktop" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/batik-svgparser-andy" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/java3d-core-and" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/java3d-utils-and" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/vecmath" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/SweetHome3D" />
-	<classpathentry combineaccessrules="false" kind="src"
-		path="/sunflow" />
-	<classpathentry kind="con"
-		path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.6.0_45" />
-	<classpathentry kind="output" path="classes" />
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/iText-2.1.7.jar"/>
+	<classpathentry kind="lib" path="lib/freehep-vectorgraphics-svg-2.1.1b.jar"/>
+	<classpathentry kind="lib" path="lib/jmf.jar"/>
+	<classpathentry kind="lib" path="libtest/abbot.jar"/>
+	<classpathentry kind="lib" path="libtest/jdom-1.0.jar"/>
+	<classpathentry kind="lib" path="libtest/gnu-regexp-1.1.0.jar"/>
+	<classpathentry kind="lib" path="libtest/jdepend-2.9.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/awtgeom"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/awtshim"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/awtshim-desktop"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/batik-svgparser-andy"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/java3d-core-and"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils-and"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/vecmath"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sunflow"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.6.0_45"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/SweetHome3D"/>
+	<classpathentry kind="output" path="classes"/>
 </classpath>

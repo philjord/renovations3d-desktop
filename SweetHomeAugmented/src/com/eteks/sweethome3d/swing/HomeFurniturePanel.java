@@ -40,6 +40,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
+//import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -872,7 +873,9 @@ public class HomeFurniturePanel extends JPanel implements DialogView {
           this.textureRadioButton.setSelected(true);
           break;
         case MODEL_MATERIALS :
+          if (this.modelMaterialsRadioButton != null) {
           this.modelMaterialsRadioButton.setSelected(true);
+          }
           break;
       } 
       updateShininessRadioButtons(controller);

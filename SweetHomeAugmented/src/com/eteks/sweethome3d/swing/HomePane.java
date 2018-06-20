@@ -68,14 +68,11 @@ import java.awt.print.PrinterJob;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.io.OutputStream;
-import java.io.Writer;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -2641,6 +2638,7 @@ public class HomePane extends JRootPane implements HomeView {
             }
           });
         ((JViewport)furnitureView.getParent()).setComponentPopupMenu(furnitureViewPopup);
+        //PJPJ MacOS specific code removed
         furnitureView = furnitureScrollPane;
       }
     }
@@ -3932,15 +3930,16 @@ public class HomePane extends JRootPane implements HomeView {
     }
     float maxMemoryGigaByte = Math.max(0.1f, Runtime.getRuntime().maxMemory() / 1073741824f);    
     javaVersion += " / " + new DecimalFormat("#.#").format(maxMemoryGigaByte) + " GB max";
-    String java3dVersion;
+    String java3dVersion = "<i>not available</i>";
     try {
-      java3dVersion = (String)VirtualUniverse.getProperties().get("j3d.version");
-      if (java3dVersion != null) {
-        java3dVersion = java3dVersion.split("\\s") [0];
+      if (!Boolean.getBoolean("com.eteks.sweethome3d.no3D")) {
+        java3dVersion = (String)VirtualUniverse.getProperties().get("j3d.version");
+        if (java3dVersion != null) {
+          java3dVersion = java3dVersion.split("\\s") [0];
+        }
       }
     } catch (Throwable ex) {
       // No Java 3D libraries
-      java3dVersion = "<i>not available</i>";
     }
     String message = String.format(messageFormat, aboutVersion, javaVersion, java3dVersion);
     JComponent messagePane = createEditorPane(message);

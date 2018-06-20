@@ -1280,14 +1280,13 @@ public class HomeController implements Controller {
       for (CatalogPieceOfFurniture piece : selectedFurniture) {
         addedFurniture.add(getFurnitureController().createHomePieceOfFurniture(piece));
       }
-      adjustFurnitureSizeAndElevation(addedFurniture, false);
-
       // Add furniture to home with furnitureController
       if (group != null) {
         getFurnitureController().addFurnitureToGroup(addedFurniture, group);
       } else {
         getFurnitureController().addFurniture(addedFurniture);
       }
+      adjustFurnitureSizeAndElevation(addedFurniture, false);
     }
   }
   
@@ -1536,6 +1535,7 @@ public class HomeController implements Controller {
       // Start a compound edit that adds walls, furniture, rooms, dimension lines, polylines and labels to home
       UndoableEditSupport undoSupport = getUndoableEditSupport();
       undoSupport.beginUpdate();
+      getPlanController().addItems(items);
       List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(items);
       adjustFurnitureSizeAndElevation(addedFurniture, dx == 0 && dy == 0);
       getPlanController().moveItems(items, dx, dy);
@@ -1546,7 +1546,6 @@ public class HomeController implements Controller {
         // Adjust piece when it's dropped in plan view  
         getPlanController().adjustMagnetizedPieceOfFurniture((HomePieceOfFurniture)items.get(0), dx, dy);
       } 
-      getPlanController().addItems(items);
       undoSupport.postEdit(new AbstractUndoableEdit() {      
           @Override
           public String getPresentationName() {
@@ -1561,20 +1560,19 @@ public class HomeController implements Controller {
 
   /**
    * Adjusts furniture size and elevation if magnetism is enabled.
+   * This method should be called after the given furniture is added to the plan, 
+   * to ensure its size in plan is adjusted too. 
    */
   private void adjustFurnitureSizeAndElevation(List<HomePieceOfFurniture> furniture, boolean keepDoorsAndWindowDepth) {
     if (this.preferences.isMagnetismEnabled()) {
       for (HomePieceOfFurniture piece : furniture) {
         if (piece.isResizable()) {
           piece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
-          piece.setWidthInPlan(piece.getWidth());
           // Don't adjust depth of doors or windows otherwise they may be misplaced in a wall 
           if (!(piece instanceof HomeDoorOrWindow) || !keepDoorsAndWindowDepth) {
             piece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
-            piece.setDepthInPlan(piece.getDepth());
           }
           piece.setHeight(this.preferences.getLengthUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
-          piece.setHeightInPlan(piece.getHeight());
         }
         piece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
       }
@@ -1640,9 +1638,9 @@ public class HomeController implements Controller {
     UndoableEditSupport undoSupport = getUndoableEditSupport();
     undoSupport.beginUpdate();
     List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(getView().getClipboardItems());
-    adjustFurnitureSizeAndElevation(addedFurniture, true);
     getFurnitureController().addFurnitureToGroup(addedFurniture, 
         (HomeFurnitureGroup)this.home.getSelectedItems().get(0));
+    adjustFurnitureSizeAndElevation(addedFurniture, true);
     undoSupport.postEdit(new AbstractUndoableEdit() {      
         @Override
         public String getPresentationName() {
@@ -2151,8 +2149,10 @@ public class HomeController implements Controller {
         replacingPiece.setX(piece.getX());
         replacingPiece.setY(piece.getY());
         home.addPieceOfFurniture(replacingPiece, i);
-        replacingPiece.setPitch(piece.getPitch());
-        replacingPiece.setRoll(piece.getRoll());
+        if (replacingPiece.isHorizontallyRotatable()) {
+          replacingPiece.setPitch(piece.getPitch());
+          replacingPiece.setRoll(piece.getRoll());
+        }
         replacingPiece.setLevel(piece.getLevel());
         home.deletePieceOfFurniture(piece);
       } else {      

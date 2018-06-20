@@ -35,6 +35,8 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.ActionEvent;
+//PJPJ MacOS specific code removed import java.awt.event.AdjustmentEvent;
+//PJPJ MacOS specific code removed import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
@@ -521,16 +523,16 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
           GridBagConstraints.HORIZONTAL, componentInsets, 0, 0));
     }
     // Last row
-    JScrollPane listScrollPane = new JScrollPane(this.catalogFurnitureList);
+    final JScrollPane listScrollPane = SwingTools.createScrollPane(this.catalogFurnitureList);
     listScrollPane.getVerticalScrollBar().addAdjustmentListener(
         SwingTools.createAdjustmentListenerUpdatingScrollPaneViewToolTip(listScrollPane));
+    //PJPJ MacOS specific code removed
     listScrollPane.setPreferredSize(new Dimension(250, 250));
     listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     add(listScrollPane, 
         new GridBagConstraints(
         0, 2, 2, 1, 1, 1, GridBagConstraints.CENTER, 
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
-    SwingTools.installFocusBorder(this.catalogFurnitureList);
     
     setFocusTraversalPolicyProvider(true);
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy() {

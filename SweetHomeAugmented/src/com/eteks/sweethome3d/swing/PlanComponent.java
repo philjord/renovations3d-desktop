@@ -695,6 +695,9 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                       || HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName()))
                      && (((HomePieceOfFurniture)ev.getSource()).isHorizontallyRotated()
                          || ((HomePieceOfFurniture)ev.getSource()).getTexture() != null))) {
+            if (HomePieceOfFurniture.Property.HEIGHT_IN_PLAN.name().equals(ev.getPropertyName())) {
+              sortedLevelFurniture = null;
+            } 
             if (controller == null || !controller.isModificationState()) {
               invalidateFurnitureTopViewIcon((HomePieceOfFurniture)ev.getSource());
             } else {
@@ -2548,7 +2551,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.setComposite(oldComposite);
       }
       
-      if (this.otherLevelsWallsCache != null && !this.otherLevelsWallsCache.isEmpty()) {
+      if (!this.otherLevelsWallsCache.isEmpty()) {
         Composite oldComposite = setTransparency(g2D, 
             this.preferences.isGridVisible() ? 0.2f : 0.1f);
         fillAndDrawWallsArea(g2D, this.otherLevelsWallAreaCache, planScale, 

@@ -297,6 +297,8 @@ public class WizardPane extends JOptionPane implements DialogView {
           }
         });
     
+    //PJPJ MacOS specific code removed
+    
     // Pack again because resize decorations may have changed dialog preferred size
     this.dialog.pack();
     this.dialog.setMinimumSize(getSize());
