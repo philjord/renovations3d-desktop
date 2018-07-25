@@ -117,9 +117,9 @@ public class PlanController extends FurnitureController implements Controller {
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
-  private static final int PIXEL_MARGIN           = 4;
-  private static final int INDICATOR_PIXEL_MARGIN = 5;
-  private static final int WALL_ENDS_PIXEL_MARGIN = 2;
+  public static int PIXEL_MARGIN           = 4;
+  public static int INDICATOR_PIXEL_MARGIN = 5;
+  public static int WALL_ENDS_PIXEL_MARGIN = 2;
 
   private final Home                  home;
   private final UserPreferences       preferences;

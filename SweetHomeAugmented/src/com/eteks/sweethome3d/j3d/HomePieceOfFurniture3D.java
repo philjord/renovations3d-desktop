@@ -238,7 +238,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 	 */
 	private void updatePieceOfFurnitureTransform() {
 	   	Transform3D pieceTransform = ModelManager.getInstance().getPieceOfFurnitureNormalizedModelTransformation(
-	   		(HomePieceOfFurniture) getUserData(), pieceTransformGroup.getChild(0));
+	   		(HomePieceOfFurniture) getUserData(), getFilledModelNode());
 		// Change model transformation      
 		pieceTransformGroup.setTransform(pieceTransform);
 	}
@@ -256,11 +256,11 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 				null, null,	new HashSet<Appearance>());
 		} else if (piece.getTexture() != null) {
 			setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(), null, waitTextureLoadingEnd,
-				new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelNode), 
+            new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelChild),
 				new HashSet<Appearance>());
 		} else if (piece.getModelMaterials() != null) {
 			setColorAndTexture(filledModelNode, null, null, null, piece.getModelMaterials(), waitTextureLoadingEnd,
-				new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelNode), 
+				new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelChild), 
 				new HashSet<Appearance>());
 		} else {
 			// Set default material and texture of model

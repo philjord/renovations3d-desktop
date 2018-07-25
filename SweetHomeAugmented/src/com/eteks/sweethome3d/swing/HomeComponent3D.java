@@ -2046,6 +2046,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    bottomRenderingAttributes.setVisible(false);
 	    bottomAppearance.setRenderingAttributes(bottomRenderingAttributes);
 	    bottomRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+	    //PJPJPJPJ allow updatable shader building
+	    bottomAppearance.setUpdatableCapabilities();
 	    Shape3D bottomHalfSphere = new Shape3D(createHalfSphereGeometry(false), bottomAppearance);
 	    backgroundBranch.addChild(bottomHalfSphere);
 
@@ -2065,6 +2067,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    groundBackgroundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
 	    groundRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
 
+	    //PJPJPJPJ allow updatable shader building
+	    groundBackgroundAppearance.setUpdatableCapabilities();
+	    
 	    GeometryInfo geometryInfo = new GeometryInfo (GeometryInfo.QUAD_ARRAY);
 	    geometryInfo.setCoordinates(new Point3f [] {
 	          new Point3f(-1f, -0.01f, -1f),
@@ -2078,7 +2083,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    geometryInfo.setCoordinateIndices(new int [] {0, 1, 2, 3, 4, 5, 6, 7});
 	    geometryInfo.setNormals(new Vector3f [] {new Vector3f(0, 1, 0)});
 	    geometryInfo.setNormalIndices(new int [] {0, 0, 0, 0, 0, 0, 0, 0});
-	    Shape3D groundBackground = new Shape3D(geometryInfo.getIndexedGeometryArray(), groundBackgroundAppearance);
+	    
+	    //PJPJPJPJ
+	  	geometryInfo.convertToIndexedTriangles();		
+	    Shape3D groundBackground = new Shape3D(geometryInfo.getIndexedGeometryArray(true,true,true,true,true), groundBackgroundAppearance);
 	    backgroundBranch.addChild(groundBackground);
 	    
 	    // Add its own lights to background to ensure they have an effect
