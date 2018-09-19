@@ -29,7 +29,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.Shape3D;
@@ -74,6 +73,7 @@ public class Ground3D extends Object3DBranch {
     this.depth = depth;
 
     SimpleShaderAppearance groundAppearance = new SimpleShaderAppearance();
+    groundAppearance.setUpdatableCapabilities(); // allow updatable shader building
     groundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
@@ -82,10 +82,7 @@ public class Ground3D extends Object3DBranch {
     transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
     groundAppearance.setTransparencyAttributes(transparencyAttributes);
     
-    //PJPJPJPJ allow updatable shader building
-    groundAppearance.setUpdatableCapabilities();
-
-    final Shape3D groundShape = new Shape3D();
+       final Shape3D groundShape = new Shape3D();
     groundShape.setAppearance(groundAppearance);
     groundShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
     groundShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
@@ -354,23 +351,13 @@ public class Ground3D extends Object3DBranch {
           ? new TexCoord2f [vertexCount]
           : null;
       
-      float textureWidth;
-      float textureHeight;
-      if (groundTexture != null) {
-        textureWidth = groundTexture.getWidth();
-        textureHeight = groundTexture.getHeight();
-      } else {
-        textureWidth = 0;
-        textureHeight = 0;
-      }
       int j = 0;
       for (float [][] areaPartPoints : areaPoints) {
         for (int i = 0; i < areaPartPoints.length; i++, j++) {
           float [] point = areaPartPoints [i];
           geometryCoords [j] = new Point3f(point [0], elevation, point [1]);
           if (groundTexture != null) {
-            geometryTextureCoords [j] = new TexCoord2f((point [0] - this.originX) / textureWidth, 
-                (this.originY - point [1]) / textureHeight);
+            geometryTextureCoords [j] = new TexCoord2f(point [0] - this.originX, this.originY - point [1]);
           }
         }
       }
@@ -383,7 +370,6 @@ public class Ground3D extends Object3DBranch {
       }
       geometryInfo.setStripCounts(stripCounts);
       new NormalGenerator(0).generateNormals(geometryInfo);
-      //new Stripifier().stripify(geometryInfo);
       groundShape.addGeometry(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
     }
   }
@@ -400,15 +386,6 @@ public class Ground3D extends Object3DBranch {
     TexCoord2f [] geometryTextureCoords = groundTexture != null 
         ? new TexCoord2f [geometryCoords.length]
         : null;
-    float textureWidth;
-    float textureHeight;
-    if (groundTexture != null) {
-      textureWidth = groundTexture.getWidth();
-      textureHeight = groundTexture.getHeight();
-    } else {
-      textureWidth = 0;
-      textureHeight = 0;
-    }
     for (int i = 0, j = 0; i < areaPoints.length; i++) {
       float [] point = areaPoints [i];
       float [] nextPoint = areaPoints [i < areaPoints.length - 1 ? i + 1 : 0];
@@ -418,10 +395,10 @@ public class Ground3D extends Object3DBranch {
       geometryCoords [j++] = new Point3f(nextPoint [0], elevation, nextPoint [1]);
       if (groundTexture != null) {
         float distance = (float)Point2D.distance(point [0], point [1], nextPoint [0], nextPoint [1]);
-        geometryTextureCoords [j - 4] = new TexCoord2f(point [0] / textureWidth, elevation / textureHeight);
-        geometryTextureCoords [j - 3] = new TexCoord2f(point [0] / textureWidth, (elevation + sideHeight) / textureHeight);
-        geometryTextureCoords [j - 2] = new TexCoord2f((point [0] - distance) / textureWidth, (elevation + sideHeight) / textureHeight);
-        geometryTextureCoords [j - 1] = new TexCoord2f((point [0] - distance) / textureWidth, elevation / textureHeight);
+        geometryTextureCoords [j - 4] = new TexCoord2f(point [0], elevation);
+        geometryTextureCoords [j - 3] = new TexCoord2f(point [0], elevation + sideHeight);
+        geometryTextureCoords [j - 2] = new TexCoord2f(point [0] - distance, elevation + sideHeight);
+        geometryTextureCoords [j - 1] = new TexCoord2f(point [0] - distance, elevation);
       }
     }
 
@@ -431,10 +408,7 @@ public class Ground3D extends Object3DBranch {
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, geometryTextureCoords);
     }
-    
-    //PJPJPJPJ
-    geometryInfo.convertToIndexedTriangles();
-    
+    geometryInfo.convertToIndexedTriangles();// no quads in modern pipelines
     new NormalGenerator(0).generateNormals(geometryInfo);
     groundShape.addGeometry(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
   }
@@ -490,7 +464,8 @@ public class Ground3D extends Object3DBranch {
 		//Never bad idea indeed
 	}
   	
-  	public boolean isShowOutline()
+  	@Override
+	public boolean isShowOutline()
   	{
   		return false;
   	}

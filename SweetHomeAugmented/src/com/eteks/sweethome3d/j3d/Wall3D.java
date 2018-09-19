@@ -41,7 +41,6 @@ import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.Geometry;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
-import org.jogamp.java3d.IndexedGeometryArray;
 import org.jogamp.java3d.Node;
 import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
@@ -108,7 +107,7 @@ public class Wall3D extends Object3DBranch {
     setCapability(Node.ALLOW_PICKABLE_WRITE);
     setCapability(Node.ENABLE_PICK_REPORTING);
      
-    //PJPJPJ make an outline
+    // make an outline
     ignoreDrawingMode = false;
     
     // Add wall bottom, baseboard, main and top shapes to branch for left and right side
@@ -141,11 +140,11 @@ public class Wall3D extends Object3DBranch {
     wallShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
     wallShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     
-    //PJPJPJPJ outlines aren't pickable obviously
+    // outlines aren't pickable obviously
     if (!outline) 
     	wallShape.setPickable(true);
     
-    //PJPJPJPJ stencil based outlining
+    // stencil based outlining
     Appearance wallAppearance;
    
     int outlineStencilMask = Object3DBranch.WALL_STENCIL_MASK;
@@ -155,32 +154,30 @@ public class Wall3D extends Object3DBranch {
       wallAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
       wallAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
       wallAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
-    //PJPJ for outlines
-		renderingAttributes.setStencilEnable(true);
-		renderingAttributes.setStencilWriteMask(outlineStencilMask);
-		renderingAttributes.setStencilFunction(RenderingAttributes.NOT_EQUAL, outlineStencilMask, outlineStencilMask);
-		renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_KEEP, //
-				RenderingAttributes.STENCIL_KEEP, //
-				RenderingAttributes.STENCIL_KEEP);
-		//geoms often have colors in verts
-		renderingAttributes.setIgnoreVertexColors(true);
-		// draw it even when hidden
-		renderingAttributes.setDepthBufferEnable(false);
-		renderingAttributes.setDepthTestFunction(RenderingAttributes.ALWAYS);	
-		renderingAttributes.setVisible(false);
+      // for outlines
+	  renderingAttributes.setStencilEnable(true);
+	  renderingAttributes.setStencilWriteMask(outlineStencilMask);
+	  renderingAttributes.setStencilFunction(RenderingAttributes.NOT_EQUAL, outlineStencilMask, outlineStencilMask);
+	  renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_KEEP, //
+			RenderingAttributes.STENCIL_KEEP, //
+			RenderingAttributes.STENCIL_KEEP);
+	  //geoms often have colors in verts
+	  renderingAttributes.setIgnoreVertexColors(true);
+	  // draw it even when hidden
+	  renderingAttributes.setDepthBufferEnable(false);
+	  renderingAttributes.setDepthTestFunction(RenderingAttributes.ALWAYS);	
+	  renderingAttributes.setVisible(false);
 		
     } else {
       wallAppearance = new SimpleShaderAppearance();
+      ((SimpleShaderAppearance)wallAppearance).setUpdatableCapabilities();
       wallAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
       wallAppearance.setMaterial(DEFAULT_MATERIAL);      
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
       wallAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
-
-      
-      ((SimpleShaderAppearance)wallAppearance).setUpdatableCapabilities();
-      
-      //PJPJ for outlines
+  
+      // for outlines
       renderingAttributes.setStencilEnable(false);
       renderingAttributes.setStencilWriteMask(outlineStencilMask);
       renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
@@ -190,8 +187,7 @@ public class Wall3D extends Object3DBranch {
       
       renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);
     }
-    
-    
+        
     wallShape.setAppearance(wallAppearance);
     wallAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
     TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
@@ -200,7 +196,6 @@ public class Wall3D extends Object3DBranch {
     wallAppearance.setTransparencyAttributes(transparencyAttributes);
     wallAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
     renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-
     
     wallAppearance.setRenderingAttributes(renderingAttributes);
     return wallShape;
@@ -298,16 +293,12 @@ public class Wall3D extends Object3DBranch {
           }
         }     */
     	
-		//PJPJPJPJ
 		// Now put all geometries into one large geometry array for better rendering performance
-		if (wallGeometries[i].size() > 0)
-		{
+		if (wallGeometries[i].size() > 0) {
 			GeometryInfo gi = GeometryMerger.mergeGeometryArray(((List<GeometryArray>) wallGeometries[i]));
-			//new Stripifier().stripify(gi);
 			Geometry wallGeometry = makePickable(gi.getIndexedGeometryArray(true,true,true,true,true));			
 			wallFilledShapes[i].addGeometry(wallGeometry);
-			if (wallOutlineShapes[i] != null)
-			{
+			if (wallOutlineShapes[i] != null) {
 				wallOutlineShapes[i].addGeometry(wallGeometry);
 			}			
 		}
@@ -390,11 +381,10 @@ public class Wall3D extends Object3DBranch {
       if (pieceElevation + piece.getHeight() > wallElevation
           && pieceElevation < maxTopElevation) {
     	  
-	    //PJPJ Area intersection is WILDLY slow, like madly slow
+	    // Area intersection is WILDLY slow, like madly slow
 	    // so fast bounds intersects to short cut out
 	    Shape pieceShape = getShape(piece.getPoints());
-	    if(pieceShape.intersects(wallBounds))
-	    {    	
+	    if(pieceShape.intersects(wallBounds)) {    	
 	        //Area pieceArea = new Area(getShape(piece.getPoints()));
 	    	Area pieceArea = new Area(pieceShape);
 	        Area intersectionArea = new Area(wallShape);
@@ -706,16 +696,13 @@ public class Wall3D extends Object3DBranch {
         }
       }
     }
-	for (Geometry g : bottomGeometries)
-	{
+	for (Geometry g : bottomGeometries) {
 		makePickable(g);
 	}
-	for (Geometry g : sideGeometries)
-	{
+	for (Geometry g : sideGeometries) {
 		 makePickable(g);
 	}
-	for (Geometry g : topGeometries)
-	{
+	for (Geometry g : topGeometries) {
 		 makePickable(g);
 	}
   }
@@ -906,10 +893,7 @@ public class Wall3D extends Object3DBranch {
         halfThicknessSq = (wall.getThickness() * wall.getThickness()) / 4;
       }
       TexCoord2f [] textureCoords = new TexCoord2f [coords.size()];
-      float textureWidth = texture.getWidth();
-      float textureHeight = texture.getHeight();
-      float minElevationTextureCoords = minElevation / textureHeight;
-      TexCoord2f firstTextureCoords = new TexCoord2f(0, minElevationTextureCoords);
+      TexCoord2f firstTextureCoords = new TexCoord2f(0, minElevation);
       int j = 0;
       // Tolerate more error with round walls since arc points are approximative
       float epsilon = arcCircleCenter == null 
@@ -928,19 +912,19 @@ public class Wall3D extends Object3DBranch {
             float secondHorizontalTextureCoords;
             if (arcCircleCenter == null) {
               firstHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint [0], textureReferencePoint [1], 
-                  points [index][0], points [index][1]) / textureWidth;
+                  points [index][0], points [index][1]);
               secondHorizontalTextureCoords = (float)Point2D.distance(textureReferencePoint [0], textureReferencePoint [1], 
-                  points [nextIndex][0], points [nextIndex][1]) / textureWidth;
+                  points [nextIndex][0], points [nextIndex][1]);
             } else {
               if (pointUCoordinates [index] == null) {
                 float pointAngle = (float)Math.atan2(points [index][1] - arcCircleCenter [1], points [index][0] - arcCircleCenter [0]);
                 pointAngle = adjustAngleOnReferencePointAngle(pointAngle, referencePointAngle, arcExtent);
-                pointUCoordinates [index] = (pointAngle - referencePointAngle) * arcCircleRadius / textureWidth;
+                pointUCoordinates [index] = (pointAngle - referencePointAngle) * arcCircleRadius;
               }
               if (pointUCoordinates [nextIndex] == null) {
                 float pointAngle = (float)Math.atan2(points [nextIndex][1] - arcCircleCenter [1], points [nextIndex][0] - arcCircleCenter [0]);
                 pointAngle = adjustAngleOnReferencePointAngle(pointAngle, referencePointAngle, arcExtent);
-                pointUCoordinates [nextIndex] = (pointAngle - referencePointAngle) * arcCircleRadius / textureWidth;
+                pointUCoordinates [nextIndex] = (pointAngle - referencePointAngle) * arcCircleRadius;
               }
               
               firstHorizontalTextureCoords = pointUCoordinates [index];
@@ -951,13 +935,13 @@ public class Wall3D extends Object3DBranch {
               secondHorizontalTextureCoords = -secondHorizontalTextureCoords;
             }
 
-            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, minElevationTextureCoords);
-            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, minElevationTextureCoords);
+            textureCoords1 = new TexCoord2f(firstHorizontalTextureCoords, minElevation);
+            textureCoords2 = new TexCoord2f(secondHorizontalTextureCoords, minElevation);
           } else {
             textureCoords1 = firstTextureCoords;
             float horizontalTextureCoords = (float)Point2D.distance(points [index][0], points [index][1], 
-                points [nextIndex][0], points [nextIndex][1]) / textureWidth;
-            textureCoords2 = new TexCoord2f(horizontalTextureCoords, minElevationTextureCoords);
+                points [nextIndex][0], points [nextIndex][1]);
+            textureCoords2 = new TexCoord2f(horizontalTextureCoords, minElevation);
           }
           
           if (subpartSize > 0) {
@@ -965,25 +949,23 @@ public class Wall3D extends Object3DBranch {
             for (float yMax = Math.min(top [index].y, top [nextIndex].y) - subpartSize / 2; y < yMax; y += subpartSize) {
               textureCoords [j++] = textureCoords1;
               textureCoords [j++] = textureCoords2;
-              float yTextureCoords = y / textureHeight;
-              textureCoords1 = new TexCoord2f(textureCoords1.x, yTextureCoords);
-              textureCoords2 = new TexCoord2f(textureCoords2.x, yTextureCoords);
+              textureCoords1 = new TexCoord2f(textureCoords1.x, y);
+              textureCoords2 = new TexCoord2f(textureCoords2.x, y);
               textureCoords [j++] = textureCoords2;
               textureCoords [j++] = textureCoords1;
             }
           }
           textureCoords [j++] = textureCoords1;
           textureCoords [j++] = textureCoords2;
-          textureCoords [j++] = new TexCoord2f(textureCoords2.x, top [nextIndex].y / textureHeight);
-          textureCoords [j++] = new TexCoord2f(textureCoords1.x, top [index].y / textureHeight);
+          textureCoords [j++] = new TexCoord2f(textureCoords2.x, top [nextIndex].y);
+          textureCoords [j++] = new TexCoord2f(textureCoords1.x, top [index].y);
         }
       }
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, textureCoords);
     }
     
-    //PJPJPJPJ
-    geometryInfo.convertToIndexedTriangles();
+    geometryInfo.convertToIndexedTriangles();// quads not allowed on modern pipelines
        
     // Generate normals
     NormalGenerator normalGenerator = new NormalGenerator();
@@ -991,7 +973,6 @@ public class Wall3D extends Object3DBranch {
       normalGenerator.setCreaseAngle(0);
     }
     normalGenerator.generateNormals(geometryInfo);  
-    //new Stripifier().stripify(geometryInfo);
     return makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
   }
 
@@ -1051,7 +1032,7 @@ public class Wall3D extends Object3DBranch {
       normalGenerator.setCreaseAngle(0);
     }
     normalGenerator.generateNormals(geometryInfo);
-    return makePickable(geometryInfo.getIndexedGeometryArray ());
+    return makePickable(geometryInfo.getIndexedGeometryArray());
   }
   
   /**
@@ -1076,7 +1057,7 @@ public class Wall3D extends Object3DBranch {
       normalGenerator.setCreaseAngle(0);
     }
     normalGenerator.generateNormals(geometryInfo);
-    return makePickable(geometryInfo.getIndexedGeometryArray ());
+    return makePickable(geometryInfo.getIndexedGeometryArray());
   }
   
   /**
@@ -1176,18 +1157,12 @@ public class Wall3D extends Object3DBranch {
           List<Point3f> slopingTopCoords = new ArrayList<Point3f>();        
           TexCoord2f [] textureCoords;
           List<TexCoord2f> borderTextureCoords;
-          float textureWidth;
-          float textureHeight;
           if (texture != null) {
             textureCoords = new TexCoord2f [coords.length];
             borderTextureCoords = new ArrayList<TexCoord2f>(4 * vertexCount);
-            textureWidth = texture.getWidth();
-            textureHeight = texture.getHeight();
           } else {
             textureCoords = null;
             borderTextureCoords = null;
-            textureWidth = 0;
-            textureHeight = 0;
           }
           int i = 0;
           for (float [][] areaPoints : doorOrWindowSurroundingAreasPoints) {
@@ -1197,11 +1172,11 @@ public class Wall3D extends Object3DBranch {
             if (texture != null) {
               // Compute texture coordinates of wall side according to textureReferencePoint
               float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint [0], textureReferencePoint [1], 
-                  point.x, point.z) / textureWidth;
+                  point.x, point.z);
               if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
                 horizontalTextureCoords = -horizontalTextureCoords;
               }
-              textureCoord = new TexCoord2f(horizontalTextureCoords, point.y / textureHeight);
+              textureCoord = new TexCoord2f(horizontalTextureCoords, point.y);
             }
             double distanceToTop = Line2D.ptLineDistSq(topWallPoint1.x, topWallPoint1.y, topWallPoint2.x, topWallPoint2.y, 
                 areaPoints [0][0], areaPoints [0][1]);
@@ -1237,11 +1212,11 @@ public class Wall3D extends Object3DBranch {
               TexCoord2f nextTextureCoord = null;
               if (texture != null) {
                 float horizontalTextureCoords = (float)Point2D.distance(textureReferencePoint [0], textureReferencePoint [1], 
-                    nextPoint.x, nextPoint.z) / textureWidth;
+                    nextPoint.x, nextPoint.z);
                 if (wallSide == WALL_LEFT_SIDE && texture.isLeftToRightOriented()) {
                   horizontalTextureCoords = -horizontalTextureCoords;
                 }
-                nextTextureCoord = new TexCoord2f(horizontalTextureCoords, nextPoint.y / textureHeight);
+                nextTextureCoord = new TexCoord2f(horizontalTextureCoords, nextPoint.y);
                 if (coordsList == borderCoords) {
                   borderTextureCoords.add(textureCoord);
                   borderTextureCoords.add(textureCoord);
@@ -1273,7 +1248,6 @@ public class Wall3D extends Object3DBranch {
             geometryInfo.setTextureCoordinates(0, textureCoords);
           }
           new NormalGenerator().generateNormals(geometryInfo);
-          //new Stripifier().stripify(geometryInfo);
           wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true)));
         
           if (borderCoords.size() > 0) { 
@@ -1285,11 +1259,9 @@ public class Wall3D extends Object3DBranch {
               geometryInfo.setTextureCoordinates(0, borderTextureCoords.toArray(new TexCoord2f [borderTextureCoords.size()]));
             }
             
-            //PJPJPJPJ
-            geometryInfo.convertToIndexedTriangles();
+            geometryInfo.convertToIndexedTriangles();// quads not allowed on modern pipelines
             
             new NormalGenerator(Math.PI / 2).generateNormals(geometryInfo);
-            //new Stripifier().stripify(geometryInfo);
             wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true)));
           }
           
@@ -1298,11 +1270,9 @@ public class Wall3D extends Object3DBranch {
             geometryInfo = new GeometryInfo(GeometryInfo.QUAD_ARRAY);        
             geometryInfo.setCoordinates(slopingTopCoords.toArray(new Point3f [slopingTopCoords.size()]));
             
-            //PJPJPJPJ
-            geometryInfo.convertToIndexedTriangles();
+            geometryInfo.convertToIndexedTriangles();// quads not allowed on modern pipelines
             
             new NormalGenerator().generateNormals(geometryInfo);
-            //new Stripifier().stripify(geometryInfo);
             wallGeometries.add(makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true)));
           }          
         }
