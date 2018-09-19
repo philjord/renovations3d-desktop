@@ -1896,7 +1896,7 @@ public class HomeController implements Controller {
   /**
    * Returns a map with entries containing furniture name associated to their id.
    */
-  private Map<String, String> getCatalogFurnitureNames(FurnitureCatalog catalog) {
+  public Map<String, String> getCatalogFurnitureNames(FurnitureCatalog catalog) {
     Map<String, String> furnitureNames = new HashMap<String, String>();
     for (FurnitureCategory category : catalog.getCategories()) {
       for (CatalogPieceOfFurniture piece : category.getFurniture()) {
@@ -1911,7 +1911,7 @@ public class HomeController implements Controller {
   /**
    * Renames the given <code>piece</code> from the piece name with the same id in <code>furnitureNames</code>. 
    */
-  private void renameToCatalogName(HomePieceOfFurniture piece, 
+  public void renameToCatalogName(HomePieceOfFurniture piece, 
                                    Map<String, String> furnitureNames,
                                    String groupName) {
     if (piece instanceof HomeFurnitureGroup) {
