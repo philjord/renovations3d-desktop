@@ -249,27 +249,29 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 	private void updatePieceOfFurnitureColorAndTexture(boolean waitTextureLoadingEnd) {
 		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
 		Node filledModelNode = getFilledModelNode();
-		Node filledModelChild = ((Group)filledModelNode).getChild(0);
-	  if(filledModelNode != null && filledModelChild.getUserData() != DEFAULT_BOX) {
-		if (piece.getColor() != null) {
-			setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), null, false, 
-				null, null,	new HashSet<Appearance>());
-		} else if (piece.getTexture() != null) {
-			setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(), null, waitTextureLoadingEnd,
-            new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelChild),
-				new HashSet<Appearance>());
-		} else if (piece.getModelMaterials() != null) {
-			setColorAndTexture(filledModelNode, null, null, null, piece.getModelMaterials(), waitTextureLoadingEnd,
-				new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelChild), 
-				new HashSet<Appearance>());
-		} else {
-			// Set default material and texture of model
-			setColorAndTexture(filledModelNode, null, null, piece.getShininess(), null, false, 
-				null, null, new HashSet<Appearance>());
-		}
-	  } else {
-		 System.out.println("filledModelNode == null! " + this);
-	  }
+		if(filledModelNode != null ) {
+			Node filledModelChild = ((Group)filledModelNode).getChild(0);
+			if(filledModelChild != null && filledModelChild.getUserData() != DEFAULT_BOX) {
+				if (piece.getColor() != null) {
+					setColorAndTexture(filledModelNode, piece.getColor(), null, piece.getShininess(), null, false, 
+						null, null,	new HashSet<Appearance>());
+				} else if (piece.getTexture() != null) {
+					setColorAndTexture(filledModelNode, null, piece.getTexture(), piece.getShininess(), null, waitTextureLoadingEnd,
+		            new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelChild),
+						new HashSet<Appearance>());
+				} else if (piece.getModelMaterials() != null) {
+					setColorAndTexture(filledModelNode, null, null, null, piece.getModelMaterials(), waitTextureLoadingEnd,
+						new Vector3f(piece.getWidth(), piece.getHeight(), piece.getDepth()), ModelManager.getInstance().getBounds(filledModelChild), 
+						new HashSet<Appearance>());
+				} else {
+					// Set default material and texture of model
+					setColorAndTexture(filledModelNode, null, null, piece.getShininess(), null, false, 
+						null, null, new HashSet<Appearance>());
+				}
+			}
+	    } else {
+		   System.out.println("filledModelNode == null! " + this);
+	    }
 	}
 
 	/**
