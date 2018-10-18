@@ -3298,7 +3298,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected wall with a start point 
    * at (<code>x</code>, <code>y</code>).
    */
-  private Wall getResizedWallStartAt(float x, float y) {
+  public Wall getResizedWallStartAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall
@@ -3316,7 +3316,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected wall with an end point at (<code>x</code>, <code>y</code>).
    */
-  private Wall getResizedWallEndAt(float x, float y) {
+  public Wall getResizedWallEndAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall
@@ -3344,7 +3344,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected room with a point at (<code>x</code>, <code>y</code>).
    */
-  private Room getResizedRoomAt(float x, float y) {
+  public Room getResizedRoomAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
@@ -3362,7 +3362,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected room with its name center point at (<code>x</code>, <code>y</code>).
    */
-  private Room getRoomNameAt(float x, float y) {
+  public Room getRoomNameAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
@@ -3383,7 +3383,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected room with its 
    * name angle point at (<code>x</code>, <code>y</code>).
    */
-  private Room getRoomRotatedNameAt(float x, float y) {
+  public Room getRoomRotatedNameAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
@@ -3405,7 +3405,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected room with its area center point at (<code>x</code>, <code>y</code>).
    */
-  private Room getRoomAreaAt(float x, float y) {
+  public Room getRoomAreaAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
@@ -3425,7 +3425,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected room with its 
    * area angle point at (<code>x</code>, <code>y</code>).
    */
-  private Room getRoomRotatedAreaAt(float x, float y) {
+  public Room getRoomRotatedAreaAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
@@ -3569,7 +3569,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected dimension line with an end extension line
    * at (<code>x</code>, <code>y</code>).
    */
-  private DimensionLine getResizedDimensionLineStartAt(float x, float y) {
+  public DimensionLine getResizedDimensionLineStartAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
@@ -3588,7 +3588,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected dimension line with an end extension line
    * at (<code>x</code>, <code>y</code>).
    */
-  private DimensionLine getResizedDimensionLineEndAt(float x, float y) {
+  public DimensionLine getResizedDimensionLineEndAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
@@ -3607,7 +3607,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected dimension line with a point
    * at (<code>x</code>, <code>y</code>) at its middle.
    */
-  private DimensionLine getOffsetDimensionLineAt(float x, float y) {
+  public DimensionLine getOffsetDimensionLineAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
@@ -3639,7 +3639,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected polyline with a point at (<code>x</code>, <code>y</code>).
    */
-  private Polyline getResizedPolylineAt(float x, float y) {
+  public Polyline getResizedPolylineAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Polyline
@@ -3940,7 +3940,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the items that intersects with the rectangle of (<code>x0</code>,
    * <code>y0</code>), (<code>x1</code>, <code>y1</code>) opposite corners.
    */
-  protected List<Selectable> getSelectableItemsIntersectingRectangle(float x0, float y0, float x1, float y1) {
+  public List<Selectable> getSelectableItemsIntersectingRectangle(float x0, float y0, float x1, float y1) {
     List<Selectable> items = new ArrayList<Selectable>();
     boolean basePlanLocked = this.home.isBasePlanLocked();
     for (Selectable item : getVisibleItemsAtSelectedLevel()) {
@@ -3961,7 +3961,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece.
    */
-  private HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
+  public HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
@@ -3978,7 +3978,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to elevate the piece.
    */
-  private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
+  public HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
@@ -3996,7 +3996,7 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to resize the height 
    * of the piece.
    */
-  private HomePieceOfFurniture getHeightResizedPieceOfFurnitureAt(float x, float y) {
+  public HomePieceOfFurniture getHeightResizedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
     if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
@@ -4015,7 +4015,7 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece 
    * around the pitch axis.
    */
-  private HomePieceOfFurniture getPitchRotatedPieceOfFurnitureAt(float x, float y) {
+  public HomePieceOfFurniture getPitchRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null
         && this.getView().isFurnitureSizeInPlanSupported()) {
@@ -4035,7 +4035,7 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece 
    * around the roll axis.
    */
-  private HomePieceOfFurniture getRollRotatedPieceOfFurnitureAt(float x, float y) {
+  public HomePieceOfFurniture getRollRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null
         && this.getView().isFurnitureSizeInPlanSupported()) {
@@ -4055,7 +4055,7 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to resize 
    * the width and the depth of the piece.
    */
-  private HomePieceOfFurniture getWidthAndDepthResizedPieceOfFurnitureAt(float x, float y) {
+  public HomePieceOfFurniture getWidthAndDepthResizedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
     if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
@@ -4112,7 +4112,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected light with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to resize the power of the light.
    */
-  private HomeLight getModifiedLightPowerAt(float x, float y) {
+  public HomeLight getModifiedLightPowerAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedPieceOfFurniture();
     if (selectedPiece instanceof HomeLight) {
       float margin = INDICATOR_PIXEL_MARGIN * (1 / getScale());
@@ -4129,7 +4129,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected piece of furniture with its 
    * name center point at (<code>x</code>, <code>y</code>).
    */
-  private HomePieceOfFurniture getPieceOfFurnitureNameAt(float x, float y) {
+  public HomePieceOfFurniture getPieceOfFurnitureNameAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
@@ -4146,7 +4146,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected piece of furniture with its 
    * name angle point at (<code>x</code>, <code>y</code>).
    */
-  private HomePieceOfFurniture getPieceOfFurnitureRotatedNameAt(float x, float y) {
+  public HomePieceOfFurniture getPieceOfFurnitureRotatedNameAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
       float margin = INDICATOR_PIXEL_MARGIN / getScale();
@@ -4178,7 +4178,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected label with its angle point at (<code>x</code>, <code>y</code>).
    */
-  private Label getRotatedLabelAt(float x, float y) {
+  public Label getRotatedLabelAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Label
@@ -4197,7 +4197,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected label with its elevation point at (<code>x</code>, <code>y</code>).
    */
-  private Label getElevatedLabelAt(float x, float y) {
+  public Label getElevatedLabelAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Label) {
@@ -4222,7 +4222,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to change the camera yaw angle.
    */
-  private Camera getYawRotatedCameraAt(float x, float y) {
+  public Camera getYawRotatedCameraAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera
@@ -4248,7 +4248,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to change the camera pitch angle.
    */
-  private Camera getPitchRotatedCameraAt(float x, float y) {
+  public Camera getPitchRotatedCameraAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera
@@ -4274,7 +4274,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to change the camera elevation.
    */
-  private Camera getElevatedCameraAt(float x, float y) {
+  public Camera getElevatedCameraAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera
@@ -4300,7 +4300,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected compass with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to rotate it.
    */
-  private Compass getRotatedCompassAt(float x, float y) {
+  public Compass getRotatedCompassAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Compass
@@ -4326,7 +4326,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected compass with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to resize it.
    */
-  private Compass getResizedCompassAt(float x, float y) {
+  public Compass getResizedCompassAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Compass
