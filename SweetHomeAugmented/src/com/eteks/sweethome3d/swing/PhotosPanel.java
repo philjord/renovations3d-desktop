@@ -430,26 +430,27 @@ public class PhotosPanel extends JPanel implements DialogView {
     this.statusPanel.add(this.tipLabel, TIP_CARD);
     this.tipLabel.setMinimumSize(this.tipLabel.getPreferredSize());
     JPanel progressPanel = new JPanel(new GridBagLayout());
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     progressPanel.add(this.photoComponent, new GridBagConstraints(
         0, 0, 1, 2, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     progressPanel.add(this.progressBar, new GridBagConstraints(
         1, 0, 1, 1, 1, 1, GridBagConstraints.SOUTH, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 5, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, standardGap, standardGap, 0), 0, 0));
     progressPanel.add(this.progressLabel, new GridBagConstraints(
         1, 1, 1, 1, 0, 1, GridBagConstraints.NORTH, 
-        GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, standardGap, 0, 0), 0, 0));
     this.statusPanel.add(progressPanel, PROGRESS_CARD);
     this.statusPanel.add(this.endLabel, END_CARD);
     this.endLabel.setMinimumSize(this.endLabel.getPreferredSize());
     // First row
     add(this.selectedCamerasLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     // Second row
     add(SwingTools.createScrollPane(this.selectedCamerasList), new GridBagConstraints(
         0, 1, 1, 1, 1, 1, GridBagConstraints.CENTER, 
-        GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(0, 0, standardGap, 0), 0, 0));
     // Third row
     add(this.statusPanel, new GridBagConstraints(
         0, 2, 1, 1, 1, 0, GridBagConstraints.CENTER, 

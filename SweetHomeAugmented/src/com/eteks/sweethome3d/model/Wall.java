@@ -72,6 +72,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   private Level               level;
   
   private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
+  private transient Shape      shapeCache;
   private transient float []   arcCircleCenterCache;
   private transient float [][] pointsCache;
   private transient float [][] pointsIncludingBaseboardsCache;
@@ -250,7 +251,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    */
   public void setArcExtent(Float arcExtent) {
     if (arcExtent != this.arcExtent
-        || (arcExtent != null && !arcExtent.equals(this.arcExtent))) {
+        && (arcExtent == null || !arcExtent.equals(this.arcExtent))) {
       Float oldArcExtent = this.arcExtent;
       this.arcExtent = arcExtent;
       clearPointsCache();
@@ -440,7 +441,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    */
   public void setHeight(Float height) {
     if (height != this.height
-        || (height != null && !height.equals(this.height))) {
+        && (height == null || !height.equals(this.height))) {
       Float oldHeight = this.height;
       this.height = height;
       this.propertyChangeSupport.firePropertyChange(Property.HEIGHT.name(), 
@@ -761,6 +762,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    * Clears the points cache of this wall and of the walls attached to it.
    */
   private void clearPointsCache() {
+    this.shapeCache = null;
     this.pointsCache = null;
     this.pointsIncludingBaseboardsCache = null;
     if (this.wallAtStart != null ) {
@@ -1123,6 +1125,24 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
   }
   
   /**
+   * Returns <code>true</code> if the middle point of this wall is the point at (<code>x</code>, <code>y</code>)
+   * with a given <code>margin</code>.
+   */
+  public boolean isMiddlePointAt(float x, float y, float margin) {
+    float [][] wallPoints = getPoints();
+    int leftSideMiddlePointIndex = wallPoints.length / 4;
+    int rightSideMiddlePointIndex = wallPoints.length - 1 - leftSideMiddlePointIndex;
+    Line2D middleLine = wallPoints.length % 4 == 0
+        ? new Line2D.Float((wallPoints [leftSideMiddlePointIndex - 1][0] + wallPoints [leftSideMiddlePointIndex][0]) / 2,
+            (wallPoints [leftSideMiddlePointIndex - 1][1] + wallPoints [leftSideMiddlePointIndex][1]) / 2,
+            (wallPoints [rightSideMiddlePointIndex][0] + wallPoints [rightSideMiddlePointIndex + 1][0]) / 2,
+            (wallPoints [rightSideMiddlePointIndex][1] + wallPoints [rightSideMiddlePointIndex + 1][1]) / 2)
+        : new Line2D.Float(wallPoints [leftSideMiddlePointIndex][0], wallPoints [leftSideMiddlePointIndex][1],
+            wallPoints [rightSideMiddlePointIndex][0], wallPoints [rightSideMiddlePointIndex][1]);
+    return containsShapeAtWithMargin(middleLine, x, y, margin);
+  }
+
+  /**
    * Returns <code>true</code> if this wall start line contains 
    * the point at (<code>x</code>, <code>y</code>)
    * with a given <code>margin</code> around the wall start line.
@@ -1163,14 +1183,17 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
    * Returns the shape matching this wall.
    */
   private Shape getShape(boolean includeBaseboards) {
-    float [][] wallPoints = getPoints(includeBaseboards);
-    GeneralPath wallPath = new GeneralPath();
-    wallPath.moveTo(wallPoints [0][0], wallPoints [0][1]);
-    for (int i = 1; i < wallPoints.length; i++) {
-      wallPath.lineTo(wallPoints [i][0], wallPoints [i][1]);
+    if (this.shapeCache == null) {
+      float [][] wallPoints = getPoints(includeBaseboards);
+      GeneralPath wallPath = new GeneralPath();
+      wallPath.moveTo(wallPoints [0][0], wallPoints [0][1]);
+      for (int i = 1; i < wallPoints.length; i++) {
+        wallPath.lineTo(wallPoints [i][0], wallPoints [i][1]);
+      }
+      wallPath.closePath();
+      this.shapeCache = wallPath;
     }
-    wallPath.closePath();
-    return wallPath;
+    return this.shapeCache;
   }
   
   /**
@@ -1220,6 +1243,7 @@ public class Wall extends HomeObject implements Selectable, Elevatable {
     clone.wallAtStart = null;
     clone.wallAtEnd = null;
     clone.level = null;
+    clone.shapeCache = null;
     clone.pointsCache = null;
     clone.pointsIncludingBaseboardsCache = null;
     return clone;

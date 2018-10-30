@@ -291,7 +291,8 @@ public class TextureManager {
         double cos = Math.cos(angle);
         double sin = Math.sin(angle);
         BufferedImage rotatedImage = new BufferedImage((int)Math.round(Math.abs(image.getWidth() * cos) + Math.abs(image.getHeight() * sin)), 
-            (int)Math.round(Math.abs(image.getWidth() * sin) + Math.abs(image.getHeight() * cos)), BufferedImage.TYPE_INT_ARGB);
+            (int)Math.round(Math.abs(image.getWidth() * sin) + Math.abs(image.getHeight() * cos)), 
+            BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2D = (Graphics2D)rotatedImage.getGraphics();
         g2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2D.setPaint(new TexturePaint(image, 

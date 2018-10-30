@@ -987,23 +987,8 @@ public class OBJLoader extends LoaderBase implements Loader {
     "sharpness 60.0000\n";
 	private final static Map<String, Appearance> DEFAULT_APPEARANCES;
 
-	
-	 private final static boolean USE_POW_TABLE = true;
-
-	    // Precompute Math.pow(10, n) as table:
-	    private final static int POW_RANGE = (USE_POW_TABLE) ? 256 : 0;
-	    private final static double[] POS_EXPS = new double[POW_RANGE];
-	    private final static double[] NEG_EXPS = new double[POW_RANGE];
-
-	    static {
-	        for (int i = 0; i < POW_RANGE; i++) {
-	            POS_EXPS[i] = Math.pow(10., i);
-	            NEG_EXPS[i] = Math.pow(10., -i);
-	        }
-	        
-	    
-		try
-		{
+	static {
+    try {
 			DEFAULT_APPEARANCES = parseMaterialStream(new StringReader(JAVA_3D_MATERIALS), null, null);
 		} catch (IOException ex) {
 			// Can't happen because materials are read from a string
@@ -1177,8 +1162,50 @@ public class OBJLoader extends LoaderBase implements Loader {
 		for (Group group : this.groups.values())
 		{
 			// special group names used by  ModelManager.updateShapeNamesAndWindowPanesTransparency(Scene scene)			
-			if (group.name.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX) || group.name.startsWith(ModelManager.MIRROR_SHAPE_PREFIX)
-					|| group.name.startsWith(ModelManager.LIGHT_SHAPE_PREFIX))
+			if (group.name.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX) 
+					|| group.name.startsWith(ModelManager.MIRROR_SHAPE_PREFIX)
+					|| group.name.startsWith(ModelManager.LIGHT_SHAPE_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_ABDOMEN_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_CHEST_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_PELVIS_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_NECK_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_HEAD_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_SHOULDER_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_ARM_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_ELBOW_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_FOREARM_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_WRIST_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_HAND_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_HIP_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_THIGH_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_KNEE_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_LEG_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_ANKLE_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_FOOT_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_SHOULDER_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_ARM_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_ELBOW_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_FOREARM_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_WRIST_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_HAND_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_HIP_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_THIGH_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_KNEE_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_LEG_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_ANKLE_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_FOOT_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_ABDOMEN_CHEST_PREFIX)
+					|| group.name.startsWith(ModelManager.MANNEQUIN_ABDOMEN_PELVIS_PREFIX)
+					|| group.name.startsWith(ModelManager.BALL_PREFIX)
+					|| group.name.startsWith(ModelManager.ARM_ON_BALL_PREFIX)
+					|| group.name.startsWith(ModelManager.HINGE_PREFIX)
+					|| group.name.startsWith(ModelManager.OPENING_ON_HINGE_PREFIX)
+					|| group.name.startsWith(ModelManager.WINDOW_PANE_ON_HINGE_PREFIX)
+					|| group.name.startsWith(ModelManager.UNIQUE_RAIL_PREFIX)
+					|| group.name.startsWith(ModelManager.RAIL_PREFIX)
+					|| group.name.startsWith(ModelManager.OPENING_ON_RAIL_PREFIX)
+					|| group.name.startsWith(ModelManager.WINDOW_PANE_ON_RAIL_PREFIX)
+					|| group.name.endsWith(ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX))
 			{
 				String c = group.name + unique++;
 
@@ -1267,7 +1294,7 @@ public class OBJLoader extends LoaderBase implements Loader {
 				if (firstFaceHasNormalIndices) {
 					int[] normalIndices = new int[indexCount];
 					for (int j = 0, destIndex = 0; j < geometryCount; j++) {
-						int[] faceNormalIndices = ((Face) geometries.get(j)).getNormalIndices();
+						int [] faceNormalIndices = ((Face)geometries.get(j)).getNormalIndices();
 						System.arraycopy(faceNormalIndices, 0, normalIndices, destIndex, faceNormalIndices.length);
 						destIndex += faceNormalIndices.length;
 					}
@@ -1304,7 +1331,7 @@ public class OBJLoader extends LoaderBase implements Loader {
 
 			// Clone appearance to avoid sharing it
 			if (appearance != null) {
-				appearance = (Appearance) appearance.cloneNodeComponent(false);// PJPJ why?
+            	appearance = (Appearance)appearance.cloneNodeComponent(false);
 				// Create texture coordinates if geometry doesn't define its own coordinates 
 				// and appearance contains a texture 
 				if (!firstGeometryHasTextureCoordinateIndices 
@@ -1313,7 +1340,6 @@ public class OBJLoader extends LoaderBase implements Loader {
 				}
 			}
 			Shape3D shape = new Shape3D(geometryArray, appearance);
-			shape.setName("shape with app " + appearance.getName());
 			sceneRoot.addChild(shape);
 
 			scene.addNamedObject(groupClassifier, shape);
@@ -1417,7 +1443,8 @@ public class OBJLoader extends LoaderBase implements Loader {
 				textureCoordinateIndices.clear();
 			}
 			if (vertexIndices.size() > 1) {
-				this.currentGroup.addGeometry(new Line(vertexIndices, textureCoordinateIndices, this.currentMaterial));
+        		this.currentGroup.addGeometry(new Line(vertexIndices, textureCoordinateIndices,
+            		this.currentMaterial));
 			}
 		} else if ("f".equals(tokenizer.sval)) {
 			tokenizer.ordinaryChar('/');
@@ -1651,8 +1678,8 @@ public class OBJLoader extends LoaderBase implements Loader {
 
 		if (in != null) {
 			try {
-				this.appearances
-						.putAll(parseMaterialStream(new BufferedReader(new InputStreamReader(in, "ISO-8859-1")), baseUrl, this.useCaches));
+        		this.appearances.putAll(parseMaterialStream(
+            		new BufferedReader(new InputStreamReader(in, "ISO-8859-1")), baseUrl, this.useCaches));
 				return true;
 			} catch (IOException ex) {
 				throw new ParsingErrorException(ex.getMessage());
@@ -1720,22 +1747,26 @@ public class OBJLoader extends LoaderBase implements Loader {
 			}
 		} else if ("Ka".equals(tokenizer.sval)) {
 			// Read ambient color Ka r g b
-			Color3f ambientColor = new Color3f(parseNumber(tokenizer), parseNumber(tokenizer), parseNumber(tokenizer));
+			Color3f ambientColor = new Color3f(parseNumber(tokenizer),
+				parseNumber(tokenizer), parseNumber(tokenizer));
 			if (currentAppearance != null) {
 				Material material = getMaterial(currentAppearance);
 				material.setAmbientColor(ambientColor);
 			}
 		} else if ("Kd".equals(tokenizer.sval)) {
 			// Read diffuse or emissive color Kd r g b
-			Color3f diffuseColor = new Color3f(parseNumber(tokenizer), parseNumber(tokenizer), parseNumber(tokenizer));
+			Color3f diffuseColor = new Color3f(parseNumber(tokenizer),
+				parseNumber(tokenizer), parseNumber(tokenizer));
 			if (currentAppearance != null) {
 				OBJMaterial material = getMaterial(currentAppearance);
 				material.setDiffuseColor(diffuseColor);
-				currentAppearance.setColoringAttributes(new ColoringAttributes(diffuseColor, ColoringAttributes.SHADE_GOURAUD));
+				currentAppearance.setColoringAttributes(
+					new ColoringAttributes(diffuseColor, ColoringAttributes.SHADE_GOURAUD));
 			}
 		} else if ("Ks".equals(tokenizer.sval)) {
 			// Read specular color Ks r g b
-			Color3f specularColor = new Color3f(parseNumber(tokenizer), parseNumber(tokenizer), parseNumber(tokenizer));
+			Color3f specularColor = new Color3f(parseNumber(tokenizer), 
+				parseNumber(tokenizer), parseNumber(tokenizer));
 			if (currentAppearance != null) {
 				OBJMaterial material = getMaterial(currentAppearance);
 				if (!material.isIlluminationModelSet() 
@@ -1932,7 +1963,8 @@ public class OBJLoader extends LoaderBase implements Loader {
 		}
 
 		public boolean hasTextureCoordinateIndices() {
-			return this.textureCoordinateIndices != null && this.textureCoordinateIndices.length > 0;
+			return this.textureCoordinateIndices != null 
+				&& this.textureCoordinateIndices.length > 0;
 		}
 
 		public String getMaterial() {
@@ -1990,7 +2022,8 @@ public class OBJLoader extends LoaderBase implements Loader {
 		}
 
 		public boolean hasNormalIndices() {
-			return this.normalIndices != null && this.normalIndices.length > 0;
+			return this.normalIndices != null 
+				&& this.normalIndices.length > 0;
 		}
 
 		@Override
@@ -2026,8 +2059,7 @@ public class OBJLoader extends LoaderBase implements Loader {
 		}
 	}
 	
-	// see https://github.com/bourgesl/jnumbers/blob/master/src/main/java/org/jnumbers/NumberParser.java
-	
+	// see https://github.com/bourgesl/jnumbers/blob/master/src/main/java/org/jnumbers/NumberParser.java	
 	public static double getDouble(final String csq) throws NumberFormatException {
         return getDouble(csq, 0, csq.length());
     }
@@ -2129,7 +2161,7 @@ public class OBJLoader extends LoaderBase implements Loader {
 
                 if (numberLength > 0) {
                     // TODO: try factorizing pow10 with exponent below: only 1 long + operation
-                    number += getPow10(-numberLength) * dval;
+                    number += Power.getPow10(-numberLength) * dval;
                     error = false;
                 }
             }
@@ -2179,9 +2211,9 @@ public class OBJLoader extends LoaderBase implements Loader {
                         // effects of denormalization.
                         if (exponent > -300) {
                             // TODO: cache Math.pow ?? see web page
-                            number *= getPow10(exponent);
+                            number *= Power.getPow10(exponent);
                         } else {
-                            number = 1.0E-300 * (number * getPow10(exponent + 300));
+                            number = 1.0E-300 * (number * Power.getPow10(exponent + 300));
                         }
                     }
                 }
@@ -2193,8 +2225,22 @@ public class OBJLoader extends LoaderBase implements Loader {
         }
 
         return (numSign) ? number : -number;
-}
-   
+    }
+    
+    private final static boolean USE_POW_TABLE = true;    
+    private static class Power {
+
+    // Precompute Math.pow(10, n) as table:
+    private final static int POW_RANGE = (USE_POW_TABLE) ? 256 : 0;
+    private final static double[] POS_EXPS = new double[POW_RANGE];
+    private final static double[] NEG_EXPS = new double[POW_RANGE];
+
+    static {
+        for (int i = 0; i < POW_RANGE; i++) {
+            POS_EXPS[i] = Math.pow(10., i);
+            NEG_EXPS[i] = Math.pow(10., -i);
+        }
+    }   
 
     // Calculate the value of the specified exponent - reuse a precalculated value if possible
     private final static double getPow10(final int exp) {
@@ -2208,5 +2254,6 @@ public class OBJLoader extends LoaderBase implements Loader {
             }
         }
         return Math.pow(10., exp);
-}
+    }
+    }
 }

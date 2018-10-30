@@ -23,6 +23,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,7 +50,8 @@ public abstract class UserPreferences {
    * The properties of user preferences that may change. <code>PropertyChangeListener</code>s added 
    * to user preferences will be notified under a property name equal to the string value of one these properties.
    */
-	public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME, 
+  public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, CURRENCY, VALUE_ADDED_TAX_ENABLED, DEFAULT_VALUE_ADDED_TAX_PERCENTAGE,
+                        MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME,
         FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
         NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_WALL_SIDEBOARD_THICKNESS, NEW_WALL_SIDEBOARD_HEIGHT, NEW_FLOOR_THICKNESS, 
         RECENT_HOMES, IGNORED_ACTION_TIP, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
@@ -85,7 +87,7 @@ public abstract class UserPreferences {
     DEFAULT_SUPPORTED_LANGUAGES = defaultSupportedLanguages;
   }
   
-  private PropertyChangeSupport          propertyChangeSupport;
+  private PropertyChangeSupport          propertyChangeSupport;//not final 
   private final Map<Class<?>, ResourceBundle>  classResourceBundles;
   private final Map<String, ResourceBundle>    resourceBundles;
 
@@ -96,6 +98,8 @@ public abstract class UserPreferences {
   private String []        supportedLanguages;
   private String           language;
   private String           currency;
+  private boolean          valueAddedTaxEnabled;
+  private BigDecimal       defaultValueAddedTaxPercentage;
   private LengthUnit       unit;
   private boolean          furnitureCatalogViewedInTree = true;
   private boolean          aerialViewCenteredOnSelectionEnabled;
@@ -105,6 +109,7 @@ public abstract class UserPreferences {
   private boolean          rulersVisible       = true;
   private boolean          gridVisible         = true;
   private String           defaultFontName;
+  private boolean          drawingModeEnabled;
   private boolean          furnitureViewedFromTop;
   private int              furnitureModelIconSize = 128;
   private boolean          roomFloorColoredOrTextured;
@@ -138,6 +143,11 @@ public abstract class UserPreferences {
     this.recentTextures = Collections.emptyList();
     this.homeExamples = Collections.emptyList();
 
+    try {
+      this.drawingModeEnabled = Boolean.getBoolean("com.eteks.sweethome3d.j3d.drawingModeEnabled");
+    } catch (SecurityException ex) {
+    }
+
     this.supportedLanguages = DEFAULT_SUPPORTED_LANGUAGES;
     this.defaultCountry = Locale.getDefault().getCountry();    
     String defaultLanguage = Locale.getDefault().getLanguage();
@@ -161,8 +171,7 @@ public abstract class UserPreferences {
   }
 
   //PJPJPJ to allow a singleton prefs to drop it's references to a loaded home on a reload of a new home
-  public void clearPropertyChangeListeners()
-  {
+  public void clearPropertyChangeListeners() {
 	  this.propertyChangeSupport = new PropertyChangeSupport(this);
   }
   
@@ -495,17 +504,7 @@ public abstract class UserPreferences {
           }
         };
     } catch (IOException ex) {
-      return new Iterator<String>(){
-		@Override
-		public boolean hasNext()
-		{return false;}
-		@Override
-		public String next()
-		{return null;}
-		@Override
-		public void remove()
-		{			
-		}};
+      return Collections.<String>emptyList().iterator();
     }
   }
 
@@ -519,7 +518,7 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Returns the default currency in use, noted with ISO 4217 code, or <code>null</code> 
+   * Returns the currency in use, noted with ISO 4217 code, or <code>null</code>
    * if prices aren't used in application.
    */
   public String getCurrency() {
@@ -527,12 +526,63 @@ public abstract class UserPreferences {
   }
 
   /**
-   * Sets the default currency in use.
+   * Sets the currency in use.
    */
-  protected void setCurrency(String currency) {
-    this.currency = currency;
+  public void setCurrency(String currency) {
+    if (currency != this.currency
+        && (currency == null || !currency.equals(this.currency))) {
+      String oldCurrency = this.currency;
+      this.currency = currency;
+      this.propertyChangeSupport.firePropertyChange(Property.CURRENCY.name(), oldCurrency, currency);
+
+    }
   }
     
+  /**
+   * Returns <code>true</code> if Value Added Tax should be taken in account in prices.
+   * @since 6.0
+   */
+  public boolean isValueAddedTaxEnabled() {
+    return this.valueAddedTaxEnabled;
+  }
+
+  /**
+   * Sets whether Value Added Tax should be taken in account in prices.
+   * @param valueAddedTaxEnabled if <code>true</code> VAT will be added to prices.
+   * @since 6.0
+   */
+  public void setValueAddedTaxEnabled(boolean valueAddedTaxEnabled) {
+    if (this.valueAddedTaxEnabled != valueAddedTaxEnabled) {
+      this.valueAddedTaxEnabled = valueAddedTaxEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.VALUE_ADDED_TAX_ENABLED.name(),
+          !valueAddedTaxEnabled, valueAddedTaxEnabled);
+    }
+  }
+
+  /**
+   * Returns the Value Added Tax percentage applied to prices by default, or <code>null</code>
+   * if VAT isn't taken into account in the application.
+   * @since 6.0
+   */
+  public BigDecimal getDefaultValueAddedTaxPercentage() {
+    return this.defaultValueAddedTaxPercentage;
+  }
+
+  /**
+   * Sets the Value Added Tax percentage applied to prices by default.
+   * @param valueAddedTaxPercentage the default VAT percentage
+   * @since 6.0
+   */
+  public void setDefaultValueAddedTaxPercentage(BigDecimal valueAddedTaxPercentage) {
+    if (valueAddedTaxPercentage != this.defaultValueAddedTaxPercentage
+        && (valueAddedTaxPercentage == null || !valueAddedTaxPercentage.equals(this.defaultValueAddedTaxPercentage))) {
+      BigDecimal oldValueAddedTaxPercentage = this.defaultValueAddedTaxPercentage;
+      this.defaultValueAddedTaxPercentage = valueAddedTaxPercentage;
+      this.propertyChangeSupport.firePropertyChange(Property.DEFAULT_VALUE_ADDED_TAX_PERCENTAGE.name(), oldValueAddedTaxPercentage, valueAddedTaxPercentage);
+
+    }
+  }
+
   /**
    * Returns <code>true</code> if the furniture catalog should be viewed in a tree.
    * @since 2.3
@@ -679,6 +729,15 @@ public abstract class UserPreferences {
     }
   }
   
+  /**
+   * Returns <code>true</code> is {@link HomeEnvironment#getDrawingMode() drawing mode}
+   * should be taken into account.
+   * @since 6.0
+   */
+  public boolean isDrawingModeEnabled() {
+    return this.drawingModeEnabled;
+  }
+
   /**
    * Returns the name of the font that should be used by default or <code>null</code> 
    * if the default font should be the default one in the application.

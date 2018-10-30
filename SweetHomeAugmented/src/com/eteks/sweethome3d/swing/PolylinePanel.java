@@ -60,8 +60,11 @@ public class PolylinePanel extends JPanel implements DialogView {
   private JComboBox      joinStyleComboBox;
   private JLabel         dashStyleLabel;
   private JComboBox      dashStyleComboBox;
+  private JLabel           dashOffsetLabel;
+  private JSpinner         dashOffsetSpinner;
   private JLabel         colorLabel;
   private ColorButton    colorButton;
+  private NullableCheckBox visibleIn3DViewCheckBox;
   private String         dialogTitle;
   
   /**
@@ -86,7 +89,7 @@ public class PolylinePanel extends JPanel implements DialogView {
     this.thicknessLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         PolylinePanel.class, "thicknessLabel.text", preferences.getLengthUnit().getName()));
     final NullableSpinner.NullableSpinnerLengthModel thicknessSpinnerModel = 
-        new NullableSpinner.NullableSpinnerLengthModel(preferences, preferences.getLengthUnit().getMinimumLength(), 20f);
+        new NullableSpinner.NullableSpinnerLengthModel(preferences, preferences.getLengthUnit().getMinimumLength(), 50f);
     this.thicknessSpinner = new NullableSpinner(thicknessSpinnerModel);
     thicknessSpinnerModel.setNullable(controller.getThickness() == null);
     thicknessSpinnerModel.setLength(controller.getThickness());
@@ -114,6 +117,7 @@ public class PolylinePanel extends JPanel implements DialogView {
     }
     this.arrowsStyleComboBox = new JComboBox(new DefaultComboBoxModel(arrowsStyles));
     this.arrowsStyleComboBox.setMaximumRowCount(arrowsStyles.length);
+    final float resolutionScale = SwingTools.getResolutionScale();
     this.arrowsStyleComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(final JList list, 
@@ -123,22 +127,23 @@ public class PolylinePanel extends JPanel implements DialogView {
               list, "", index, isSelected, cellHasFocus);
           setIcon(new Icon() {
               public int getIconWidth() {
-                return 64;
+                return Math.round(64 * resolutionScale);
               }
         
               public int getIconHeight() {
-                return 16;
+                return Math.round(16 * resolutionScale);
               }
         
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (arrowsStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
+                  g2D.scale(resolutionScale, resolutionScale);
                   if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
                     g2D.translate(0, 2);
                   }
                   g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                   g2D.setColor(list.getForeground());
-                  int iconWidth = getIconWidth();
+                  int iconWidth = 64;
                   g2D.setStroke(new BasicStroke(2));
                   g2D.drawLine(6, 8, iconWidth - 6, 8);
                   switch (arrowsStyle.getStartArrowStyle()) {
@@ -229,16 +234,17 @@ public class PolylinePanel extends JPanel implements DialogView {
               list, "", index, isSelected, cellHasFocus);
           setIcon(new Icon() {
               public int getIconWidth() {
-                return 64;
+                return Math.round(64 * resolutionScale);
               }
         
               public int getIconHeight() {
-                return 16;
+                return Math.round(16 * resolutionScale);
               }
         
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (joinStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
+                  g2D.scale(resolutionScale, resolutionScale);
                   if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
                     g2D.translate(0, 2);
                   }
@@ -275,14 +281,14 @@ public class PolylinePanel extends JPanel implements DialogView {
     // Create dash style label and combo box bound to controller DASH_STYLE property
     this.dashStyleLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
         PolylinePanel.class, "dashStyleLabel.text"));    
-    Polyline.DashStyle [] dashStyles = Polyline.DashStyle.values();
-    if (controller.getDashStyle() == null) {
-      List<Polyline.DashStyle> dashStylesList = new ArrayList<Polyline.DashStyle>();
-      dashStylesList.add(null);
-      dashStylesList.addAll(Arrays.asList(dashStyles));
-      dashStyles = dashStylesList.toArray(new Polyline.DashStyle [dashStylesList.size()]);
+    List<Polyline.DashStyle> dashStyles = new ArrayList<Polyline.DashStyle>(Arrays.asList(Polyline.DashStyle.values()));
+    if (controller.getDashStyle() != Polyline.DashStyle.CUSTOMIZED) {
+      dashStyles.remove(Polyline.DashStyle.CUSTOMIZED);
     }
-    this.dashStyleComboBox = new JComboBox(new DefaultComboBoxModel(dashStyles));
+    if (controller.getDashStyle() == null) {
+      dashStyles.add(0, null);
+    }
+    this.dashStyleComboBox = new JComboBox(new DefaultComboBoxModel(dashStyles.toArray(new Polyline.DashStyle [dashStyles.size()])));
     this.dashStyleComboBox.setRenderer(new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(final JList list, 
@@ -292,22 +298,25 @@ public class PolylinePanel extends JPanel implements DialogView {
               list, "", index, isSelected, cellHasFocus);
           setIcon(new Icon() {
               public int getIconWidth() {
-                return 64;
+                return Math.round(64 * resolutionScale);
               }
         
               public int getIconHeight() {
-                return 16;
+                return Math.round(16 * resolutionScale);
               }
         
               public void paintIcon(Component c, Graphics g, int x, int y) {
                 if (dashStyle != null) {
                   Graphics2D g2D = (Graphics2D)g;
+                  g2D.scale(resolutionScale, resolutionScale);
                   if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
                     g2D.translate(0, 2);
                   }
                   g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                   g2D.setColor(list.getForeground());
-                  g2D.setStroke(SwingTools.getStroke(2, Polyline.CapStyle.BUTT, Polyline.JoinStyle.MITER, dashStyle));
+                  float dashOffset = controller.getDashOffset() != null ? controller.getDashOffset().floatValue() : 0;
+                  g2D.setStroke(PlanComponent.ShapeTools.getStroke(2, Polyline.CapStyle.BUTT, Polyline.JoinStyle.MITER,
+                      dashStyle != Polyline.DashStyle.CUSTOMIZED ? dashStyle.getDashPattern() : controller.getDashPattern(), dashOffset));
                   g2D.drawLine(4, 8, getIconWidth() - 4, 8);
                 }
               }
@@ -325,8 +334,32 @@ public class PolylinePanel extends JPanel implements DialogView {
         new PropertyChangeListener() {
           public void propertyChange(PropertyChangeEvent ev) {
             dashStyleComboBox.setSelectedItem(controller.getDashStyle());
+            dashOffsetSpinner.setEnabled(controller.getDashStyle() != Polyline.DashStyle.SOLID);
           }
         });
+
+    // Create dash offset label and spinner bound to controller DASH_OFFSET property
+    this.dashOffsetLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, PolylinePanel.class, "dashOffsetLabel.text"));
+    final NullableSpinner.NullableSpinnerNumberModel dashOffsetSpinnerModel =
+        new NullableSpinner.NullableSpinnerNumberModel(0f, 0f, 100f, 5f);
+    this.dashOffsetSpinner = new NullableSpinner(dashOffsetSpinnerModel);
+    dashOffsetSpinnerModel.setNullable(controller.getDashOffset() == null);
+    dashOffsetSpinnerModel.setValue(controller.getDashOffset() != null ? controller.getDashOffset() * 100 : null);
+    dashOffsetSpinnerModel.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          controller.setDashOffset(dashOffsetSpinnerModel.getValue() != null
+              ? ((Number)dashOffsetSpinnerModel.getValue()).floatValue() / 100
+              : null);
+        }
+      });
+    controller.addPropertyChangeListener(PolylineController.Property.DASH_OFFSET,
+        new PropertyChangeListener() {
+          public void propertyChange(PropertyChangeEvent ev) {
+            dashOffsetSpinnerModel.setValue(controller.getDashOffset() != null ? controller.getDashOffset() * 100 : null);
+            dashStyleComboBox.repaint();
+          }
+        });
+    this.dashOffsetSpinner.setEnabled(controller.getDashStyle() != Polyline.DashStyle.SOLID);
     
     // Create color label and its button bound to COLOR controller property
     this.colorLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
@@ -348,6 +381,27 @@ public class PolylinePanel extends JPanel implements DialogView {
           }
         });
 
+    // Create components bound to ELEVATION controller property
+    this.visibleIn3DViewCheckBox = new NullableCheckBox(SwingTools.getLocalizedLabelText(preferences,
+        PolylinePanel.class, "visibleIn3DViewCheckBox.text"));
+    if (controller.isElevationEnabled() != null) {
+      this.visibleIn3DViewCheckBox.setValue(controller.isElevationEnabled());
+    } else {
+      this.visibleIn3DViewCheckBox.setNullable(true);
+      this.visibleIn3DViewCheckBox.setValue(null);
+    }
+    this.visibleIn3DViewCheckBox.addChangeListener(new ChangeListener() {
+        public void stateChanged(ChangeEvent ev) {
+          if (visibleIn3DViewCheckBox.isNullable()) {
+            visibleIn3DViewCheckBox.setNullable(false);
+          }
+          if (Boolean.FALSE.equals(visibleIn3DViewCheckBox.getValue())) {
+            controller.setElevation(null);
+          } else {
+            controller.setElevation(0f);
+          }
+        }
+      });
 
     this.dialogTitle = preferences.getLocalizedString(PolylinePanel.class, "polyline.title");
   }
@@ -369,9 +423,14 @@ public class PolylinePanel extends JPanel implements DialogView {
       this.dashStyleLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           PolylinePanel.class, "dashStyleLabel.mnemonic")).getKeyCode());
       this.dashStyleLabel.setLabelFor(this.dashStyleComboBox);
+      this.dashOffsetLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PolylinePanel.class, "dashOffsetLabel.mnemonic")).getKeyCode());
+      this.dashOffsetLabel.setLabelFor(this.dashOffsetSpinner);
       this.colorLabel.setDisplayedMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
           PolylinePanel.class, "colorLabel.mnemonic")).getKeyCode());
       this.colorLabel.setLabelFor(this.colorButton);
+      this.visibleIn3DViewCheckBox.setMnemonic(KeyStroke.getKeyStroke(preferences.getLocalizedString(
+          PolylinePanel.class, "visibleIn3DViewCheckBox.mnemonic")).getKeyCode());
     }
   }
   
@@ -382,12 +441,13 @@ public class PolylinePanel extends JPanel implements DialogView {
     int labelAlignment = OperatingSystem.isMacOSX() 
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
-    Insets labelInsets = new Insets(0, 0, 5, 5);
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
+    Insets labelInsets = new Insets(0, 0, standardGap, standardGap);
     // First row
     add(this.thicknessLabel, new GridBagConstraints(
         0, 0, 1, 1, 0, 0, labelAlignment, 
         GridBagConstraints.NONE, labelInsets, 0, 0));
-    Insets rightComponentInsets = new Insets(0, 0, 5, 0);
+    Insets rightComponentInsets = new Insets(0, 0, standardGap, 0);
     add(this.thicknessSpinner, new GridBagConstraints(
         1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
@@ -412,13 +472,24 @@ public class PolylinePanel extends JPanel implements DialogView {
     add(this.dashStyleComboBox, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
-    // Last row
+    // Fifth row
+    add(this.dashOffsetLabel, new GridBagConstraints(
+        0, 4, 1, 1, 0, 0, labelAlignment,
+        GridBagConstraints.NONE, labelInsets, 0, 0));
+    add(this.dashOffsetSpinner, new GridBagConstraints(
+        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, rightComponentInsets, 0, 0));
+    // Sixth row
     add(this.colorLabel, new GridBagConstraints(
-        0, 4, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+        0, 5, 1, 1, 0, 0, labelAlignment,
+        GridBagConstraints.NONE, labelInsets, 0, 0));
     add(this.colorButton, new GridBagConstraints(
-        1, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, OperatingSystem.isMacOSX() ? 2  : -1, 0, OperatingSystem.isMacOSX() ? 3  : -1), 0, 0));
+        1, 5, 1, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.HORIZONTAL, new Insets(0, OperatingSystem.isMacOSX() ? 2  : -1, standardGap, OperatingSystem.isMacOSX() ? 3  : -1), 0, 0));
+    // Last row
+    add(this.visibleIn3DViewCheckBox, new GridBagConstraints(
+        0, 6, 2, 1, 0, 0, GridBagConstraints.LINE_START,
+        GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
   }
 
   /**

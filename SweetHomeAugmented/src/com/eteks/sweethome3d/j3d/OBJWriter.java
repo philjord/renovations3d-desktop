@@ -683,8 +683,7 @@ public class OBJWriter extends FilterWriter {
   	                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
   	            }
   	          }
-  			}
-  			else{
+  			} else {
           // Write vertices coordinates
           float [] vertexCoordinates = geometryArray.getCoordRefFloat();
           for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
@@ -716,7 +715,8 @@ public class OBJWriter extends FilterWriter {
               normalsDefined = writeNormal(normalsBuffer, parentTransformations, normal, index, normalIndexSubstitutes, 
                   oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
             }
-          }}
+          }
+          }
         }
       } else {
         // Write vertices coordinates
@@ -1103,9 +1103,7 @@ public class OBJWriter extends FilterWriter {
         }
       }
     
-    }
-    else
-    {
+    } else {
     
     if (textureCoordinatesGenerated) {
       if (normalsDefined) {

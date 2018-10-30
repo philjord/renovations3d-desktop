@@ -90,6 +90,7 @@ import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Camera.Lens;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.tools.OperatingSystem;
@@ -534,10 +535,11 @@ public class PhotoPanel extends JPanel implements DialogView {
     this.photoPanel = new JPanel(this.photoCardLayout);
     photoPanel.add(this.photoComponent, PHOTO_CARD);
     photoPanel.add(this.animatedWaitLabel, WAIT_CARD);
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     // First row
     add(this.photoPanel, new GridBagConstraints(
         0, 0, 3, 1, 1, 1, GridBagConstraints.CENTER, 
-        GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(0, 0, standardGap, 0), 0, 0));
     // Second row
     // Add a dummy label at left and right
     add(new JLabel(), new GridBagConstraints(
@@ -557,25 +559,25 @@ public class PhotoPanel extends JPanel implements DialogView {
     JPanel advancedPanel = new JPanel(new GridBagLayout());
     advancedPanel.add(this.dateLabel, new GridBagConstraints(
         0, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     this.dateLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.dateSpinner, new GridBagConstraints(
         1, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 10), 0, 0));
     advancedPanel.add(this.timeLabel, new GridBagConstraints(
         2, 1, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     this.timeLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.timeSpinner, new GridBagConstraints(
         3, 1, 1, 1, 1, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     advancedPanel.add(this.dayNightLabel, new GridBagConstraints(
         4, 1, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     // Last row
     advancedPanel.add(this.lensLabel, new GridBagConstraints(
         0, 2, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, standardGap), 0, 0));
     this.lensLabel.setHorizontalAlignment(labelAlignment);
     advancedPanel.add(this.lensComboBox, new GridBagConstraints(
         1, 2, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
@@ -776,8 +778,8 @@ public class PhotoPanel extends JPanel implements DialogView {
         }
         if (photoCreationExecutor != null) {
         	//PJPJPJ
-        final BufferedImage image2 = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
-        image = image2;
+          final BufferedImage image2 = new BufferedImage(imageWidth, bestImageHeight, BufferedImage.TYPE_INT_RGB);
+          image = image2;
           this.photoComponent.setImage(image);
           EventQueue.invokeLater(new Runnable() {
             public void run() {
@@ -786,17 +788,15 @@ public class PhotoPanel extends JPanel implements DialogView {
           });
           //PJPJPJ
           //photoRenderer.render(image, camera, this.photoComponent);
-          ImageObserver io =new ImageObserver(){
+          ImageObserver io = new ImageObserver() {
   			@Override
-  			public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height)
-  			{
+  			public boolean imageUpdate(Image img, int infoflags, int x, int y, int width, int height) {
   				photoComponent.setImage(image2);
   				return false;
   			}
 
   			@Override
-  			public Object getDelegate()
-  			{				 
+  			public Object getDelegate() {				 
   				return null;
   			}};
   			//PJPJPJ
@@ -806,7 +806,11 @@ public class PhotoPanel extends JPanel implements DialogView {
       } else {
         // Compute 3D view offscreen image
         HomeComponent3D homeComponent3D = new HomeComponent3D(
-            home, this.preferences, this.object3dFactory, quality == 1, null);
+            home, this.preferences, this.object3dFactory,
+            quality == 1
+            && (!this.preferences.isDrawingModeEnabled()
+                || home.getEnvironment().getDrawingMode() != HomeEnvironment.DrawingMode.OUTLINE),
+            null);
         image = homeComponent3D.getOffScreenImage(imageWidth, imageHeight);
       }
     } catch (OutOfMemoryError ex) {
@@ -863,7 +867,7 @@ public class PhotoPanel extends JPanel implements DialogView {
         // Confirm the stop if a rendering has been running for more than 30 s 
         && (!confirmStop
             || System.currentTimeMillis() - this.photoCreationStartTime < MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING
-            || JOptionPane.showConfirmDialog(getRootPane(), 
+            || JOptionPane.showConfirmDialog(this,
                   this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopCreation.message"),
                   this.preferences.getLocalizedString(PhotoPanel.class, "confirmStopCreation.title"), 
                   JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)) {

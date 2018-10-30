@@ -52,9 +52,6 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.apache.batik.parser.AWTPathProducer;
-import org.apache.batik.parser.ParseException;
-import org.apache.batik.parser.PathParser;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BoundingBox;
 import org.jogamp.java3d.Bounds;
@@ -139,6 +136,63 @@ public class ModelManager {
    * <code>Shape3D</code> user data prefix for lights. 
    */
   public static final String LIGHT_SHAPE_PREFIX = "sweethome3d_light";
+  /**
+   * <code>Node</code> user data prefix for mannequin parts.
+   */
+  public static final String    MANNEQUIN_ABDOMEN_PREFIX        = "sweethome3d_mannequin_abdomen";
+  public static final String    MANNEQUIN_CHEST_PREFIX          = "sweethome3d_mannequin_chest";
+  public static final String    MANNEQUIN_PELVIS_PREFIX         = "sweethome3d_mannequin_pelvis";
+  public static final String    MANNEQUIN_NECK_PREFIX           = "sweethome3d_mannequin_neck";
+  public static final String    MANNEQUIN_HEAD_PREFIX           = "sweethome3d_mannequin_head";
+  public static final String    MANNEQUIN_LEFT_SHOULDER_PREFIX  = "sweethome3d_mannequin_left_shoulder";
+  public static final String    MANNEQUIN_LEFT_ARM_PREFIX       = "sweethome3d_mannequin_left_arm";
+  public static final String    MANNEQUIN_LEFT_ELBOW_PREFIX     = "sweethome3d_mannequin_left_elbow";
+  public static final String    MANNEQUIN_LEFT_FOREARM_PREFIX   = "sweethome3d_mannequin_left_forearm";
+  public static final String    MANNEQUIN_LEFT_WRIST_PREFIX     = "sweethome3d_mannequin_left_wrist";
+  public static final String    MANNEQUIN_LEFT_HAND_PREFIX      = "sweethome3d_mannequin_left_hand";
+  public static final String    MANNEQUIN_LEFT_HIP_PREFIX       = "sweethome3d_mannequin_left_hip";
+  public static final String    MANNEQUIN_LEFT_THIGH_PREFIX     = "sweethome3d_mannequin_left_thigh";
+  public static final String    MANNEQUIN_LEFT_KNEE_PREFIX      = "sweethome3d_mannequin_left_knee";
+  public static final String    MANNEQUIN_LEFT_LEG_PREFIX       = "sweethome3d_mannequin_left_leg";
+  public static final String    MANNEQUIN_LEFT_ANKLE_PREFIX     = "sweethome3d_mannequin_left_ankle";
+  public static final String    MANNEQUIN_LEFT_FOOT_PREFIX      = "sweethome3d_mannequin_left_foot";
+  public static final String    MANNEQUIN_RIGHT_SHOULDER_PREFIX = "sweethome3d_mannequin_right_shoulder";
+  public static final String    MANNEQUIN_RIGHT_ARM_PREFIX      = "sweethome3d_mannequin_right_arm";
+  public static final String    MANNEQUIN_RIGHT_ELBOW_PREFIX    = "sweethome3d_mannequin_right_elbow";
+  public static final String    MANNEQUIN_RIGHT_FOREARM_PREFIX  = "sweethome3d_mannequin_right_forearm";
+  public static final String    MANNEQUIN_RIGHT_WRIST_PREFIX    = "sweethome3d_mannequin_right_wrist";
+  public static final String    MANNEQUIN_RIGHT_HAND_PREFIX     = "sweethome3d_mannequin_right_hand";
+  public static final String    MANNEQUIN_RIGHT_HIP_PREFIX      = "sweethome3d_mannequin_right_hip";
+  public static final String    MANNEQUIN_RIGHT_THIGH_PREFIX    = "sweethome3d_mannequin_right_thigh";
+  public static final String    MANNEQUIN_RIGHT_KNEE_PREFIX     = "sweethome3d_mannequin_right_knee";
+  public static final String    MANNEQUIN_RIGHT_LEG_PREFIX      = "sweethome3d_mannequin_right_leg";
+  public static final String    MANNEQUIN_RIGHT_ANKLE_PREFIX    = "sweethome3d_mannequin_right_ankle";
+  public static final String    MANNEQUIN_RIGHT_FOOT_PREFIX     = "sweethome3d_mannequin_right_foot";
+
+  public static final String    MANNEQUIN_ABDOMEN_CHEST_PREFIX  = "sweethome3d_mannequin_abdomen_chest";
+  public static final String    MANNEQUIN_ABDOMEN_PELVIS_PREFIX = "sweethome3d_mannequin_abdomen_pelvis";
+  /**
+   * <code>Node</code> user data prefix for ball / rotating  joints.
+   */
+  public static final String    BALL_PREFIX                 = "sweethome3d_ball_";
+  public static final String    ARM_ON_BALL_PREFIX          = "sweethome3d_arm_on_ball_";
+  /**
+   * <code>Node</code> user data prefix for hinge / rotating opening joints.
+   */
+  public static final String    HINGE_PREFIX                = "sweethome3d_hinge_";
+  public static final String    OPENING_ON_HINGE_PREFIX     = "sweethome3d_opening_on_hinge_";
+  public static final String    WINDOW_PANE_ON_HINGE_PREFIX = "sweethome3d_window_pane_on_hinge_";
+  /**
+   * <code>Node</code> user data prefix for rail / sliding opening joints.
+   */
+  public static final String    UNIQUE_RAIL_PREFIX          = "sweethome3d_unique_rail";
+  public static final String    RAIL_PREFIX                 = "sweethome3d_rail_";
+  public static final String    OPENING_ON_RAIL_PREFIX      = "sweethome3d_opening_on_rail_";
+  public static final String    WINDOW_PANE_ON_RAIL_PREFIX  = "sweethome3d_window_pane_on_rail_";
+  /**
+   * Deformable group suffix.
+   */
+  public static final String    DEFORMABLE_TRANSFORM_GROUP_SUFFIX = "_transformation";
   
   private static final TransparencyAttributes WINDOW_PANE_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
@@ -161,15 +215,12 @@ public class ModelManager {
   private ExecutorService           modelsLoader;
   // List of additional loader classes
   private Class<Loader> []          additionalLoaderClasses;
-  // SVG path Shapes 
-  private final Map<String, Shape>  parsedShapes;
 
   private ModelManager() {    
     // This class is a singleton
     this.loadedModelNodes = new WeakHashMap<Content, BranchGroup>();
     this.loadingModelObservers = new HashMap<Content, List<ModelObserver>>();
     this.transformedModelNodeBounds = new WeakHashMap<Content, Map<Transform3D, BoundingBox>>();
-    this.parsedShapes = new WeakHashMap<String, Shape>();
     // Load other optional Loader classes 
     List<Class<Loader>> loaderClasses = new ArrayList<Class<Loader>>();
     String loaderClassNames = System.getProperty(ADDITIONAL_LOADER_CLASSES);
@@ -277,6 +328,21 @@ public class ModelManager {
   }
   
   /**
+   * Returns the center of the bounds of <code>node</code> 3D shapes.
+   * @param node  the root of a model
+   */
+  public Point3f getCenter(Node node) {
+    BoundingBox bounds = getBounds(node);
+    Point3d lower = new Point3d();
+    bounds.getLower(lower);
+    Point3d upper = new Point3d();
+    bounds.getUpper(upper);
+    return new Point3f((float)(lower.getX() + upper.getX()) / 2,
+        (float)(lower.getY() + upper.getY()) / 2,
+        (float)(lower.getZ() + upper.getZ()) / 2);
+  }
+
+  /**
    * Returns the bounds of the 3D shapes of <code>node</code>.
    * This method computes the exact box that contains all the shapes,
    * contrary to <code>node.getBounds()</code> that returns a bounding 
@@ -299,7 +365,7 @@ public class ModelManager {
     BoundingBox objectBounds = new BoundingBox(
         new Point3d(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY),
         new Point3d(Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.NEGATIVE_INFINITY));
-    computeBounds(node, objectBounds, transformation, !isOrthogonalRotation(transformation));
+    computeBounds(node, objectBounds, transformation, !isOrthogonalRotation(transformation), isDeformed(node));
     Point3d lower = new Point3d();
     objectBounds.getLower(lower);
     if (lower.x == Double.POSITIVE_INFINITY) {
@@ -328,8 +394,8 @@ public class ModelManager {
     return true;
   }
 
-  private void computeBounds(Node node, BoundingBox bounds, 
-                             Transform3D parentTransformation, boolean transformShapeGeometry) {
+  private void computeBounds(Node node, BoundingBox bounds, Transform3D parentTransformation,
+                             boolean transformShapeGeometry, boolean deformedGeometry) {
     if (node instanceof Group) {
       Map<Transform3D, BoundingBox> modelBounds = null;
       BoundingBox transformationModelBounds = null; 
@@ -339,6 +405,7 @@ public class ModelManager {
         ((TransformGroup)node).getTransform(transform);
         parentTransformation.mul(transform);
       } else if (transformShapeGeometry 
+                 && !deformedGeometry
                  && node instanceof BranchGroup
                  && node.getUserData() instanceof Content) {
         // Check if it's the node of a model 
@@ -361,7 +428,8 @@ public class ModelManager {
       // Compute the bounds of all the node children
       Iterator<Node> enumeration = ((Group)node).getAllChildren();
       while (enumeration.hasNext ()) {
-        computeBounds(enumeration.next(), combinedBounds, parentTransformation, transformShapeGeometry);
+        computeBounds(enumeration.next(), combinedBounds, parentTransformation, 
+ 			transformShapeGeometry, deformedGeometry);
       }
       if (modelBounds != null) {
           // Store the computed bounds of the model
@@ -373,11 +441,14 @@ public class ModelManager {
         bounds.combine(transformationModelBounds);
       }
     } else if (node instanceof Link) {
-      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformation, transformShapeGeometry);
+      computeBounds(((Link)node).getSharedGroup(), bounds, parentTransformation,
+          transformShapeGeometry, deformedGeometry);
     } else if (node instanceof Shape3D) {
       Shape3D shape = (Shape3D)node;
       Bounds shapeBounds;
-      if (transformShapeGeometry) {
+      if (transformShapeGeometry
+          || deformedGeometry
+             && !isOrthogonalRotation(parentTransformation)) {
         shapeBounds = computeTransformedGeometryBounds(shape, parentTransformation);
       } else {
         shapeBounds = shape.getBounds();
@@ -531,7 +602,7 @@ public class ModelManager {
    * @param modelCenteredAtOrigin if <code>true</code> center will be moved to match the origin
    *                 after the model rotation is applied
    */
-  private Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width,
+  public Transform3D getNormalizedTransform(Node node, float [][] modelRotation, float width,
                                             boolean modelCenteredAtOrigin) {
     // Get model bounding box size 
     BoundingBox modelBounds = getBounds(node);
@@ -726,14 +797,14 @@ public class ModelManager {
           public void run() {
             try {
               final BranchGroup loadedModel = loadModel(content);
-              synchronized (ModelManager.this.loadedModelNodes) {
+              synchronized (loadedModelNodes) {
                 // Update loaded models cache and notify registered observers
-                ModelManager.this.loadedModelNodes.put(content, loadedModel);
-                ModelManager.this.transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
+                loadedModelNodes.put(content, loadedModel);
+                transformedModelNodeBounds.put(content, new WeakHashMap<Transform3D, BoundingBox>());
               }
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    List<ModelObserver> observers = ModelManager.this.loadingModelObservers.remove(content);
+                    List<ModelObserver> observers = loadingModelObservers.remove(content);
                     if (observers != null) {
                       for (final ModelObserver observer : observers) {
                         observer.modelUpdated((BranchGroup)cloneNode(loadedModel));
@@ -744,7 +815,7 @@ public class ModelManager {
             } catch (final IOException ex) {
               EventQueue.invokeLater(new Runnable() {
                   public void run() {
-                    List<ModelObserver> observers = ModelManager.this.loadingModelObservers.remove(content);
+                    List<ModelObserver> observers = loadingModelObservers.remove(content);
                     if (observers != null) {
                       for (final ModelObserver observer : observers) {
                         observer.modelError(ex);
@@ -948,8 +1019,10 @@ public class ModelManager {
         updateShapeNamesAndWindowPanesTransparency(scene);        
         // Turn off lights because some loaders don't take into account the ~LOAD_LIGHT_NODES flag
         turnOffLightsShareAndModulateTextures(modelNode, new IdentityHashMap<Texture, Texture>());        
+        updateDeformableModelHierarchy(modelNode);
         checkAppearancesName(modelNode);
-        modelNode.setUserData(content);         
+        modelNode.setUserData(content);      
+        modelNode.setPickable(true);        
         return modelNode;
       } catch (IllegalArgumentException ex) {
         lastException = ex;
@@ -1020,12 +1093,19 @@ public class ModelManager {
   private void updateShapeNamesAndWindowPanesTransparency(Scene scene) {
     Map<String, Object> namedObjects = scene.getNamedObjects();
     for (Map.Entry<String, Object> entry : namedObjects.entrySet()) {
-      if (entry.getValue() instanceof Shape3D) {
-        String shapeName = entry.getKey();
-        // Assign shape name to its user data
-        Shape3D shape = (Shape3D)entry.getValue();
-        shape.setUserData(shapeName);
-        if (shapeName.startsWith(WINDOW_PANE_SHAPE_PREFIX)) {
+      String name = entry.getKey();
+      Object value = entry.getValue();
+      if (value instanceof Node) {
+        // Assign node name to its user data
+        ((Node)value).setUserData(name);
+        ((Node)value).setPickable(true);
+        ((Node)value).setCapability(Node.ALLOW_PARENT_READ);
+      }
+      if (value instanceof Shape3D
+          && (name.startsWith(WINDOW_PANE_SHAPE_PREFIX)
+              || name.startsWith(WINDOW_PANE_ON_HINGE_PREFIX)
+              || name.startsWith(WINDOW_PANE_ON_RAIL_PREFIX))) {
+        Shape3D shape = (Shape3D)value;
           Appearance appearance = shape.getAppearance();
           if (appearance == null) {
             appearance = new SimpleShaderAppearance();
@@ -1037,11 +1117,259 @@ public class ModelManager {
         }
       }
     }
+
+  /**
+   * Updates the hierarchy of nodes with intermediate pickable nodes to help deforming models.
+  */
+  private void updateDeformableModelHierarchy(Group group) {
+    // Try to reorganize node hierarchy of mannequin model
+    if (containsNode(group, MANNEQUIN_ABDOMEN_PREFIX)
+        && containsNode(group, MANNEQUIN_CHEST_PREFIX)
+        && containsNode(group, MANNEQUIN_PELVIS_PREFIX)
+        && containsNode(group, MANNEQUIN_NECK_PREFIX)
+        && containsNode(group, MANNEQUIN_HEAD_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_SHOULDER_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_ARM_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_ELBOW_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_FOREARM_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_WRIST_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_HAND_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_HIP_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_THIGH_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_KNEE_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_LEG_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_ANKLE_PREFIX)
+        && containsNode(group, MANNEQUIN_LEFT_FOOT_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_SHOULDER_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_ARM_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_ELBOW_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_FOREARM_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_WRIST_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_HAND_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_HIP_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_THIGH_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_KNEE_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_LEG_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_ANKLE_PREFIX)
+        && containsNode(group, MANNEQUIN_RIGHT_FOOT_PREFIX)) {
+      // Head
+      Node head = extractNodes(group, MANNEQUIN_HEAD_PREFIX, null);
+      TransformGroup headGroup = createPickableTransformGroup(MANNEQUIN_NECK_PREFIX, head);
+
+      // Left arm
+      Node leftHand = extractNodes(group, MANNEQUIN_LEFT_HAND_PREFIX, null);
+      TransformGroup leftHandGroup = createPickableTransformGroup(MANNEQUIN_LEFT_WRIST_PREFIX, leftHand);
+      Node leftForearm = extractNodes(group, MANNEQUIN_LEFT_FOREARM_PREFIX, null);
+      Node leftWrist = extractNodes(group, MANNEQUIN_LEFT_WRIST_PREFIX, null);
+      TransformGroup leftForearmGroup = createPickableTransformGroup(MANNEQUIN_LEFT_ELBOW_PREFIX, leftForearm, leftWrist, leftHandGroup);
+      Node leftArm = extractNodes(group, MANNEQUIN_LEFT_ARM_PREFIX, null);
+      Node leftElbow = extractNodes(group, MANNEQUIN_LEFT_ELBOW_PREFIX, null);
+      TransformGroup leftArmGroup = createPickableTransformGroup(MANNEQUIN_LEFT_SHOULDER_PREFIX, leftArm, leftElbow, leftForearmGroup);
+
+      // Right arm
+      Node rightHand = extractNodes(group, MANNEQUIN_RIGHT_HAND_PREFIX, null);
+      TransformGroup rightHandGroup = createPickableTransformGroup(MANNEQUIN_RIGHT_WRIST_PREFIX, rightHand);
+      Node rightForearm = extractNodes(group, MANNEQUIN_RIGHT_FOREARM_PREFIX, null);
+      Node rightWrist = extractNodes(group, MANNEQUIN_RIGHT_WRIST_PREFIX, null);
+      TransformGroup rightForearmGroup = createPickableTransformGroup(MANNEQUIN_RIGHT_ELBOW_PREFIX, rightForearm, rightWrist, rightHandGroup);
+      Node rightArm = extractNodes(group, MANNEQUIN_RIGHT_ARM_PREFIX, null);
+      Node rightElbow = extractNodes(group, MANNEQUIN_RIGHT_ELBOW_PREFIX, null);
+      TransformGroup rightArmGroup = createPickableTransformGroup(MANNEQUIN_RIGHT_SHOULDER_PREFIX, rightArm, rightElbow, rightForearmGroup);
+
+      // Chest
+      Node chest = extractNodes(group, MANNEQUIN_CHEST_PREFIX, null);
+      Node leftShoulder = extractNodes(group, MANNEQUIN_LEFT_SHOULDER_PREFIX, null);
+      Node rightShoulder = extractNodes(group, MANNEQUIN_RIGHT_SHOULDER_PREFIX, null);
+      Node neck = extractNodes(group, MANNEQUIN_NECK_PREFIX, null);
+      TransformGroup chestGroup = createPickableTransformGroup(MANNEQUIN_ABDOMEN_CHEST_PREFIX, chest, leftShoulder, leftArmGroup, rightShoulder, rightArmGroup, neck, headGroup);
+
+      // Left leg
+      Node leftFoot = extractNodes(group, MANNEQUIN_LEFT_FOOT_PREFIX, null);
+      TransformGroup leftFootGroup = createPickableTransformGroup(MANNEQUIN_LEFT_ANKLE_PREFIX, leftFoot);
+      Node leftLeg = extractNodes(group, MANNEQUIN_LEFT_LEG_PREFIX, null);
+      Node leftAnkle = extractNodes(group, MANNEQUIN_LEFT_ANKLE_PREFIX, null);
+      TransformGroup leftLegGroup = createPickableTransformGroup(MANNEQUIN_LEFT_KNEE_PREFIX, leftLeg, leftAnkle, leftFootGroup);
+      Node leftThigh = extractNodes(group, MANNEQUIN_LEFT_THIGH_PREFIX, null);
+      Node leftKnee = extractNodes(group, MANNEQUIN_LEFT_KNEE_PREFIX, null);
+      TransformGroup leftThighGroup = createPickableTransformGroup(MANNEQUIN_LEFT_HIP_PREFIX, leftThigh, leftKnee, leftLegGroup);
+
+      // Right leg
+      Node rightFoot = extractNodes(group, MANNEQUIN_RIGHT_FOOT_PREFIX, null);
+      TransformGroup rightFootGroup = createPickableTransformGroup(MANNEQUIN_RIGHT_ANKLE_PREFIX, rightFoot);
+      Node rightLeg = extractNodes(group, MANNEQUIN_RIGHT_LEG_PREFIX, null);
+      Node rightAnkle = extractNodes(group, MANNEQUIN_RIGHT_ANKLE_PREFIX, null);
+      TransformGroup rightLegGroup = createPickableTransformGroup(MANNEQUIN_RIGHT_KNEE_PREFIX, rightLeg, rightAnkle, rightFootGroup);
+      Node rightThigh = extractNodes(group, MANNEQUIN_RIGHT_THIGH_PREFIX, null);
+      Node rightKnee = extractNodes(group, MANNEQUIN_RIGHT_KNEE_PREFIX, null);
+      TransformGroup rightThighGroup = createPickableTransformGroup(MANNEQUIN_RIGHT_HIP_PREFIX, rightThigh, rightKnee, rightLegGroup);
+
+     // Pelvis
+      Node pelvis = extractNodes(group, MANNEQUIN_PELVIS_PREFIX, null);
+      Node leftHip = extractNodes(group, MANNEQUIN_LEFT_HIP_PREFIX, null);
+      Node rightHip = extractNodes(group, MANNEQUIN_RIGHT_HIP_PREFIX, null);
+      TransformGroup pelvisGroup = createPickableTransformGroup(MANNEQUIN_ABDOMEN_PELVIS_PREFIX, pelvis, leftHip, leftThighGroup, rightHip, rightThighGroup);
+
+      Node abdomen = extractNodes(group, MANNEQUIN_ABDOMEN_PREFIX, null);
+      group.addChild(abdomen);
+      group.addChild(chestGroup);
+      group.addChild(pelvisGroup);        
+    } else {
+      // Reorganize rotating openings
+      updateSimpleDeformableModelHierarchy(group, null, HINGE_PREFIX, OPENING_ON_HINGE_PREFIX, WINDOW_PANE_ON_HINGE_PREFIX);
+      updateSimpleDeformableModelHierarchy(group, null, BALL_PREFIX, ARM_ON_BALL_PREFIX, null);
+      // Reorganize sliding openings
+      updateSimpleDeformableModelHierarchy(group, UNIQUE_RAIL_PREFIX, RAIL_PREFIX, OPENING_ON_RAIL_PREFIX, WINDOW_PANE_ON_RAIL_PREFIX);
+    }    
+    group.setPickable(true);
+    group.setCapability(Node.ALLOW_PARENT_READ);
+  }
+
+  private void updateSimpleDeformableModelHierarchy(Group group, String uniqueReferenceNodePrefix, String referenceNodePrefix,
+                                                    String openingPrefix, String openingPanePrefix) {
+    if (containsNode(group, openingPrefix + 1)
+       || (openingPanePrefix != null && containsNode(group, openingPanePrefix + 1))) {
+      if (containsNode(group, referenceNodePrefix + 1)) {
+        // Reorganize openings with multiple reference nodes
+        int i = 1;
+        do {
+          Node referenceNode = extractNodes(group, referenceNodePrefix + i, null);
+          Node opening = extractNodes(group, openingPrefix + i, null);
+          Node openingPane = openingPanePrefix != null ? extractNodes(group, openingPanePrefix + i, null) : null;
+          TransformGroup openingGroup = createPickableTransformGroup(referenceNodePrefix + i, opening, openingPane);
+          group.addChild(referenceNode);
+          group.addChild(openingGroup);
+          i++;
+        } while (containsNode(group, referenceNodePrefix + i)
+            && (containsNode(group, openingPrefix + i)
+                || (openingPanePrefix != null && containsNode(group, openingPanePrefix + i))));
+      } else if (uniqueReferenceNodePrefix != null
+                 && containsNode(group, uniqueReferenceNodePrefix)) {
+        // Reorganize openings with a unique reference node
+        Node referenceNode = extractNodes(group, uniqueReferenceNodePrefix, null);
+        group.addChild(referenceNode);
+        int i = 1;
+        do {
+          Node opening = extractNodes(group, openingPrefix + i, null);
+          Node openingPane = extractNodes(group, openingPanePrefix + i, null);
+          group.addChild(createPickableTransformGroup(referenceNodePrefix + i, opening, openingPane));
+          i++;
+        } while (containsNode(group, openingPrefix + i)
+                 || containsNode(group, openingPanePrefix + i));
+      }
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if the given <code>node</code> or a node in its hierarchy
+   * contains a node which name, stored in user data, starts with <code>prefix</code>.
+   */
+  public boolean containsNode(Node node, String prefix) {
+    Object userData = node.getUserData();
+    if (userData instanceof String
+        && ((String)userData).startsWith(prefix)) {
+      return true;
+    }
+    if (node instanceof Group) {
+      Group group = (Group)node;
+      for (int i = group.numChildren() - 1; i >= 0; i--) {
+        if (containsNode((Node)group.getChild(i), prefix)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Searches among the given <code>node</code> and its children the nodes which name, stored in user data, starts with <code>name</code>,
+   * then returns a group containing the found nodes.
+   */
+  private Group extractNodes(Node node, String name, Group destinationGroup) {
+    if (node.getUserData() != null
+        && ((String)node.getUserData()).startsWith(name)) {
+      ((Group)node.getParent()).removeChild(node);
+      if (destinationGroup == null) {
+        destinationGroup = new Group();
+      }
+      destinationGroup.addChild(node);
+      destinationGroup.setPickable(true);
+      destinationGroup.setCapability(TransformGroup.ALLOW_PARENT_READ);
+    }
+    if (node instanceof Group) {
+      // Enumerate children
+      Group group = (Group)node;
+      for (int i = group.numChildren() - 1; i >= 0; i--) {
+        destinationGroup = extractNodes((Node)group.getChild(i), name, destinationGroup);
+      }
+    }
+    return destinationGroup;
   }
   
   /**
+   * Returns a pickable group with its <code>children</code> and the given reference node as user data.
+   */
+  private TransformGroup createPickableTransformGroup(String deformableGroupPrefix, Node ... children) {
+    TransformGroup transformGroup = new TransformGroup();
+    transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
+    transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+    transformGroup.setCapability(TransformGroup.ENABLE_PICK_REPORTING);    
+    transformGroup.setUserData(deformableGroupPrefix + DEFORMABLE_TRANSFORM_GROUP_SUFFIX);    
+    transformGroup.setPickable(true);
+    transformGroup.setCapability(TransformGroup.ALLOW_PARENT_READ);    
+    // Store the node around which objects should turn
+    for (Node child : children) {
+      if (child != null) {    	  
+        transformGroup.addChild(child);        
+      }
+    }
+    return transformGroup;
+  }
+
+  /**
+   * Return <code>true</code> if the given <code>node</code> or its children contains at least a deformable group.
+   * @param node  the root of a model
+   */
+  public boolean containsDeformableNode(Node node) {
+    if (node instanceof TransformGroup
+        && node.getUserData() instanceof String
+        && ((String)node.getUserData()).endsWith(DEFORMABLE_TRANSFORM_GROUP_SUFFIX)) {
+      return true;
+    } else if (node instanceof Group) {
+      Iterator<Node> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasNext()) {
+        if (containsDeformableNode(enumeration.next())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Return <code>true</code> if the given <code>node</code> or its children contains is a deformed transformed group.
+   * @param node  a node
+   */
+  private boolean isDeformed(Node node) {
+    if (node instanceof TransformGroup
+        && node.getUserData() instanceof String
+        && ((String)node.getUserData()).endsWith(DEFORMABLE_TRANSFORM_GROUP_SUFFIX)) {
+      Transform3D transform = new Transform3D();
+      ((TransformGroup)node).getTransform(transform);
+      return (transform.getBestType() & Transform3D.IDENTITY) != Transform3D.IDENTITY;
+    } else if (node instanceof Group) {
+      Iterator<Node> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasNext()) {
+        if (isDeformed(enumeration.next())) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Turns off light nodes of <code>node</code> children, 
-   * and modulates textures if needed.
+   * modulates textures if needed and allows shapes to change their pickable property.
    */
   private void turnOffLightsShareAndModulateTextures(Node node, 
                                                      Map<Texture, Texture> replacedTextures) {
@@ -1056,10 +1384,14 @@ public class ModelManager {
     } else if (node instanceof Light) {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
+      node.setCapability(Node.ALLOW_PICKABLE_WRITE);
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance != null) {
+    	//allow texture to be read (ModelPreviewComponent needs this)
+      	appearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
+      	
         Texture texture = appearance.getTexture();
-        if (texture != null) {
+        if (texture != null) {        	
           // Share textures data as much as possible requesting TextureManager#shareTexture the less often possible
           Texture sharedTexture = replacedTextures.get(texture);
           if (sharedTexture == null) {
@@ -1070,7 +1402,7 @@ public class ModelManager {
             appearance.setTexture(sharedTexture);
           }
           TextureAttributes textureAttributes = appearance.getTextureAttributes();
-          if (textureAttributes == null) {
+          if (textureAttributes == null) {          	
             // Mix texture and shape color
             textureAttributes = new TextureAttributes();
             textureAttributes.setTextureMode(TextureAttributes.MODULATE);
@@ -1294,14 +1626,18 @@ public class ModelManager {
     } else {
       List<float []> vertices = new ArrayList<float[]>(vertexCount); 
       computeVerticesOnFloor(node, vertices, new Transform3D());
-      float [][] surroundingPolygon = getSurroundingPolygon(vertices.toArray(new float [vertices.size()][]));
-      GeneralPath generalPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, surroundingPolygon.length);
-      generalPath.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
-      for (int i = 0; i < surroundingPolygon.length; i++) {
-    	  generalPath.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
+      if (vertices.size() > 0) {
+        float [][] surroundingPolygon = getSurroundingPolygon(vertices.toArray(new float [vertices.size()][]));
+        GeneralPath generalPath = new GeneralPath(GeneralPath.WIND_NON_ZERO, surroundingPolygon.length);
+        generalPath.moveTo(surroundingPolygon [0][0], surroundingPolygon [0][1]);
+        for (int i = 0; i < surroundingPolygon.length; i++) {
+          generalPath.lineTo(surroundingPolygon [i][0], surroundingPolygon [i][1]);
+        }
+        generalPath.closePath();
+        modelAreaOnFloor = new Area(generalPath);
+      } else {
+        modelAreaOnFloor = new Area();
       }
-      generalPath.closePath();
-      modelAreaOnFloor = new Area(generalPath);
     }
     return modelAreaOnFloor;
   }
@@ -1839,8 +2175,7 @@ public class ModelManager {
         // Test if points [i] is left of the line at the stack top
         if (isLeft(polygon [top - 1], polygon [top], vertices [i]) > 0) {
           break; // points [i] is a new hull vertex
-        }
-        else {
+        } else {
           top--; // pop top point off stack
       }
       }
@@ -1949,37 +2284,7 @@ public class ModelManager {
    * Returns the AWT shape matching the given <a href="http://www.w3.org/TR/SVG/paths.html">SVG path shape</a>.  
    */
   public Shape getShape(String svgPathShape) {
-    Shape shape = this.parsedShapes.get(svgPathShape);
-    if (shape == null) {
-      try {
-        shape = SVGPathSupport.parsePathShape(svgPathShape);
-      } catch (LinkageError ex) {
-    	  ex.printStackTrace();
-        // Fallback to default square shape if batik classes aren't in classpath
-        shape = new Rectangle2D.Float(0, 0, 1, 1);
-      }
-      this.parsedShapes.put(svgPathShape, shape);
-    }
-    return shape;
-  }
-  
-  /**
-   * Separated static class to be able to exclude Batik library from classpath. 
-   */
-  private static class SVGPathSupport {
-    public static Shape parsePathShape(String svgPathShape) {
-      try {
-        AWTPathProducer pathProducer = new AWTPathProducer();
-        PathParser pathParser = new PathParser();
-        pathParser.setPathHandler(pathProducer);
-        pathParser.parse(svgPathShape);
-        return pathProducer.getShape();
-      } catch (ParseException ex) {
-    	  ex.printStackTrace();
-        // Fallback to default square shape if shape is incorrect
-        return new Rectangle2D.Float(0, 0, 1, 1);
-      }
-    }
+    return ShapeTools.getShape(svgPathShape);
   }
   
   /**

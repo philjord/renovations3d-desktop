@@ -203,7 +203,9 @@ public class FurnitureController implements Controller {
       }
     }  
     final boolean newBasePlanLocked = basePlanLocked;
-    final Level furnitureLevel = this.home.getSelectedLevel();
+    final Level furnitureLevel = group != null
+        ? group.getLevel()
+        : this.home.getSelectedLevel();
     
     doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, null, newBasePlanLocked, false); 
     if (this.undoSupport != null) {
@@ -645,10 +647,11 @@ public class FurnitureController implements Controller {
         }
       } 
       final HomeFurnitureGroup group;
-      if (selectedFurniture.indexOf(this.leadSelectedPieceOfFurniture) > 0) {
-        group = createHomeFurnitureGroup(Arrays.asList(groupedPieces), this.leadSelectedPieceOfFurniture);
+      List<HomePieceOfFurniture> groupedFurniture = Arrays.asList(groupedPieces);
+      if (groupedFurniture.indexOf(this.leadSelectedPieceOfFurniture) > 0) {
+        group = createHomeFurnitureGroup(groupedFurniture, this.leadSelectedPieceOfFurniture);
       } else {
-        group = createHomeFurnitureGroup(Arrays.asList(groupedPieces));
+        group = createHomeFurnitureGroup(groupedFurniture);
       }
       // Store piece elevation that could have been updated during grouping
       final float [] groupPiecesNewElevation = new float [groupedPieces.length];

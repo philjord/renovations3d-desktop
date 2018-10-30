@@ -53,8 +53,10 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE, NAME_ANGLE,
-      DESCRIPTION, PRICE, WIDTH, WIDTH_IN_PLAN, DEPTH, DEPTH_IN_PLAN, HEIGHT, HEIGHT_IN_PLAN, 
-      COLOR, TEXTURE, MODEL_MATERIALS, SHININESS, VISIBLE, X, Y, ELEVATION, ANGLE, PITCH, ROLL, MODEL_MIRRORED, MOVABLE, LEVEL};
+      DESCRIPTION, PRICE, VALUE_ADDED_TAX_PERCENTAGE, CURRENCY,
+      WIDTH, WIDTH_IN_PLAN, DEPTH, DEPTH_IN_PLAN, HEIGHT, HEIGHT_IN_PLAN,
+      COLOR, TEXTURE, MODEL_MATERIALS, SHININESS, VISIBLE, MODEL_TRANSFORMATIONS,
+      X, Y, ELEVATION, ANGLE, PITCH, ROLL, MODEL_MIRRORED, MOVABLE, LEVEL};
   
   /** 
    * The properties on which home furniture may be sorted.  
@@ -308,6 +310,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private Float                  shininess;
   private float [][]             modelRotation;
   private boolean                modelCenteredAtOrigin;
+  private Transformation []      modelTransformations;
   private String                 staircaseCutOutShape;
   private String                 creator;
   private boolean                backFaceShown;
@@ -375,6 +378,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       this.depthInPlan = homePiece.getDepthInPlan();
       this.heightInPlan = homePiece.getHeightInPlan();
       this.modelCenteredAtOrigin = homePiece.isModelCenteredAtOrigin();
+      this.modelTransformations = homePiece.getModelTransformations();
       this.angle = homePiece.getAngle();
       this.pitch = homePiece.getPitch();
       this.roll = homePiece.getRoll();
@@ -866,6 +870,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    * Once this piece is updated, listeners added to this piece will receive a change notification.
    * @param modelMaterials the materials of the 3D model or <code>null</code> if they shouldn't be changed
    * @throws IllegalStateException if this piece of furniture isn't texturable
+   * @since 4.0
    */
   public void setModelMaterials(HomeMaterial [] modelMaterials) {
     if (isTexturable()) {
@@ -1047,6 +1052,20 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   }
 
   /**
+   * Sets the Value Added Tax percentage applied to prices.
+   * @since 6.0
+   */
+  public void setValueAddedTaxPercentage(BigDecimal valueAddedTaxPercentage) {
+    if (valueAddedTaxPercentage != this.valueAddedTaxPercentage
+        && (valueAddedTaxPercentage == null || !valueAddedTaxPercentage.equals(this.valueAddedTaxPercentage))) {
+      BigDecimal oldValueAddedTaxPercentage = this.valueAddedTaxPercentage;
+      this.valueAddedTaxPercentage = valueAddedTaxPercentage;
+      this.propertyChangeSupport.firePropertyChange(Property.VALUE_ADDED_TAX_PERCENTAGE.name(), oldValueAddedTaxPercentage, valueAddedTaxPercentage);
+
+    }
+  }
+
+  /**
    * Returns the Value Added Tax applied to the price of this piece of furniture. 
    */
   public BigDecimal getValueAddedTax() {
@@ -1076,6 +1095,20 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    */
   public String getCurrency() {
     return this.currency;
+  }
+
+  /**
+   * Sets the price currency, noted with ISO 4217 code. Once this piece is updated,
+   * listeners added to this piece will receive a change notification.
+   * @since 6.0
+   */
+  public void setCurrency(String currency) {
+    if (currency != this.currency
+        && (currency == null || !currency.equals(this.currency))) {
+      String oldCurrency = this.currency;
+      this.currency = currency;
+      this.propertyChangeSupport.firePropertyChange(Property.CURRENCY.name(), oldCurrency, currency);
+    }
   }
 
   /**
@@ -1278,6 +1311,36 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     return this.modelCenteredAtOrigin;
   }
   
+  /**
+   * Sets the transformations applied to some parts of the 3D model of this piece of furniture.
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @param modelTransformations the transformations of the 3D model or <code>null</code> if no transformation shouldn't be applied
+   * @since 6.0
+   */
+  public void setModelTransformations(Transformation [] modelTransformations) {
+    if (!Arrays.equals(modelTransformations, this.modelTransformations)) {
+      Transformation [] oldModelTransformations = this.modelTransformations;
+      this.modelTransformations = modelTransformations != null && modelTransformations.length > 0
+          ? modelTransformations.clone()
+          : null;
+      this.propertyChangeSupport.firePropertyChange(Property.MODEL_MATERIALS.name(), oldModelTransformations, modelTransformations);
+     }
+  }
+
+  /**
+   * Returns the transformations applied to the 3D model of this piece of furniture.
+   * @return the transformations of the 3D model or <code>null</code>
+   * if the 3D model is not transformed.
+   * @since 6.0
+   */
+  public Transformation [] getModelTransformations() {
+    if (this.modelTransformations != null) {
+      return this.modelTransformations.clone();
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Returns the shape used to cut out upper levels when they intersect with the piece   
    * like a staircase.

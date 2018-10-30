@@ -46,6 +46,7 @@ import org.jogamp.java3d.TextureAttributes;
 import org.jogamp.java3d.Transform3D;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Vector3d;
+import org.jogamp.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -116,16 +117,10 @@ public abstract class Object3DBranch extends BranchGroup {
   }
   
   /**
-   * Returns the shape matching the coordinates in <code>points</code> array.
+   * Returns the closed shape matching the coordinates in <code>points</code> array.
    */
   protected Shape getShape(float [][] points) {
-    GeneralPath path = new GeneralPath();
-    path.moveTo(points [0][0], points [0][1]);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points [i][0], points [i][1]);
-    }
-    path.closePath();
-    return path;
+    return ShapeTools.getShape(points, true, null);
   }
   
   /**
@@ -174,11 +169,13 @@ public abstract class Object3DBranch extends BranchGroup {
       textureWidth = 100;
       textureHeight = 100;
     }
+    float textureXOffset = texture.getXOffset();
+    float textureYOffset = texture.getYOffset();
     float textureAngle = texture.getAngle();
     float textureScale = 1 / texture.getScale();
     TextureKey key = scaled
-        ? new TextureKey(textureWidth, textureHeight, textureAngle, textureScale)
-        : new TextureKey(-1f, -1f, textureAngle, textureScale);
+        ? new TextureKey(textureWidth, textureHeight, textureXOffset, textureYOffset, textureAngle, textureScale)
+        : new TextureKey(-1f, -1f, textureXOffset, textureYOffset, textureAngle, textureScale);
     TextureAttributes textureAttributes = Object3DBranch.textureAttributes.get(key);
     if (textureAttributes == null) {
       textureAttributes = new TextureAttributes();
@@ -186,13 +183,17 @@ public abstract class Object3DBranch extends BranchGroup {
       textureAttributes.setTextureMode(TextureAttributes.MODULATE);
       Transform3D rotation = new Transform3D();
       rotation.rotZ(textureAngle);
+      Transform3D translation = new Transform3D();
       Transform3D transform = new Transform3D();
       // Change scale if required
       if (scaled) {
+        translation.setTranslation(new Vector3f(-textureXOffset / textureScale * textureWidth, -textureYOffset / textureScale * textureHeight, 0));
         transform.setScale(new Vector3d(textureScale / textureWidth, textureScale / textureHeight, textureScale));
       } else {
+        translation.setTranslation(new Vector3f(-textureXOffset / textureScale, -textureYOffset / textureScale, 0));
         transform.setScale(textureScale);
       }
+      rotation.mul(translation);
       transform.mul(rotation);
       textureAttributes.setTextureTransform(transform);
       textureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
@@ -207,12 +208,16 @@ public abstract class Object3DBranch extends BranchGroup {
   private static class TextureKey {
     private final float width;
     private final float height;
+    private final float xOffset;
+    private final float yOffset;
     private final float angle;
     private final float scale;
     
-    public TextureKey(float width, float height, float angle, float scale) {
+    public TextureKey(float width, float height, float xOffset, float yOffset, float angle, float scale) {
       this.width = width;
       this.height = height;
+      this.xOffset = xOffset;
+      this.yOffset = yOffset;
       this.angle = angle;
       this.scale = scale;
     }
@@ -222,6 +227,8 @@ public abstract class Object3DBranch extends BranchGroup {
       TextureKey key = (TextureKey)obj;
       return this.width == key.width 
           && this.height == key.height 
+          && this.xOffset == key.xOffset
+          && this.yOffset == key.yOffset
           && this.angle == key.angle 
           && this.scale == key.scale;
     }
@@ -230,6 +237,8 @@ public abstract class Object3DBranch extends BranchGroup {
     public int hashCode() {
       return Float.floatToIntBits(this.width) * 31 
           + Float.floatToIntBits(this.height) * 31
+          + Float.floatToIntBits(this.xOffset) * 31
+          + Float.floatToIntBits(this.yOffset) * 31
           + Float.floatToIntBits(this.angle) * 31
           + Float.floatToIntBits(this.scale);
     }
@@ -439,6 +448,12 @@ public abstract class Object3DBranch extends BranchGroup {
 
 				geometry.setCapability(Geometry.ALLOW_INTERSECT);
 			}
+			else
+			{
+				System.out.println("makePickable(Geometry geometry) failed if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)");
+				System.out.println("geometry instanceof GeometryArray " +(geometry instanceof GeometryArray));
+				System.out.println("geometry.isLive() " +geometry.isLive());
+			}
 		}
 		return geometry;
 	}
@@ -457,6 +472,10 @@ public abstract class Object3DBranch extends BranchGroup {
 
 				for (int i = 0; i < shape3D.numGeometries(); i++)
 					makePickable(shape3D.getGeometry(i));
+			}
+			else
+			{
+				System.out.println(" makePickable(Shape3D shape3D) failed if (!shape3D.isLive() && !shape3D.isCompiled())");
 			}
 		}
 		return shape3D;

@@ -55,8 +55,7 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * @return an unmodifiable list of furniture.
    */
   public List<CatalogPieceOfFurniture> getFurniture() {
-	  synchronized(furniture)
-	  {
+	  synchronized(furniture) {
 		  return Collections.unmodifiableList(new ArrayList<CatalogPieceOfFurniture>(this.furniture));
 	  }
   }
@@ -87,14 +86,10 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * Adds a piece of furniture to this category.
    * @param piece the piece to add.
    */
-  void add(CatalogPieceOfFurniture piece) {
-    
-	  if(piece !=null)
-	  {
-		  synchronized(furniture)
-		  {
-			  	piece.setCategory(this);
-		  
+  void add(CatalogPieceOfFurniture piece) {    
+	  if (piece != null) {
+		  synchronized(furniture) {
+			  	piece.setCategory(this);		  
 			    int index = Collections.binarySearch(this.furniture, piece);
 			    if (index < 0) {
 			      index = -index - 1;
@@ -110,10 +105,8 @@ public class FurnitureCategory implements Comparable<FurnitureCategory> {
    * @throws IllegalArgumentException if the piece doesn't exist in this category.
    */
   void delete(CatalogPieceOfFurniture piece) {
-	   if(piece != null)
-	   {
-		  synchronized(furniture)
-		  {
+	   if (piece != null) {
+		  synchronized(furniture) {
 			  int pieceIndex = this.furniture.indexOf(piece);
 		    if (pieceIndex == -1) {
 		      throw new IllegalArgumentException(

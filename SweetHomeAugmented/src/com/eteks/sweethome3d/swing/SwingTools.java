@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.swing;
 
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
@@ -58,6 +57,7 @@ import java.awt.image.RGBImageFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
@@ -73,6 +73,7 @@ import java.util.concurrent.Executors;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
@@ -98,6 +99,7 @@ import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import javax.swing.plaf.basic.BasicLookAndFeel;
 import javax.swing.text.JTextComponent;
 
 import com.eteks.sweethome3d.model.Content;
@@ -520,6 +522,24 @@ public class SwingTools {
     dialog.dispose();
   }
 
+  /**
+   * Displays message in a dialog box, possibly adjusting font size if required.
+   */
+  public static int showOptionDialog(Component parentComponent,
+                                     String message, String title,
+                                     int optionType, int messageType,
+                                     Object[] options, Object initialValue) {
+   if (SwingTools.getResolutionScale() > 1
+       && message.indexOf("<font size=\"-2\">") != -1) {
+     Font font = UIManager.getFont("OptionPane.font");
+     if (font != null) {
+       message = message.replace("<font size=\"-2\">", "<font size=\"" + Math.round(font.getSize() / 5f) + "\">");
+     }
+   }
+   return JOptionPane.showOptionDialog(parentComponent, message, title, optionType,
+       messageType, null, options, initialValue);
+ }
+
   private static Map<TextureImage, BufferedImage> patternImages;
   
   /**
@@ -531,8 +551,8 @@ public class SwingTools {
     if (patternImages == null) {
       patternImages = new HashMap<TextureImage, BufferedImage>();
     }
-    BufferedImage image = new BufferedImage(
-        (int)pattern.getWidth(), (int)pattern.getHeight(), BufferedImage.TYPE_INT_RGB);
+    BufferedImage image = new BufferedImage((int)pattern.getWidth(),
+        (int)pattern.getHeight(), BufferedImage.TYPE_INT_RGB);
     Graphics2D imageGraphics = (Graphics2D)image.getGraphics();
     imageGraphics.setColor(backgroundColor);
     imageGraphics.fillRect(0, 0, image.getWidth(), image.getHeight());
@@ -589,14 +609,21 @@ public class SwingTools {
   public static void showSplashScreenWindow(URL imageUrl) {
     try {
       final BufferedImage image = ImageIO.read(imageUrl);
+      // Try to find an image scale without getResolutionScale()
+      // because look and feel is probably not set yet
+      Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+      final float scale = OperatingSystem.isMacOSX()
+          ? 1f
+          : (float)Math.min(2, Math.max(1, Math.min(screenSize.getWidth() / 5 / image.getWidth(), screenSize.getHeight() / 5 / image.getHeight())));
       final Window splashScreenWindow = new Window(new Frame()) {
           @Override
           public void paint(Graphics g) {
+            ((Graphics2D)g).scale(scale, scale);
             g.drawImage(image, 0, 0, this);
           }
         };
         
-      splashScreenWindow.setSize(image.getWidth(), image.getHeight());
+      splashScreenWindow.setSize((int)(image.getWidth() * scale), (int)(image.getHeight() * scale));
       splashScreenWindow.setLocationRelativeTo(null);
       splashScreenWindow.setVisible(true);
           
@@ -704,7 +731,7 @@ public class SwingTools {
   /**
    * Returns <code>true</code> if a tool tip is showing.
    */
-  private static boolean isToolTipShowing() {
+  public static boolean isToolTipShowing() {
     for (Frame frame : Frame.getFrames()) {
       if (isToolTipShowing(frame)) {
         return true;
@@ -755,7 +782,8 @@ public class SwingTools {
           break;
         }
       }  
-      if (allItemsInvisible) {
+      if (allItemsInvisible
+          && popupMenu.getComponentCount() > 0) {
         popupMenu.getComponent(0).setVisible(true);
       }
     }
@@ -773,7 +801,9 @@ public class SwingTools {
             hideDisabledMenuItems(((JMenu)component).getPopupMenu());
           }
         } else if (component instanceof JMenuItem) {
-          component.setVisible(component.isEnabled());
+          Action action = ((JMenuItem)component).getAction();
+          component.setVisible(component.isEnabled()
+              && (action == null || !Boolean.FALSE.equals(action.getValue(ResourceAction.VISIBLE))));
         }
       }
       hideUselessSeparators(popupMenu);
@@ -956,11 +986,11 @@ public class SwingTools {
     InputStream in = null;
     try {
       in = image.openStream();
-      ImageInputStream iis = ImageIO.createImageInputStream(in);
-      Iterator<ImageReader> it = ImageIO.getImageReaders(iis);
+      ImageInputStream imageInputStream = ImageIO.createImageInputStream(in);
+      Iterator<ImageReader> it = ImageIO.getImageReaders(imageInputStream);
       if (it.hasNext()) {
         ImageReader reader = (ImageReader)it.next();
-        reader.setInput(iis);
+        reader.setInput(imageInputStream);
         int imageWidth = reader.getWidth(reader.getMinIndex());
         int imageHeight = reader.getHeight(reader.getMinIndex());
         reader.dispose();
@@ -981,107 +1011,95 @@ public class SwingTools {
                                  Polyline.CapStyle capStyle,
                                  Polyline.JoinStyle joinStyle, 
                                  Polyline.DashStyle dashStyle) {
-    int strokeCapStyle;
-    switch (capStyle) {
-      case ROUND :
-        strokeCapStyle = BasicStroke.CAP_ROUND;
-        break;
-      case SQUARE :
-        strokeCapStyle = BasicStroke.CAP_SQUARE;
-        break;
-      default:
-        strokeCapStyle = BasicStroke.CAP_BUTT;
-        break;
-    }
-    
-    int strokeJoinStyle;
-    switch (joinStyle) {
-      case ROUND :
-      case CURVED :
-        strokeJoinStyle = BasicStroke.JOIN_ROUND;
-        break;
-      case BEVEL :
-        strokeJoinStyle = BasicStroke.JOIN_BEVEL;
-        break;
-      default:
-        strokeJoinStyle = BasicStroke.JOIN_MITER;
-        break;
-    }
-    
-    float [] strokeDashes;
-    switch (dashStyle) {
-      case DOT :
-        strokeDashes = new float [] {thickness, thickness}; 
-        break;
-      case DASH :
-        strokeDashes = new float [] {thickness * 4, thickness * 2}; 
-        break;
-      case DASH_DOT :
-        strokeDashes = new float [] {thickness * 8, thickness * 2, thickness * 2, thickness * 2};
-        break;
-      case DASH_DOT_DOT :
-        strokeDashes = new float [] {thickness * 8, thickness * 2, thickness * 2, thickness * 2, thickness * 2, thickness * 2};
-        break;
-      default :
-        strokeDashes = null;
-        break;
-    }
-    
-    return new BasicStroke(thickness, strokeCapStyle, strokeJoinStyle, 10, strokeDashes, 0);
+    return PlanComponent.ShapeTools.getStroke(thickness, capStyle, joinStyle, dashStyle.getDashPattern(), 0);
   }
+
+  private static Float defaultResolutionScale;
 
   /**
    * Updates Swing components default size according to resolution scale.
    */
   static void updateComponentDefaults() {
-    float resolutionScale = getResolutionScale();
-    if (resolutionScale != 1) {
-      Font buttonFont = updateComponentFontSize("Button.font", resolutionScale);
-      updateComponentFontSize("ToggleButton.font", resolutionScale);
-      updateComponentFontSize("RadioButton.font", resolutionScale);
-      updateComponentFontSize("CheckBox.font", resolutionScale);
-      updateComponentFontSize("ColorChooser.font", resolutionScale);
-      updateComponentFontSize("ComboBox.font", resolutionScale);
-      updateComponentFontSize("InternalFrame.titleFont", resolutionScale);
-      Font labelFont = updateComponentFontSize("Label.font", resolutionScale);
-      updateComponentFontSize("List.font", resolutionScale);
-      updateComponentFontSize("MenuBar.font", resolutionScale);
-      updateComponentFontSize("MenuItem.font", resolutionScale);
-      updateComponentFontSize("MenuItem.acceleratorFont", resolutionScale);
-      updateComponentFontSize("RadioButtonMenuItem.font", resolutionScale);
-      updateComponentFontSize("RadioButtonMenuItem.acceleratorFont", resolutionScale);
-      updateComponentFontSize("CheckBoxMenuItem.font", resolutionScale);
-      updateComponentFontSize("CheckBoxMenuItem.acceleratorFont", resolutionScale);
-      updateComponentFontSize("Menu.font", resolutionScale);
-      updateComponentFontSize("Menu.acceleratorFont", resolutionScale);
-      updateComponentFontSize("PopupMenu.font", resolutionScale);
-      updateComponentFontSize("OptionPane.font", resolutionScale);
-      updateComponentFontSize("Panel.font", resolutionScale);
-      updateComponentFontSize("ProgressBar.font", resolutionScale);
-      updateComponentFontSize("ScrollPane.font", resolutionScale);
-      updateComponentFontSize("Viewport.font", resolutionScale);
-      updateComponentFontSize("Slider.font", resolutionScale);
-      updateComponentFontSize("Spinner.font", resolutionScale);
-      updateComponentFontSize("Table.font", resolutionScale);
-      updateComponentFontSize("TabbedPane.font", resolutionScale);
-      updateComponentFontSize("TableHeader.font", resolutionScale);
-      updateComponentFontSize("TextField.font", resolutionScale);
-      updateComponentFontSize("FormattedTextField.font", resolutionScale);
-      updateComponentFontSize("PasswordField.font", resolutionScale);
-      updateComponentFontSize("TextArea.font", resolutionScale);
-      updateComponentFontSize("EditorPane.font", resolutionScale);
-      updateComponentFontSize("TitledBorder.font", resolutionScale);
-      updateComponentFontSize("ToolBar.font", resolutionScale);
-      updateComponentFontSize("ToolTip.font", resolutionScale);
-      updateComponentFontSize("Tree.font", resolutionScale);
+    if (defaultResolutionScale == null) {
+      try {
+        defaultResolutionScale = 1f;
+        if ((OperatingSystem.isLinux()
+              || OperatingSystem.isWindows() && !OperatingSystem.isJavaVersionGreaterOrEqual("1.9"))
+            && UIManager.getLookAndFeel().getClass().isAssignableFrom(Class.forName(UIManager.getSystemLookAndFeelClassName()))) {
+          int defaultPanelFontSize = new BasicLookAndFeel() {
+              public String getDescription() {
+                return null;
+              }
+
+              public String getID() {
+                return null;
+    }
+    
+              public String getName() {
+                return null;
+    }
+    
+              public boolean isNativeLookAndFeel() {
+                return false;
+    }
+    
+              public boolean isSupportedLookAndFeel() {
+                return false;
+              }
+            }.getDefaults().getFont("Panel.font").getSize();
+          // Try to guess current resolution scale by comparing default font size with the one of the look and feel
+          defaultResolutionScale = (float)UIManager.getFont("Panel.font").getSize() / defaultPanelFontSize;
+        }
+      } catch (ClassNotFoundException ex) {
+        // Issue with LAF classes
+      }
+  }
+
+    float userResolutionScale = getUserResolutionScale();
+    if (userResolutionScale != 1) {
+      Font buttonFont = updateComponentFontSize("Button.font", userResolutionScale);
+      updateComponentFontSize("ToggleButton.font", userResolutionScale);
+      updateComponentFontSize("RadioButton.font", userResolutionScale);
+      updateComponentFontSize("CheckBox.font", userResolutionScale);
+      updateComponentFontSize("ColorChooser.font", userResolutionScale);
+      updateComponentFontSize("ComboBox.font", userResolutionScale);
+      updateComponentFontSize("InternalFrame.titleFont", userResolutionScale);
+      Font labelFont = updateComponentFontSize("Label.font", userResolutionScale);
+      updateComponentFontSize("List.font", userResolutionScale);
+      updateComponentFontSize("MenuBar.font", userResolutionScale);
+      updateComponentFontSize("MenuItem.font", userResolutionScale);
+      updateComponentFontSize("MenuItem.acceleratorFont", userResolutionScale);
+      updateComponentFontSize("RadioButtonMenuItem.font", userResolutionScale);
+      updateComponentFontSize("RadioButtonMenuItem.acceleratorFont", userResolutionScale);
+      updateComponentFontSize("CheckBoxMenuItem.font", userResolutionScale);
+      updateComponentFontSize("CheckBoxMenuItem.acceleratorFont", userResolutionScale);
+      updateComponentFontSize("Menu.font", userResolutionScale);
+      updateComponentFontSize("Menu.acceleratorFont", userResolutionScale);
+      updateComponentFontSize("PopupMenu.font", userResolutionScale);
+      updateComponentFontSize("OptionPane.font", userResolutionScale);
+      updateComponentFontSize("Panel.font", userResolutionScale);
+      updateComponentFontSize("ProgressBar.font", userResolutionScale);
+      updateComponentFontSize("ScrollPane.font", userResolutionScale);
+      updateComponentFontSize("Viewport.font", userResolutionScale);
+      updateComponentFontSize("Slider.font", userResolutionScale);
+      updateComponentFontSize("Spinner.font", userResolutionScale);
+      updateComponentFontSize("Table.font", userResolutionScale);
+      updateComponentFontSize("TabbedPane.font", userResolutionScale);
+      updateComponentFontSize("TableHeader.font", userResolutionScale);
+      updateComponentFontSize("TextField.font", userResolutionScale);
+      updateComponentFontSize("FormattedTextField.font", userResolutionScale);
+      updateComponentFontSize("PasswordField.font", userResolutionScale);
+      updateComponentFontSize("TextArea.font", userResolutionScale);
+      updateComponentFontSize("EditorPane.font", userResolutionScale);
+      updateComponentFontSize("TitledBorder.font", userResolutionScale);
+      updateComponentFontSize("ToolBar.font", userResolutionScale);
+      updateComponentFontSize("ToolTip.font", userResolutionScale);
+      updateComponentFontSize("Tree.font", userResolutionScale);
       UIManager.put("OptionPane.messageFont", labelFont);
       UIManager.put("OptionPane.buttonFont", buttonFont);
-      int dividerSize = UIManager.getInt("SplitPane.dividerSize");
-      if (dividerSize != 0) {
-        UIManager.put("SplitPane.dividerSize", Math.round(dividerSize * resolutionScale));
       }
+    updateComponentSize("SplitPane.dividerSize", getResolutionScale());
     }
-  }
 
   private static Font updateComponentFontSize(String fontKey, float resolutionScale) {
     Font font = UIManager.getFont(fontKey);
@@ -1092,19 +1110,40 @@ public class SwingTools {
     return font;
   }
   
+  private static int updateComponentSize(String sizeKey, float resolutionScale) {
+    int size = UIManager.getInt(sizeKey);
+    if (size != 0) {
+      size = Math.round(size * resolutionScale);
+      UIManager.put(sizeKey, size);
+    }
+    return size;
+  }
+
   /**
    * Returns a scale factor used to adapt user interface items to screen resolution.
    */
   public static float getResolutionScale() {
+    float defaultResolutionScale = SwingTools.defaultResolutionScale != null
+        ? SwingTools.defaultResolutionScale
+        : 1f;
+    return defaultResolutionScale * getUserResolutionScale();
+  }
+
+  /**
+   * Returns an additional user scale factor for the user interface items.
+   */
+  private static float getUserResolutionScale() {
+    try {
     String resolutionScaleProperty = System.getProperty("com.eteks.sweethome3d.resolutionScale");
     if (resolutionScaleProperty != null) {
-      try {
         return Float.parseFloat(resolutionScaleProperty.trim());
+      } else {
+
+      }
+    } catch (AccessControlException ex) {
       } catch (NumberFormatException ex) {
         // Ignore resolution
       }
-    }
-    
     return 1f;
   }
   

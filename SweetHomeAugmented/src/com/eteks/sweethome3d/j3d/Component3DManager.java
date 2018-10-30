@@ -57,6 +57,7 @@ public class Component3DManager {
   private Object                 renderingErrorListener; 
   private Boolean                offScreenImageSupported;
   private GraphicsConfiguration  defaultScreenConfiguration;
+  private int                    depthSize;
 
   private Component3DManager() {
 	//PJPJPJPJP
@@ -81,25 +82,45 @@ public class Component3DManager {
     }
     // Retrieve graphics configuration once 
     GraphicsConfigTemplate3D template = new GraphicsConfigTemplate3D();
+
+    // Request depth size equal to 24 if supported
+    int preferredDepthSize = 24;
+    try {
+      preferredDepthSize = Integer.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.depthSize", "24"));
+    } catch (NumberFormatException ex) {
+      // Keep 24
+    }
+    int defaultDepthSize = template.getDepthSize();
+    template.setDepthSize(preferredDepthSize);
+    //if (!template.isGraphicsConfigSupported(
+    //    GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration())) {
+    //  template.setDepthSize(defaultDepthSize);
+    //}
+
     // Try to get antialiasing
     template.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
-    if (OperatingSystem.isMacOSX() && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-      // Request depth size equal to 24 with Java 3D 1.6
-      template.setDepthSize(24);
-    }
     
     // From http://www.java.net/node/683852
     // Check if the user has set the Java 3D stereo option.
     String stereo = System.getProperty("j3d.stereo");
     if (stereo != null) {
-      if ("REQUIRED".equals(stereo))
+      if ("REQUIRED".equals(stereo)) {
         template.setStereo(GraphicsConfigTemplate.REQUIRED);
-      else if ("PREFERRED".equals(stereo))
+      } else if ("PREFERRED".equals(stereo)) {
         template.setStereo(GraphicsConfigTemplate.PREFERRED);
+      }
     }
+
     return template;
   }
   
+  /**
+   * Returns the depth bits size of the Z-buffer.
+   */
+  public int getDepthSize() {
+    return this.depthSize;
+  }
+
   /**
    * Returns an instance of this singleton. 
    */
@@ -192,10 +213,10 @@ public class Component3DManager {
       if (configuration == null) {
         configuration = deviceConfiguration.getDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
       }
+    }
+    if (configuration == null) {
+      throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
     }*/
-//    if (configuration == null) {
-//      throw new IllegalRenderingStateException("Can't create graphics environment for Canvas 3D");
-//    }
     try {
       // Ensure unused canvases are freed
       System.gc();
@@ -432,8 +453,7 @@ public class Component3DManager {
     private ObservedCanvas3D(//GraphicsConfiguration graphicsConfiguration, 
                              boolean offScreen,
                              RenderingObserver renderingObserver) {
-    	//PJPJPJPJ
-    	super(offScreen);//graphicsConfiguration, offScreen);
+      super(offScreen);//graphicsConfiguration, offScreen);
       this.renderingObserver = renderingObserver;
       // Under Windows with Java 7 and above, delay the rendering of the canvas 3D when 
       // it's repainted (i.e. it's resized, moved or partially hidden) to avoid it to get grayed
@@ -443,19 +463,19 @@ public class Component3DManager {
 
     @Override
     public void preRender() {
-    	super.preRender();
+      super.preRender();
       this.renderingObserver.canvas3DPreRendered(this);
     }
 
     @Override
     public void postRender() {
-    	super.postRender();
+      super.postRender();
       this.renderingObserver.canvas3DPostRendered(this);
     }
 
     @Override
     public void postSwap() {
-    	super.postSwap();
+      super.postSwap();
       this.renderingObserver.canvas3DSwapped(this);
     }
     //PJPJPJPJ no more paint
@@ -478,3 +498,4 @@ public class Component3DManager {
     }*/
   }
 }
+

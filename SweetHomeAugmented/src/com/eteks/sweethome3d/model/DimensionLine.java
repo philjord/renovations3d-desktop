@@ -184,7 +184,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldOffset = this.offset;
       this.offset = offset;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldOffset, offset);
+      this.propertyChangeSupport.firePropertyChange(Property.OFFSET.name(), oldOffset, offset);
     }
   }
 
@@ -293,8 +293,8 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
     double angle = Math.atan2(this.yEnd - this.yStart, this.xEnd - this.xStart);
     float dx = (float)-Math.sin(angle) * this.offset;
     float dy = (float)Math.cos(angle) * this.offset;
-    float xMiddle = (xStart + xEnd) / 2 + dx;
-    float yMiddle = (yStart + yEnd) / 2 + dy;
+    float xMiddle = (this.xStart + this.xEnd) / 2 + dx;
+    float yMiddle = (this.yStart + this.yEnd) / 2 + dy;
     return Math.abs(x - xMiddle) <= margin && Math.abs(y - yMiddle) <= margin;
   }
 

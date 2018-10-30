@@ -75,6 +75,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -153,6 +154,7 @@ import com.eteks.sweethome3d.j3d.mouseover.HomeComponent3DMouseHandler;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
+import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
@@ -161,6 +163,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
@@ -215,6 +218,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private PropertyChangeListener                   furnitureChangeListener;
   private CollectionListener<Room>                 roomListener;
   private PropertyChangeListener                   roomChangeListener;
+  private CollectionListener<Polyline>             polylineListener;
+  private PropertyChangeListener                   polylineChangeListener;
   private CollectionListener<Label>                labelListener;
   private PropertyChangeListener                   labelChangeListener;
   // Offscreen printed image cache
@@ -258,7 +263,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	  public HomeComponent3D(Home home, 
 	                         UserPreferences  preferences, 
 	                         boolean displayShadowOnFloor) {
-	    this(home, preferences, new Object3DBranchFactory(), displayShadowOnFloor, null);  
+    	this(home, preferences, new Object3DBranchFactory(preferences), displayShadowOnFloor, null);
 	  }
 	  
 	  /**
@@ -268,7 +273,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	  public HomeComponent3D(Home home,
 	                         UserPreferences  preferences,
 	                         HomeController3D controller) {
-	    this(home, preferences, new Object3DBranchFactory(), false, controller);    
+    	this(home, preferences, new Object3DBranchFactory(preferences), false, controller);
 	  }
 
 	  /**
@@ -301,7 +306,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    this.displayShadowOnFloor = displayShadowOnFloor;
 	    this.object3dFactory = object3dFactory != null 
 	        ? object3dFactory
-	        : new Object3DBranchFactory();
+        	: new Object3DBranchFactory(preferences);
 
 	    if (controller != null) {
 	      createActions(controller);
@@ -886,6 +891,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.backgroundChangeListener);
 	    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_COLOR, this.groundChangeListener);
 	    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
+    	homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D, this.groundChangeListener);
+    	this.home.removePropertyChangeListener(Home.Property.BACKGROUND_IMAGE, this.groundChangeListener);
 	    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.backgroundLightColorListener);
 	    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.LIGHT_COLOR, this.lightColorListener);
 	    homeEnvironment.removePropertyChangeListener(HomeEnvironment.Property.WALLS_ALPHA, this.wallsAlphaListener);
@@ -915,6 +922,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    for (Room room : this.home.getRooms()) {
 	      room.removePropertyChangeListener(this.roomChangeListener);
 	    }
+    	this.home.removePolylinesListener(this.polylineListener);
+    	for (Polyline polyline : this.home.getPolylines()) {
+      	  polyline.removePropertyChangeListener(this.polylineChangeListener);
+    	}
 	    this.home.removeLabelsListener(this.labelListener);
 	    for (Label label : this.home.getLabels()) {
 	      label.removePropertyChangeListener(this.labelChangeListener);
@@ -1023,7 +1034,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasNext()) {
         cloneTexture((Node)enumeration.next(), replacedTextures);
-			}				
+	  }				
     } else if (node instanceof Link) {
 			cloneTexture(((Link) node).getSharedGroup(), replacedTextures);
     } else if (node instanceof Shape3D) {
@@ -1646,7 +1657,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		component3D.addMouseMotionListener(mouseListener);
 		component3D.addMouseWheelListener(mouseWheelListener);
 		// Add a mouse listener to this component to request focus in case user clicks in component border
-		this.addMouseListener(new MouseInputAdapter() {
+    	super.addMouseListener(new MouseInputAdapter() {
 			@Override
         public void mousePressed(MouseEvent e) {
 				requestFocusInWindow();
@@ -1996,6 +2007,41 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
 	/**
+   * Returns the closest {@link Selectable} object at screen coordinates (x, y),
+   * or <code>null</code> if not found.
+   */
+  public Selectable getClosestItemAt(int x, int y) {
+   /* if (this.component3D != null) {
+      Canvas3D canvas;
+      if (this.component3D instanceof JCanvas3D) {
+        canvas = ((JCanvas3D)this.component3D).getOffscreenCanvas3D();
+      } else {
+        canvas = (Canvas3D)this.component3D;
+      }
+      PickCanvas pickCanvas = new PickCanvas(canvas, this.onscreenUniverse.getLocale());
+      pickCanvas.setMode(PickCanvas.GEOMETRY);
+      Point canvasPoint = SwingUtilities.convertPoint(this, x, y, this.component3D);
+      pickCanvas.setShapeLocation(canvasPoint.x, canvasPoint.y);
+      PickResult result = pickCanvas.pickClosest();
+      if (result != null) {
+        Node pickedNode = result.getNode(PickResult.SHAPE3D);
+        while (!this.homeObjects.containsValue(pickedNode)
+               && pickedNode.getParent() != null) {
+          pickedNode = pickedNode.getParent();
+        }
+        if (pickedNode != null) {
+          for (Map.Entry<Selectable, Object3DBranch> entry : this.homeObjects.entrySet()) {
+            if (entry.getValue() == pickedNode) {
+              return entry.getKey();
+            }
+          }
+        }
+      }
+    }*/
+    return null;
+  }
+
+  /**
 	 * Returns a new scene tree root.
 	 */
 	private BranchGroup createSceneTree(boolean displayShadowOnFloor,
@@ -2027,10 +2073,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     final SimpleShaderAppearance skyBackgroundAppearance = new SimpleShaderAppearance();
 		ColoringAttributes skyBackgroundColoringAttributes = new ColoringAttributes();
 		skyBackgroundAppearance.setColoringAttributes(skyBackgroundColoringAttributes);
-		// Allow background color and texture to change
+    	TextureAttributes skyBackgroundTextureAttributes = new TextureAttributes();
+    	skyBackgroundAppearance.setTextureAttributes(skyBackgroundTextureAttributes);
+    	// Allow sky color and texture to change
 		skyBackgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
 		skyBackgroundAppearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
 		skyBackgroundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
+		skyBackgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_READ);
+    	skyBackgroundTextureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_WRITE);
+		
 		//PJPJPJPJ allow updatable shader building
 		skyBackgroundAppearance.setUpdatableCapabilities();
 
@@ -2152,7 +2203,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       double nextAlpha = (i  + 1) * 2 * Math.PI / divisionCount;
       float cosNextAlpha = (float)Math.cos(nextAlpha);
       float sinNextAlpha = (float)Math.sin(nextAlpha);
-      for (int j = 0; j < divisionCount / 4; j++) {
+      for (int j = 0, max = divisionCount / 4; j < max; j++) {
         double beta = 2 * j * Math.PI / divisionCount;
         float cosBeta = (float)Math.cos(beta);
         float sinBeta = (float)Math.sin(beta);
@@ -2166,16 +2217,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         float sinNextBeta = (float)Math.sin(nextBeta);
         if (top) {
           coords [k] = new Point3f(cosAlpha * cosBeta, y, sinAlpha * cosBeta);
-          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinBeta); 
+          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, (float)j / max);
           
           coords [k] = new Point3f(cosNextAlpha * cosBeta, y, sinNextAlpha * cosBeta);
-          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinBeta); 
+          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, (float)j / max);
           
           coords [k] = new Point3f(cosNextAlpha * cosNextBeta, sinNextBeta, sinNextAlpha * cosNextBeta);
-          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, sinNextBeta); 
+          textureCoords [k++] = new TexCoord2f((float)(i + 1) / divisionCount, (float)(j + 1) / max);
           
           coords [k] = new Point3f(cosAlpha * cosNextBeta, sinNextBeta, sinAlpha * cosNextBeta);
-          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, sinNextBeta);
+          textureCoords [k++] = new TexCoord2f((float)i / divisionCount, (float)(j + 1) / max);
         } else {
           coords [k] = new Point3f(cosAlpha * cosBeta, y, sinAlpha * cosBeta);
           float color1 = .9f + y * .5f;
@@ -2227,16 +2278,20 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		skyBackgroundAppearance.getColoringAttributes().setColor(skyColor);
 	    HomeTexture skyTexture = home.getEnvironment().getSkyTexture();
 	    if (skyTexture != null) {
+      	  final Transform3D transform = new Transform3D();
+      	  transform.setTranslation(new Vector3f(-skyTexture.getXOffset(), 0, 0));
 	      TextureManager textureManager = TextureManager.getInstance();
 	      if (waitForLoading) {
 	        // Don't share the background texture otherwise if might not be rendered correctly
 	    	  skyBackgroundAppearance.setTexture(textureManager.loadTexture(skyTexture.getImage()));
+        	  skyBackgroundAppearance.getTextureAttributes().setTextureTransform(transform);
 	      } else {
 	        textureManager.loadTexture(skyTexture.getImage(), waitForLoading, 
 	            new TextureManager.TextureObserver() {
 	                public void textureUpdated(Texture texture) {
 	                  // Use a copy of the texture in case it's used in an other universe
 	                	skyBackgroundAppearance.setTexture((Texture)texture.cloneNodeComponent(false));
+                  		skyBackgroundAppearance.getTextureAttributes().setTextureTransform(transform);
 	                }
 	              });
 	      }
@@ -2310,6 +2365,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	          HomeEnvironment.Property.GROUND_COLOR, this.groundChangeListener); 
 	      homeEnvironment.addPropertyChangeListener(
 	          HomeEnvironment.Property.GROUND_TEXTURE, this.groundChangeListener);
+      	  homeEnvironment.addPropertyChangeListener(
+          HomeEnvironment.Property.BACKGROUND_IMAGE_VISIBLE_ON_GROUND_3D, this.groundChangeListener);
+      	  this.home.addPropertyChangeListener(Home.Property.BACKGROUND_IMAGE, this.groundChangeListener);
 	    }
 	    
 	    return transformGroup;
@@ -2494,7 +2552,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    if (this.lightScopeOutsideWallsAreaCache == null) {
 	      // Compute a smaller area surrounding all walls at all levels
 	      Area wallsPath = new Area();
-	      for (Wall wall : home.getWalls()) {
+      	  for (Wall wall : this.home.getWalls()) {
 	        Wall thinnerWall = wall.clone();
 	        thinnerWall.setThickness(Math.max(thinnerWall.getThickness() - 0.1f, 0.08f));
 	        wallsPath.add(new Area(getShape(thinnerWall.getPoints())));
@@ -2532,10 +2590,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	                              boolean listenToHomeUpdates, 
 	                              boolean waitForLoading) {
 	    Group homeRoot = createHomeRoot();
-	    // Add walls, pieces, rooms and labels already available 
+    	// Add walls, pieces, rooms, polylines and labels already available
 	    for (Label label : this.home.getLabels()) {
 	      addObject(homeRoot, label, listenToHomeUpdates, waitForLoading);
 	    }
+    	for (Polyline polyline : this.home.getPolylines()) {
+      	  addObject(homeRoot, polyline, listenToHomeUpdates, waitForLoading);
+    	}
 	    for (Room room : this.home.getRooms()) {
 	      addObject(homeRoot, room, listenToHomeUpdates, waitForLoading);
 	    }    
@@ -2565,6 +2626,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	      addWallListener(homeRoot);
 	      addFurnitureListener(homeRoot);
 	      addRoomListener(homeRoot);
+      	  addPolylineListener(homeRoot);
 	      addLabelListener(homeRoot);
 	      // Add environment listeners
 	      addEnvironmentListeners();
@@ -2596,10 +2658,23 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void addLevelListener(final Group group) {
     this.levelChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())
-              || Level.Property.VISIBLE.name().equals(ev.getPropertyName())
+          if (Level.Property.VISIBLE.name().equals(ev.getPropertyName())
               || Level.Property.VIEWABLE.name().equals(ev.getPropertyName())) {
+            Set<Selectable> objects = homeObjects.keySet();
+            ArrayList<Selectable> updatedItems = new ArrayList<Selectable>(objects.size());
+            for (Selectable item : objects) {
+              if (item instanceof Room // 3D rooms depend on rooms at other levels
+                  || !(item instanceof Elevatable)
+                  || ((Elevatable)item).isAtLevel((Level)ev.getSource())) {
+                updatedItems.add(item);
+              }
+            }
+            updateObjects(updatedItems);
+            groundChangeListener.propertyChange(null);
+          } else if (Level.Property.ELEVATION.name().equals(ev.getPropertyName())) {
             updateObjects(homeObjects.keySet());          
+            groundChangeListener.propertyChange(null);
+          } else if (Level.Property.BACKGROUND_IMAGE.name().equals(ev.getPropertyName())) {
             groundChangeListener.propertyChange(null);
           } else if (Level.Property.FLOOR_THICKNESS.name().equals(ev.getPropertyName())) {
             updateObjects(home.getWalls());          
@@ -2640,7 +2715,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           if (!Wall.Property.PATTERN.name().equals(propertyName)) {
             Wall updatedWall = (Wall)ev.getSource();
             updateWall(updatedWall);          
-            updateObjects(home.getRooms());
+            List<Level> levels = home.getLevels();
+            if (updatedWall.getLevel() == null
+                || updatedWall.isAtLevel(levels.get(levels.size() - 1))) {
+              // Update rooms which ceiling height may need an update at last level
+              updateObjects(home.getRooms());
+            }
             if (updatedWall.getLevel() != null && updatedWall.getLevel().getElevation() < 0) {
               groundChangeListener.propertyChange(null);
             }
@@ -2699,14 +2779,15 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
               || HomePieceOfFurniture.Property.PITCH.name().equals(propertyName)
               || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
               || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)) {
-            updatePieceOfFurnitureGeometry(updatedPiece);
+            updatePieceOfFurnitureGeometry(updatedPiece, propertyName, (Float)ev.getOldValue());
             updateObjectsLightScope(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
           } else if (HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
               || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.MODEL_TRANSFORMATIONS.name().equals(propertyName)
               || HomePieceOfFurniture.Property.VISIBLE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.LEVEL.name().equals(propertyName)) {
-            updatePieceOfFurnitureGeometry(updatedPiece);
+            updatePieceOfFurnitureGeometry(updatedPiece, null, null);
           } else if (HomePieceOfFurniture.Property.COLOR.name().equals(propertyName)
               || HomePieceOfFurniture.Property.TEXTURE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MATERIALS.name().equals(propertyName)
@@ -2717,11 +2798,31 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
         }
 
-        private void updatePieceOfFurnitureGeometry(HomePieceOfFurniture piece) {
+        private void updatePieceOfFurnitureGeometry(HomePieceOfFurniture piece, String propertyName, Float oldValue) {
           updateObjects(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-          // If piece is or contains a door or a window, update walls that intersect with piece
           if (containsDoorsAndWindows(piece)) {
-            updateObjects(home.getWalls());
+            if (oldValue != null) {
+              HomePieceOfFurniture oldPiece = piece.clone();
+              // Reset the modified property to its old value
+              if (HomePieceOfFurniture.Property.X.name().equals(propertyName)) {
+                oldPiece.setX(oldValue);
+              } else if (HomePieceOfFurniture.Property.Y.name().equals(propertyName)) {
+                oldPiece.setY(oldValue);
+              } else if (HomePieceOfFurniture.Property.ANGLE.name().equals(propertyName)) {
+                oldPiece.setAngle(oldValue);
+              } else if (HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)) {
+                oldPiece.setWidth(oldValue);
+              } else if (HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)) {
+                oldPiece.setDepth(oldValue);
+              }
+              // For doors and windows, propertyName can't be equal to ROLL or PITCH
+
+              // Update walls which intersect the piece with its old property value and the one with the new value
+              updateIntersectingWalls(oldPiece, piece);
+            } else {
+              // Property value change won't influence the walls that intersect the door or window
+              updateIntersectingWalls(piece);
+            }
           } else if (containsStaircases(piece)) {
             updateObjects(home.getRooms());
           }
@@ -2772,7 +2873,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
           }
           // If piece is or contains a door or a window, update walls that intersect with piece
           if (containsDoorsAndWindows(piece)) {
-            updateObjects(home.getWalls());
+            updateIntersectingWalls(piece);
           } else if (containsStaircases(piece)) {
             updateObjects(home.getRooms());
           } else {
@@ -2917,6 +3018,38 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
   
   /**
+   * Adds a polyline listener to home polylines that updates the children of the given
+   * <code>group</code>, each time a polyline is added, updated or deleted.
+   */
+  private void addPolylineListener(final Group group) {
+    this.polylineChangeListener = new PropertyChangeListener() {
+        public void propertyChange(PropertyChangeEvent ev) {
+          Polyline polyline = (Polyline)ev.getSource();
+          updateObjects(Arrays.asList(new Polyline [] {polyline}));
+        }
+      };
+    for (Polyline polyline : this.home.getPolylines()) {
+      polyline.addPropertyChangeListener(this.polylineChangeListener);
+    }
+    this.polylineListener = new CollectionListener<Polyline>() {
+        public void collectionChanged(CollectionEvent<Polyline> ev) {
+          Polyline polyline = ev.getItem();
+          switch (ev.getType()) {
+            case ADD :
+              addObject(group, polyline, true, false);
+              polyline.addPropertyChangeListener(polylineChangeListener);
+              break;
+            case DELETE :
+              deleteObject(polyline);
+              polyline.removePropertyChangeListener(polylineChangeListener);
+              break;
+          }
+        }
+      };
+    this.home.addPolylinesListener(this.polylineListener);
+  }
+
+  /**
    * Adds a label listener to home labels that updates the children of the given 
    * <code>group</code>, each time a label is added, updated or deleted. 
    */
@@ -2964,6 +3097,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     this.drawingModeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           updateObjects(home.getWalls());
+          updateObjects(home.getRooms());
           updateObjects(getHomeObjects(HomePieceOfFurniture.class));
         }
       };
@@ -3018,7 +3152,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
   /**
-   * Updates <code>objects</code> later. Should be invoked from Event Dispatch Thread.
+   * Updates 3D <code>objects</code> later. Should be invoked from Event Dispatch Thread.
    */
   private void updateObjects(Collection<? extends Selectable> objects) {
     if (this.homeObjectsToUpdate != null) {
@@ -3044,8 +3178,48 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
   
   /**
-   * Updates <code>wall</code> geometry, 
-   * and the walls at its end or start.
+   * Updates walls that may intersect from the given doors or window.
+   */
+  private void updateIntersectingWalls(HomePieceOfFurniture ... doorOrWindows) {
+    Collection<Wall> walls = this.home.getWalls();
+    int wallCount = 0;
+    if (this.homeObjectsToUpdate != null) {
+      for (Selectable object : this.homeObjectsToUpdate) {
+        if (object instanceof Wall) {
+          wallCount++;
+        }
+      }
+    }
+    // Check if some more walls may require an update
+    if (wallCount != walls.size()) {
+      List<Wall> updatedWalls = new ArrayList<Wall>();
+      Rectangle2D doorOrWindowBounds = null;
+      // Compute the approximate bounds of the doors and windows
+      for (HomePieceOfFurniture doorOrWindow : doorOrWindows) {
+        float [][] points = doorOrWindow.getPoints();
+        if (doorOrWindowBounds == null) {
+          doorOrWindowBounds = new Rectangle2D.Float(points [0][0], points [0][1], 0, 0);
+        } else {
+          doorOrWindowBounds.add(points [0][0], points [0][1]);
+        }
+        for (int i = 1; i < points.length; i++) {
+          doorOrWindowBounds.add(points [i][0], points [i][1]);
+        }
+      }
+      // Search walls that intersect the bounds
+      for (Wall wall : walls) {
+        if (wall.intersectsRectangle((float)doorOrWindowBounds.getX(), (float)doorOrWindowBounds.getY(),
+            (float)doorOrWindowBounds.getX() + (float)doorOrWindowBounds.getWidth(),
+            (float)doorOrWindowBounds.getY() + (float)doorOrWindowBounds.getHeight())) {
+          updatedWalls.add(wall);
+        }
+      }
+      updateObjects(updatedWalls);
+    }
+  }
+
+  /**
+   * Updates <code>wall</code> geometry and the walls at its end or start.
    */
   private void updateWall(Wall wall) {
     Collection<Wall> wallsToUpdate = new ArrayList<Wall>(3);

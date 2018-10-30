@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -87,6 +88,9 @@ public class FileUserPreferences extends UserPreferences {
   private static final String LANGUAGE                                  = "language";
   private static final String UNIT                                      = "unit";
   private static final String EXTENSIBLE_UNIT                           = "extensibleUnit";
+  private static final String CURRENCY                                  = "currency";
+  private static final String VALUE_ADDED_TAX_ENABLED                   = "valueAddedTaxEnabled";
+  private static final String DEFAULT_VALUE_ADDED_TAX_PERCENTAGE        = "defaultValueAddedTaxPercentage";
   private static final String FURNITURE_CATALOG_VIEWED_IN_TREE          = "furnitureCatalogViewedInTree";
   private static final String NAVIGATION_PANEL_VISIBLE                  = "navigationPanelVisible";
   private static final String AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED = "aerialViewCenteredOnSelectionEnabled";
@@ -282,6 +286,17 @@ public class FileUserPreferences extends UserPreferences {
     } catch (IllegalArgumentException ex) {
       setUnit(defaultLengthUnit);
     }
+    setCurrency(preferences.get(CURRENCY, defaultPreferences.getCurrency()));
+    setValueAddedTaxEnabled(preferences.getBoolean(VALUE_ADDED_TAX_ENABLED, defaultPreferences.isValueAddedTaxEnabled()));
+    String percentage = preferences.get(DEFAULT_VALUE_ADDED_TAX_PERCENTAGE, null);
+    BigDecimal valueAddedTaxPercentage = defaultPreferences.getDefaultValueAddedTaxPercentage();
+    if (percentage != null) {
+      try {
+        valueAddedTaxPercentage = new BigDecimal(percentage);
+      } catch (NumberFormatException ex) {
+      }
+    }
+    setDefaultValueAddedTaxPercentage(valueAddedTaxPercentage);
     setFurnitureCatalogViewedInTree(preferences.getBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, 
         defaultPreferences.isFurnitureCatalogViewedInTree()));
     setNavigationPanelVisible(preferences.getBoolean(NAVIGATION_PANEL_VISIBLE, 
@@ -331,7 +346,6 @@ public class FileUserPreferences extends UserPreferences {
     }
     setAutoSaveDelayForRecovery(preferences.getInt(AUTO_SAVE_DELAY_FOR_RECOVERY,
         defaultPreferences.getAutoSaveDelayForRecovery()));
-    setCurrency(defaultPreferences.getCurrency());    
     // Read recent colors list
     String [] recentColors = preferences.get(RECENT_COLORS, "").split(",");
     List<Integer> recentColorsList = new ArrayList<Integer>(recentColors.length);
@@ -920,6 +934,19 @@ public class FileUserPreferences extends UserPreferences {
     // Write other preferences 
     preferences.put(LANGUAGE, getLanguage());
     preferences.put(EXTENSIBLE_UNIT, getLengthUnit().name());   
+    String currency = getCurrency();
+    if (currency == null) {
+      preferences.remove(CURRENCY);
+    } else {
+      preferences.put(CURRENCY, currency);
+    }
+    preferences.putBoolean(VALUE_ADDED_TAX_ENABLED, isValueAddedTaxEnabled());
+    BigDecimal valueAddedTaxPercentage = getDefaultValueAddedTaxPercentage();
+    if (valueAddedTaxPercentage == null) {
+      preferences.remove(DEFAULT_VALUE_ADDED_TAX_PERCENTAGE);
+    } else {
+      preferences.put(DEFAULT_VALUE_ADDED_TAX_PERCENTAGE, valueAddedTaxPercentage.toPlainString());
+    }
     preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
     preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());

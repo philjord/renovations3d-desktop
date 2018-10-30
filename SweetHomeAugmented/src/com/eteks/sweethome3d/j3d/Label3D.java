@@ -55,7 +55,7 @@ import javaawt.image.BufferedImage;
  * @author Emmanuel Puybaret
  */
 public class Label3D extends Object3DBranch {
-  private static final TransparencyAttributes DEFAULT_TRANSPARENCY_ATTRIBUTES = 
+  public static final TransparencyAttributes DEFAULT_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0);
   private static final PolygonAttributes      DEFAULT_POLYGON_ATTRIBUTES = 
       new PolygonAttributes(PolygonAttributes.POLYGON_FILL, PolygonAttributes.CULL_NONE, 0, false);
@@ -92,7 +92,6 @@ public class Label3D extends Object3DBranch {
     //selection
     setPickable(true);
     setCapability(Node.ENABLE_PICK_REPORTING);
-    setUserData(label);
   }
 
   @Override
@@ -142,7 +141,8 @@ public class Label3D extends Object3DBranch {
         g2D.dispose();
         
         //Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-        Rectangle2D textBounds = font.getStringBounds(text);         
+        Rectangle2D textBounds = font.getStringBounds(text);   
+        
         
         float textWidth = (float)textBounds.getWidth();// stroke width is generally 0 -> + 2 * stroke.getLineWidth();
 //        if (style.isItalic()) {
@@ -195,7 +195,15 @@ public class Label3D extends Object3DBranch {
           scaleTransform.setScale(new Vector3d(textWidth, 1, textHeight));          
           // Move to the middle of base line
           this.baseLineTransform = new Transform3D();
-          this.baseLineTransform.setTranslation(new Vector3d(0, 0, textHeight / 2 + textBounds.getY()));
+          float translationX;
+          if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+            translationX = textWidth / 2;
+          } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+            translationX = -textWidth / 2;
+          } else { // CENTER
+            translationX = 0;
+          }
+          this.baseLineTransform.setTranslation(new Vector3d(translationX, 0, textHeight / 2 - 0));
           this.baseLineTransform.mul(scaleTransform);
           this.texture = new TextureLoader(textureImage).getTexture();
           this.text = text;
@@ -222,8 +230,7 @@ public class Label3D extends Object3DBranch {
   
           transformGroup.setPickable(true);
           
-          SimpleShaderAppearance appearance = new SimpleShaderAppearance();
-          appearance.setUpdatableCapabilities();
+          SimpleShaderAppearance appearance = new SimpleShaderAppearance();          
           appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
           appearance.setPolygonAttributes(DEFAULT_POLYGON_ATTRIBUTES);
           appearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
@@ -231,18 +238,18 @@ public class Label3D extends Object3DBranch {
           appearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
               TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
           appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-          Box box = new Box(0.5f, 0f, 0.5f, appearance);
+          appearance.setUpdatableCapabilities();
+          Box box = new Box(0.5f, 0f, 0.5f, Box.ENABLE_GEOMETRY_PICKING, appearance);
           Shape3D shape = box.getShape(Box.TOP);
           box.removeChild(shape);         
           makePickable(shape); //PJPJP for selection
           
-			shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-			if (!shape.getGeometry().isLive() && !shape.getGeometry().isCompiled())
-			{
-				shape.getGeometry().setCapability(GeometryArray.ALLOW_NORMAL_READ);
-			}
-         
-          
+          shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+		  if (!shape.getGeometry().isLive() && !shape.getGeometry().isCompiled())
+		  {
+			shape.getGeometry().setCapability(GeometryArray.ALLOW_NORMAL_READ);
+		  }
+                   
           // base shape outlining
           int outlineStencilMask = Object3DBranch.LABEL_STENCIL_MASK;
           RenderingAttributes renderingAttributes = new RenderingAttributes();
@@ -303,7 +310,7 @@ public class Label3D extends Object3DBranch {
         rotationY.rotY(-label.getAngle());
         rotationY.mul(pitchRotation);
         Transform3D transform = new Transform3D();
-        transform.setTranslation(new Vector3d(label.getX(), label.getGroundElevation(), label.getY()));
+        transform.setTranslation(new Vector3d(label.getX(), label.getGroundElevation() + (pitch == 0f && label.getElevation() < 0.1f ? 0.1f : 0), label.getY()));
         transform.mul(rotationY);
         transformGroup.setTransform(transform);
         ((Shape3D)transformGroup.getChild(0)).getAppearance().setTexture(this.texture);        

@@ -39,6 +39,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.ObserverCamera;
+import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
@@ -93,10 +94,6 @@ public class HomeController3D implements Controller {
   private void addModelListeners(final Home home) {
     home.addPropertyChangeListener(Home.Property.CAMERA, new PropertyChangeListener() {      
         public void propertyChange(PropertyChangeEvent ev) {
-        	//PJPJPJ allow a "no update" style camera with view of -1, for plan speed
-        	if( ((Camera)ev.getNewValue()).getFieldOfView() == -1)
-        		cameraState.exit();
-        	else        		
 		        setCameraState(home.getCamera() == home.getTopCamera() 
 		              ? topCameraState
 		              : observerCameraState);
@@ -273,12 +270,6 @@ public class HomeController3D implements Controller {
   
   
   /**
-   * PJPJPJ allow HomeComponent3D view to exit and enter camera states
-   */
-  public CameraControllerState getCameraState() {
-    return this.cameraState;
-  }
-  /**
    * Changes current state of controller.
    */
   protected void setCameraState(CameraControllerState state) {
@@ -453,6 +444,16 @@ public class HomeController3D implements Controller {
           updateCameraFromHomeBounds(false);
         }
       };
+    private CollectionListener<Polyline> polylinesListener = new CollectionListener<Polyline>() {
+        public void collectionChanged(CollectionEvent<Polyline> ev) {
+          if (ev.getType() == CollectionEvent.Type.ADD) {
+            ev.getItem().addPropertyChangeListener(objectChangeListener);
+          } else if (ev.getType() == CollectionEvent.Type.DELETE) {
+            ev.getItem().removePropertyChangeListener(objectChangeListener);
+          }
+          updateCameraFromHomeBounds(false);
+        }
+      };
     private CollectionListener<Label> labelsListener = new CollectionListener<Label>() {
         public void collectionChanged(CollectionEvent<Label> ev) {
           if (ev.getType() == CollectionEvent.Type.ADD) {
@@ -496,6 +497,10 @@ public class HomeController3D implements Controller {
         room.addPropertyChangeListener(this.objectChangeListener);
       }
       home.addRoomsListener(this.roomsListener);
+      for (Polyline polyline : home.getPolylines()) {
+        polyline.addPropertyChangeListener(this.objectChangeListener);
+      }
+      home.addPolylinesListener(this.polylinesListener);
       for (Label label : home.getLabels()) {
         label.addPropertyChangeListener(this.objectChangeListener);
       }
@@ -510,8 +515,6 @@ public class HomeController3D implements Controller {
      */
     public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
       this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
-      if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-    	  enter();
       updateCameraFromHomeBounds(false);
     }
     
@@ -532,8 +535,6 @@ public class HomeController3D implements Controller {
      * Returns the distance between the current camera location and home bounds center.
      */
     private float getCameraToAerialViewCenterDistance() {
-    	 if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-       	  enter();
       return (float)Math.sqrt(Math.pow((this.aerialViewBoundsLowerPoint [0] + this.aerialViewBoundsUpperPoint [0]) / 2 - this.topCamera.getX(), 2) 
           + Math.pow((this.aerialViewBoundsLowerPoint [1] + this.aerialViewBoundsUpperPoint [1]) / 2 - this.topCamera.getY(), 2) 
           + Math.pow((this.aerialViewBoundsLowerPoint [2] + this.aerialViewBoundsUpperPoint [2]) / 2 - this.topCamera.getZ(), 2));
@@ -634,6 +635,25 @@ public class HomeController3D implements Controller {
         }
       }
       
+      for (Polyline polyline : selectionEmpty
+                ? home.getPolylines()
+                : Home.getPolylinesSubList(selectedItems)) {
+        if (polyline.isVisibleIn3D() && isItemAtVisibleLevel(polyline)) {
+          float minZ;
+          float maxZ;
+          if (selectionEmpty) {
+            minZ = Math.max(0, polyline.getGroundElevation());
+            maxZ = Math.max(MIN_HEIGHT, polyline.getGroundElevation());
+          } else {
+            minZ =
+            maxZ = polyline.getGroundElevation();
+          }
+          for (float [] point : polyline.getPoints()) {
+            updateAerialViewBounds(point [0], point [1], minZ, maxZ);
+          }
+        }
+      }
+
       for (Label label : selectionEmpty
                              ? home.getLabels()
                              : Home.getLabelsSubList(selectedItems)) {
@@ -720,8 +740,6 @@ public class HomeController3D implements Controller {
     }
 
     public void placeCameraAt(float distanceToCenter, boolean firstPieceOfFurnitureAddedToEmptyHome) {
-    	if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-      	  enter();
     	// Check camera is always outside the sphere centered in home center and with a radius equal to minimum distance   
       distanceToCenter = Math.max(distanceToCenter, this.minDistanceToAerialViewCenter);
       // Check camera isn't too far
@@ -741,8 +759,6 @@ public class HomeController3D implements Controller {
 
     @Override
     public void rotateCameraYaw(float delta) {
-    	if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       float newYaw = this.topCamera.getYaw() + delta;
       double distanceToCenterAtGroundLevel = getCameraToAerialViewCenterDistance() * Math.cos(this.topCamera.getPitch());
       // Change camera yaw and location so user turns around home
@@ -756,8 +772,6 @@ public class HomeController3D implements Controller {
     
     @Override
     public void rotateCameraPitch(float delta) {
-    	if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       float newPitch = this.topCamera.getPitch() + delta;
       // Check new pitch is between 0 and PI / 2  
       newPitch = Math.max(newPitch, (float)0);
@@ -777,8 +791,6 @@ public class HomeController3D implements Controller {
     
     @Override
     public void goToCamera(Camera camera) {
-    	if(this.topCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       this.topCamera.setCamera(camera);
       this.topCamera.setTime(camera.getTime());
       this.topCamera.setLens(camera.getLens());
@@ -800,6 +812,10 @@ public class HomeController3D implements Controller {
         room.removePropertyChangeListener(this.objectChangeListener);
       }
       home.removeRoomsListener(this.roomsListener);
+      for (Polyline polyline : home.getPolylines()) {
+        polyline.removePropertyChangeListener(this.objectChangeListener);
+      }
+      home.removePolylinesListener(this.polylinesListener);
       for (Label label : home.getLabels()) {
         label.removePropertyChangeListener(this.objectChangeListener);
       }
@@ -867,7 +883,6 @@ public class HomeController3D implements Controller {
         level.addPropertyChangeListener(this.levelElevationChangeListener);
       }
       home.addLevelsListener(this.levelsListener);
-      // Select observer camera for user feedback
       if (preferences.isObserverCameraSelectedAtChange()) {
           // Select observer camera for user feedback      
           home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
@@ -876,8 +891,6 @@ public class HomeController3D implements Controller {
     
     @Override
     public void moveCamera(float delta) {
-    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-      	  enter();
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() + (float)Math.cos(this.observerCamera.getYaw()) * delta);
       if (preferences.isObserverCameraSelectedAtChange()) {
@@ -888,8 +901,6 @@ public class HomeController3D implements Controller {
     
     @Override
     public void moveCameraSideways(float delta) {
-    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       this.observerCamera.setX(this.observerCamera.getX() - (float)Math.cos(this.observerCamera.getYaw()) * delta);
       this.observerCamera.setY(this.observerCamera.getY() - (float)Math.sin(this.observerCamera.getYaw()) * delta);
       if (preferences.isObserverCameraSelectedAtChange()) {
@@ -900,8 +911,6 @@ public class HomeController3D implements Controller {
     
     @Override
     public void elevateCamera(float delta) {
-    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       float newElevation = this.observerCamera.getZ() + delta; 
       newElevation = Math.min(Math.max(newElevation, getMinimumElevation()), preferences.getLengthUnit().getMaximumElevation());
       this.observerCamera.setZ(newElevation);
@@ -912,8 +921,6 @@ public class HomeController3D implements Controller {
     }
 
     private void updateCameraMinimumElevation() {
-    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       observerCamera.setZ(Math.max(observerCamera.getZ(), getMinimumElevation()));
     }
 
@@ -928,9 +935,8 @@ public class HomeController3D implements Controller {
     
     @Override
     public void rotateCameraYaw(float delta) {
-    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       this.observerCamera.setYaw(this.observerCamera.getYaw() + delta); 
+      // Select observer camera for user feedback
       if (preferences.isObserverCameraSelectedAtChange()) {
           // Select observer camera for user feedback      
           home.setSelectedItems(Arrays.asList(new Selectable [] {this.observerCamera}));
@@ -939,8 +945,6 @@ public class HomeController3D implements Controller {
     
     @Override
     public void rotateCameraPitch(float delta) {
-    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       float newPitch = this.observerCamera.getPitch() + delta; 
    // Check new angle is between -90° and 90°  
       newPitch = Math.min(Math.max(-(float)Math.PI / 2, newPitch), (float)Math.PI / 2);;
@@ -965,8 +969,6 @@ public class HomeController3D implements Controller {
     
     @Override
     public void goToCamera(Camera camera) {
-    	if(this.observerCamera == null)//PJPJ this throws an exception if we are not currently entered into this state
-        	  enter();
       this.observerCamera.setCamera(camera);
       this.observerCamera.setTime(camera.getTime());
       this.observerCamera.setLens(camera.getLens());
@@ -989,7 +991,7 @@ public class HomeController3D implements Controller {
     }
   }
   
-  
+  //PJPJPJ methods below for mouse over handler
   /**
    * Controls the modification of selected walls.
    */

@@ -122,7 +122,6 @@ import javax.swing.ToolTipManager;
 import javax.swing.UIManager;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
 import org.jogamp.vecmath.Point3f;
 
 import com.eteks.sweethome3d.j3d.Component3DManager;
@@ -130,6 +129,7 @@ import com.eteks.sweethome3d.j3d.PhotoRenderer;
 import com.eteks.sweethome3d.model.AspectRatio;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.ObserverCamera;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -163,8 +163,13 @@ public class VideoPanel extends JPanel implements DialogView {
       new VideoFormat(VideoFormat.JPEG, new Dimension(1024, 768), Format.NOT_SPECIFIED, Format.byteArray, 25),
       new VideoFormat(VideoFormat.JPEG, new Dimension(1280, 960), Format.NOT_SPECIFIED, Format.byteArray, 25),
       new VideoFormat(VideoFormat.JPEG, new Dimension(720, 405), Format.NOT_SPECIFIED, Format.byteArray, 25), // 16/9
+      new VideoFormat(VideoFormat.JPEG, new Dimension(1280, 536), Format.NOT_SPECIFIED, Format.byteArray, 25),
       new VideoFormat(VideoFormat.JPEG, new Dimension(1280, 720), Format.NOT_SPECIFIED, Format.byteArray, 25),
-      new VideoFormat(VideoFormat.JPEG, new Dimension(1920, 1080), Format.NOT_SPECIFIED, Format.byteArray, 25)};
+      new VideoFormat(VideoFormat.JPEG, new Dimension(1920, 800), Format.NOT_SPECIFIED, Format.byteArray, 25),
+      new VideoFormat(VideoFormat.JPEG, new Dimension(1920, 1080), Format.NOT_SPECIFIED, Format.byteArray, 25),
+      new VideoFormat(VideoFormat.JPEG, new Dimension(3840, 2160), Format.NOT_SPECIFIED, Format.byteArray, 25),
+      new VideoFormat(VideoFormat.JPEG, new Dimension(4096, 1728), Format.NOT_SPECIFIED, Format.byteArray, 25),
+      new VideoFormat(VideoFormat.JPEG, new Dimension(7680, 4320), Format.NOT_SPECIFIED, Format.byteArray, 25)};
 
   private static final String TIP_CARD      = "tip";
   private static final String PROGRESS_CARD = "progress";
@@ -553,16 +558,23 @@ public class VideoPanel extends JPanel implements DialogView {
                                                       int index, boolean isSelected, boolean cellHasFocus) {
           VideoFormat videoFormat = (VideoFormat)value;
           String aspectRatio;
-          switch (getAspectRatio(videoFormat)) {
+          Dimension size = videoFormat.getSize();
+          switch (getAspectRatio(size.width, size.height)) {
             case RATIO_4_3 :
-              aspectRatio = "4/3";
+              aspectRatio = preferences.getLocalizedString(
+                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.4_3Ratio.text");
               break;
-            case RATIO_16_9 :
+            case RATIO_24_10 :
+              aspectRatio = preferences.getLocalizedString(
+                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.2.40_1Ratio.text");
+              break;
             default :
-              aspectRatio = "16/9";
+            case RATIO_16_9 :
+              aspectRatio = preferences.getLocalizedString(
+                  PhotoSizeAndQualityPanel.class, "aspectRatioComboBox.16_9Ratio.text");
               break;
           }
-          Dimension videoSize = videoFormat.getSize();
+          Dimension videoSize = size;
           String displayedValue = String.format(videoFormatComboBoxFormat, videoSize.width, videoSize.height,
               aspectRatio, (int)videoFormat.getFrameRate());          
           return super.getListCellRendererComponent(list, displayedValue, index, isSelected,
@@ -571,14 +583,16 @@ public class VideoPanel extends JPanel implements DialogView {
       });
     this.videoFormatComboBox.addItemListener(new ItemListener() {
         public void itemStateChanged(ItemEvent ev) {
-          controller.setWidth(((VideoFormat)videoFormatComboBox.getSelectedItem()).getSize().width);
-          controller.setAspectRatio(getAspectRatio((VideoFormat)videoFormatComboBox.getSelectedItem()));
-          controller.setFrameRate((int)((VideoFormat)videoFormatComboBox.getSelectedItem()).getFrameRate());
+          VideoFormat videoFormat = (VideoFormat)videoFormatComboBox.getSelectedItem();
+          Dimension size = videoFormat.getSize();
+          controller.setWidth(videoFormat.getSize().width);
+          controller.setAspectRatio(getAspectRatio(size.width, size.height));
+          controller.setFrameRate((int)videoFormat.getFrameRate());
         }
       });
     PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          videoFormatComboBox.setSelectedItem(controller.getAspectRatio());
+          videoFormatComboBox.setSelectedItem(getVideoFormat(controller.getWidth(), controller.getAspectRatio(), controller.getFrameRate()));
         }
       };
     controller.addPropertyChangeListener(VideoController.Property.WIDTH, propertyChangeListener);
@@ -588,6 +602,17 @@ public class VideoPanel extends JPanel implements DialogView {
 
     // Quality label and slider bound to QUALITY controller property
     this.qualityLabel = new JLabel();
+    Dimension imageSize;
+    try {
+      imageSize = SwingTools.getImageSizeInPixels(new ResourceURLContent(PhotoSizeAndQualityPanel.class,
+            "resources/quality0.jpg"));
+    } catch (IOException ex) {
+      // Shouldn't happen since resource exists
+      imageSize = null;
+    }
+    float resolutionScale = SwingTools.getResolutionScale();
+    final int imageWidth = (int)(imageSize.width * resolutionScale);
+    final int imageHeight = (int)(imageSize.height * resolutionScale);
     this.qualitySlider = new JSlider(1, controller.getQualityLevelCount()) {
         @Override
         public String getToolTipText(MouseEvent ev) {
@@ -596,8 +621,8 @@ public class VideoPanel extends JPanel implements DialogView {
           if (valueToTick < 0.25f || valueToTick > 0.75f) {
             // Display a tooltip that explains the different quality levels
             return "<html><table><tr valign='middle'>"
-                + "<td><img border='1' src='" 
-                + new ResourceURLContent(PhotoPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
+                + "<td><img border='1' width='" + imageWidth + "' height='" + imageHeight + "' src='"
+                + new ResourceURLContent(VideoPanel.class, "resources/quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + ".jpg").getURL() + "'></td>"
                 + "<td>" + preferences.getLocalizedString(VideoPanel.class, "quality" + Math.round(valueUnderMouse - qualitySlider.getMinimum()) + "DescriptionLabel.text") + "</td>"
                 + "</tr></table>";
           } else {
@@ -730,8 +755,8 @@ public class VideoPanel extends JPanel implements DialogView {
     timeSpinnerModel.addChangeListener(dateTimeChangeListener);
 
     this.dayNightLabel = new JLabel();
-    final ImageIcon dayIcon = SwingTools.getScaledImageIcon(PhotoPanel.class.getResource("resources/day.png"));
-    final ImageIcon nightIcon = SwingTools.getScaledImageIcon(PhotoPanel.class.getResource("resources/night.png"));
+    final ImageIcon dayIcon = SwingTools.getScaledImageIcon(VideoPanel.class.getResource("resources/day.png"));
+    final ImageIcon nightIcon = SwingTools.getScaledImageIcon(VideoPanel.class.getResource("resources/night.png"));
     PropertyChangeListener dayNightListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
           if (home.getCompass().getSunElevation(
@@ -767,8 +792,18 @@ public class VideoPanel extends JPanel implements DialogView {
     setComponentTexts(preferences);
     updatePlaybackTimer();
 
-    this.videoFormatComboBox.setSelectedItem(new VideoFormat(VideoFormat.JPEG, 
-        new Dimension(controller.getWidth(), controller.getHeight()), Format.NOT_SPECIFIED, Format.byteArray, controller.getFrameRate()));
+    this.videoFormatComboBox.setSelectedItem(getVideoFormat(controller.getWidth(), controller.getAspectRatio(), controller.getFrameRate()));
+  }
+
+  private VideoFormat getVideoFormat(int width, AspectRatio aspectRatio, int frameRate) {
+    for (VideoFormat videoFormat : VIDEO_FORMATS) {
+      if (videoFormat.getSize().width == width
+          && getAspectRatio(videoFormat.getSize().width, videoFormat.getSize().height) == aspectRatio
+          && videoFormat.getFrameRate() == frameRate) {
+        return videoFormat;
+      }
+    }
+    return VIDEO_FORMATS [0];
   }
 
   /**
@@ -892,14 +927,15 @@ public class VideoPanel extends JPanel implements DialogView {
     progressPanel.add(this.progressBar, BorderLayout.NORTH);
     progressPanel.add(this.progressLabel);
     this.statusPanel.add(progressPanel, PROGRESS_CARD);
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     // First row
     add(this.planComponent, new GridBagConstraints(
         0, 0, 4, 1, 1, 1, labelAlignment, 
-        GridBagConstraints.BOTH, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.BOTH, new Insets(0, 0, standardGap, 0), 0, 0));
     // Second row
     add(this.videoToolBar, new GridBagConstraints(
         0, 1, 4, 1, 0, 0, GridBagConstraints.CENTER, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
     // Third row
     add(this.statusPanel, new GridBagConstraints(
         0, 2, 4, 1, 0, 0, GridBagConstraints.CENTER, 
@@ -914,14 +950,14 @@ public class VideoPanel extends JPanel implements DialogView {
         GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
     add(this.videoFormatLabel, new GridBagConstraints(
         1, 3, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     add(this.videoFormatComboBox, new GridBagConstraints(
         2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), -50, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 10), -50, 0));
     // Fifth row
     add(this.qualityLabel, new GridBagConstraints(
         1, 4, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 2, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, 2, standardGap), 0, 0));
     add(this.qualitySlider, new GridBagConstraints(
         2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
         GridBagConstraints.HORIZONTAL, new Insets(0, 0, 2, 0), 0, 0));
@@ -933,19 +969,19 @@ public class VideoPanel extends JPanel implements DialogView {
     JPanel advancedPanel = new JPanel(new GridBagLayout());
     advancedPanel.add(this.dateLabel, new GridBagConstraints(
         1, 7, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     advancedPanel.add(this.dateSpinner, new GridBagConstraints(
         2, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 10), 1, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 10), 1, 0));
     advancedPanel.add(this.timeLabel, new GridBagConstraints(
         3, 7, 1, 1, 0, 0, labelAlignment, 
-        GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
     advancedPanel.add(this.timeSpinner, new GridBagConstraints(
         4, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 5), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, standardGap), 0, 0));
     advancedPanel.add(this.dayNightLabel, new GridBagConstraints(
         5, 7, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-        GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), 0, 0));
+        GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), 0, 0));
     // Last row
     advancedPanel.add(this.ceilingLightEnabledCheckBox, new GridBagConstraints(
         1, 8, 5, 1, 0, 0, GridBagConstraints.CENTER, 
@@ -1120,7 +1156,7 @@ public class VideoPanel extends JPanel implements DialogView {
     final ActionMap actionMap = getActionMap();
     boolean playable = cameraPath.size() > 1;
     if (playable) {
-      Camera [] videoFramesPath = getVideoFramesPath(12);
+      Camera [] videoFramesPath = getVideoFramesPath(this.controller.getSpeed(), 12);
       // Find current camera location
       Camera homeCamera = home.getCamera();
       int index = videoFramesPath.length;
@@ -1261,9 +1297,8 @@ public class VideoPanel extends JPanel implements DialogView {
   /**
    * Returns the camera path that should be used to create each frame of an animation. 
    */
-  private Camera [] getVideoFramesPath(int frameRate) {
+  private Camera [] getVideoFramesPath(final float speed, int frameRate) {
     List<Camera> videoFramesPath = new ArrayList<Camera>();
-    final float speed = 2400f / 3600; // 2.4 km/h
     final float moveDistancePerFrame = speed * 100f / frameRate;  // speed is in m/s
     final float moveAnglePerFrame = (float)(Math.PI / 120 * 30 * speed / frameRate);
     final float elapsedTimePerFrame = 345600 / frameRate * 25; // 250 frame/day at 25 frame/second
@@ -1369,7 +1404,8 @@ public class VideoPanel extends JPanel implements DialogView {
     int quality = this.controller.getQuality();
     int width = this.controller.getWidth();
     int height = this.controller.getHeight();
-    final Camera [] videoFramesPath = getVideoFramesPath(frameRate);
+    float speed = this.controller.getSpeed();
+    final Camera [] videoFramesPath = getVideoFramesPath(speed, frameRate);
     // Set initial camera location because its type may change rendering setting
     home.setCamera(videoFramesPath [0]);
     final BoundedRangeModel progressModel = this.progressBar.getModel();
@@ -1395,7 +1431,10 @@ public class VideoPanel extends JPanel implements DialogView {
               ? PhotoRenderer.Quality.LOW
               : PhotoRenderer.Quality.HIGH);        
       } else {
-        frameGenerator = new Image3DGenerator(home, width, height, this.object3dFactory, quality == 1); 
+        frameGenerator = new Image3DGenerator(home, this.preferences, width, height, this.object3dFactory,
+            quality == 1
+            && (!this.preferences.isDrawingModeEnabled()
+                || home.getEnvironment().getDrawingMode() != HomeEnvironment.DrawingMode.OUTLINE));
       }
       if (!Thread.currentThread().isInterrupted()) {
         ImageDataSource sourceStream = new ImageDataSource((VideoFormat)this.videoFormatComboBox.getSelectedItem(), 
@@ -1461,7 +1500,7 @@ public class VideoPanel extends JPanel implements DialogView {
         // Confirm the stop if a rendering has been running for more than 30 s 
         && (!confirmStop
             || System.currentTimeMillis() - this.videoCreationStartTime < MINIMUM_DELAY_BEFORE_DISCARDING_WITHOUT_WARNING
-            || JOptionPane.showConfirmDialog(getRootPane(), 
+            || JOptionPane.showConfirmDialog(this,
                   this.preferences.getLocalizedString(VideoPanel.class, "confirmStopCreation.message"),
                   this.preferences.getLocalizedString(VideoPanel.class, "confirmStopCreation.title"), 
                   JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION)) {
@@ -1568,13 +1607,14 @@ public class VideoPanel extends JPanel implements DialogView {
   }
   
   /**
-   * Returns the aspect ration of the given video format.
+   * Returns the video aspect ration of the given size.
    */
-  private AspectRatio getAspectRatio(VideoFormat videoFormat) {
-    Dimension videoSize = videoFormat.getSize();
-    return Math.abs((float)videoSize.width / videoSize.height - 4f / 3) < 0.001f
+  private AspectRatio getAspectRatio(int width, int height) {
+    return Math.abs((float)width / height - 4f / 3) < 0.001f
        ? AspectRatio.RATIO_4_3 
-       : AspectRatio.RATIO_16_9;
+       : (Math.abs((float)width / height - 24f / 10) < 0.03f
+             ? AspectRatio.RATIO_24_10
+             : AspectRatio.RATIO_16_9);
   }
 
   /**
@@ -1827,11 +1867,11 @@ public class VideoPanel extends JPanel implements DialogView {
     private HomeComponent3D homeComponent3D;
     private BufferedImage   image;
 
-    public Image3DGenerator(Home home, int width, int height,
+    public Image3DGenerator(Home home, UserPreferences preferences, int width, int height,
                             Object3DFactory object3dFactory, 
                             boolean displayShadowOnFloor) {
       this.home = home;
-      this.homeComponent3D = new HomeComponent3D(home, null, object3dFactory, displayShadowOnFloor, null);
+      this.homeComponent3D = new HomeComponent3D(home, preferences, object3dFactory, displayShadowOnFloor, null);
       this.homeComponent3D.startOffscreenImagesCreation();
       this.image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
     }

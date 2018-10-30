@@ -575,6 +575,27 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
+   * Returns <code>null</code>.
+   * @since 6.0
+   */
+  @Override
+  public Transformation [] getModelTransformations() {
+    return null;
+  }
+
+  /**
+   * Sets the transformations of this group.
+   */
+  @Override
+  public void setModelTransformations(Transformation [] modelTransformations) {
+    if (isDeformable()) {
+      for (HomePieceOfFurniture piece : this.furniture) {
+        piece.setModelTransformations(modelTransformations);
+      }
+    }
+  }
+
+  /**
    * Returns 0.
    * @since 5.5
    */

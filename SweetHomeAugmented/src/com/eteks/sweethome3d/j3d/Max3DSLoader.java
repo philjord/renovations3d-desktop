@@ -757,7 +757,7 @@ public class Max3DSLoader extends LoaderBase implements Loader {
             }
             shape = new Shape3D(geometryArray, appearance);   
             parentGroup.addChild(shape);
-            scene.addNamedObject(mesh.getName() + (i == 0 ? "" : String.valueOf(i)), shape);
+            scene.addNamedObject(mesh.getName() + (i == 0 ? "" : "_" + String.valueOf(i)), shape);
           } else {
             shape.addGeometry(geometryArray);
           }

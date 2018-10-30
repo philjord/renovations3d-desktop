@@ -35,8 +35,6 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.dnd.DnDConstants;
 import java.awt.event.ActionEvent;
-//PJPJ MacOS specific code removed import java.awt.event.AdjustmentEvent;
-//PJPJ MacOS specific code removed import java.awt.event.AdjustmentListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ItemEvent;
@@ -495,9 +493,10 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     int labelAlignment = OperatingSystem.isMacOSX() 
         ? GridBagConstraints.LINE_END
         : GridBagConstraints.LINE_START;
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     // First row
-    Insets labelInsets = new Insets(0, 2, 5, 3);
-    Insets componentInsets = new Insets(0, 2, 3, 0);
+    Insets labelInsets = new Insets(0, 2, standardGap, 3);
+    Insets componentInsets = new Insets(0, 2, Math.round(3 * SwingTools.getResolutionScale()), 0);
     if (!OperatingSystem.isMacOSX()) {
       labelInsets.top = 2;
       componentInsets.top = 2;
@@ -513,7 +512,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     if (OperatingSystem.isMacOSXLeopardOrSuperior()) {
       add(this.searchTextField, new GridBagConstraints(
           0, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 3, 0), 0, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, Math.round(3 * SwingTools.getResolutionScale()), 0), 0, 0));
     } else { 
       add(this.searchLabel, new GridBagConstraints(
           0, 1, 1, 1, 0, 0, labelAlignment, 
@@ -526,7 +525,15 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
     final JScrollPane listScrollPane = SwingTools.createScrollPane(this.catalogFurnitureList);
     listScrollPane.getVerticalScrollBar().addAdjustmentListener(
         SwingTools.createAdjustmentListenerUpdatingScrollPaneViewToolTip(listScrollPane));
-    //PJPJ MacOS specific code removed
+    /*if (OperatingSystem.isMacOSXHighSierraOrSuperior()
+        && !OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
+      // Add missing repaint calls on viewport when scroll bar is moved
+      listScrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+          public void adjustmentValueChanged(AdjustmentEvent ev) {
+            listScrollPane.getViewport().repaint();
+          }
+        });
+    }*/
     listScrollPane.setPreferredSize(new Dimension(250, 250));
     listScrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
     add(listScrollPane, 

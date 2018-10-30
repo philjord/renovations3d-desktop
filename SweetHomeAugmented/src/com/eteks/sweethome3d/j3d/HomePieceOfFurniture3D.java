@@ -23,6 +23,8 @@ import javaawt.Color;
 import javaawt.Rectangle;
 import javaawt.Shape;
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -55,6 +57,7 @@ import org.jogamp.java3d.TransparencyAttributes;
 import org.jogamp.java3d.utils.geometry.Box;
 import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Color3f;
+import org.jogamp.vecmath.Matrix4f;
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.Vector3f;
@@ -76,6 +79,7 @@ import com.eteks.sweethome3d.model.Room;
 import com.eteks.sweethome3d.model.Selectable;
 import com.eteks.sweethome3d.model.SelectionEvent;
 import com.eteks.sweethome3d.model.SelectionListener;
+import com.eteks.sweethome3d.model.Transformation;
 
 /**
  * Root of piece of furniture branch.
@@ -100,6 +104,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_MODE_READ);
 		NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES.setCapability(PolygonAttributes.ALLOW_MODE_READ);
 	}
+	
+	final TransformGroup pieceTransformGroup = new TransformGroup();
 
 	/**
 	 * Creates the 3D piece matching the given home <code>piece</code>.
@@ -127,13 +133,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 
 		// allow furniture picking
 		setPickable(true);
+		setCapability(Node.ALLOW_PARENT_READ);		
 		setCapability(Node.ALLOW_PICKABLE_WRITE);
 		setCapability(Node.ENABLE_PICK_REPORTING);
 		
 		createPieceOfFurnitureNode(piece, ignoreDrawingMode, waitModelAndTextureLoadingEnd);
 	}
-
-	final TransformGroup pieceTransformGroup = new TransformGroup();
 	
 	/**
 	 * Creates the piece node with its transform group and add it to the piece branch. 
@@ -144,6 +149,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		
 		pieceTransformGroup.setName("pieceTransformGroup " + piece.getName());
 		pieceTransformGroup.setPickable(true);
+		pieceTransformGroup.setCapability(Node.ALLOW_PARENT_READ);
 		// Allow the change of the transformation that sets piece size and position
 		pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
 		pieceTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
@@ -179,14 +185,20 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		ModelManager.getInstance().loadModel(model, waitModelAndTextureLoadingEnd, 
 			new ModelManager.ModelObserver() {
 			public void modelUpdated(BranchGroup modelRoot)	{
-				float[][] modelRotation = piece.getModelRotation();
-				// Add piece model scene to a normalized transform group
-	            TransformGroup modelTransformGroup = ModelManager.getInstance().
-	            		getNormalizedTransformGroup(modelRoot, modelRotation, 1, piece.isModelCenteredAtOrigin());
-				modelTransformGroup.setName("NormalizedTransformGroup");
-				cloneHomeTextures(modelRoot);
-				updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, 
-						ignoreDrawingMode, waitModelAndTextureLoadingEnd);
+              updateModelTransformations(modelRoot);
+
+			  float[][] modelRotation = piece.getModelRotation();
+			  // Add piece model scene to a normalized transform group
+	          TransformGroup modelTransformGroup = ModelManager.getInstance().
+	              getNormalizedTransformGroup(modelRoot, modelRotation, 1, piece.isModelCenteredAtOrigin());
+			  modelTransformGroup.setName("NormalizedTransformGroup");
+			  modelTransformGroup.setPickable(true);
+			  modelTransformGroup.setCapability(Node.ALLOW_PARENT_READ);
+			  modelTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+		  
+			  cloneHomeTextures(modelRoot);
+			  updatePieceOfFurnitureModelNode(modelRoot, modelTransformGroup, 
+				  ignoreDrawingMode, waitModelAndTextureLoadingEnd);
 			}
 
 			public void modelError(Exception ex) {
@@ -225,11 +237,14 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 	 */
 	@Override
 	public void update() {
+      if (isVisible()) {
+        updatePieceOfFurnitureModelTransformations();
 		updatePieceOfFurnitureTransform();
 		updatePieceOfFurnitureModelMirrored();
 		updatePieceOfFurnitureColorAndTexture(false);
-		updateLight();
-		updatePieceOfFurnitureVisibility();
+      }
+	  updateLight();
+	  updatePieceOfFurnitureVisibility();
 	}
 
 	/**
@@ -282,9 +297,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		if (piece instanceof HomeLight 
 				&& this.home != null) {
 			boolean enabled = this.home.getEnvironment().getSubpartSizeUnderLight() > 0 
-					&& piece.isVisible()
-					&& (piece.getLevel() == null 
-					  || piece.getLevel().isViewableAndVisible());
+                && isVisible();
 			HomeLight light = (HomeLight) piece;
 			LightSource[] lightSources = light.getLightSources();
 			if (numChildren() > 2) {
@@ -372,9 +385,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 			drawingMode = null;
 		}
 		// Update visibility of filled model shapes
-		boolean visible = piece.isVisible() 
-			&& (piece.getLevel() == null 
-				|| piece.getLevel().isViewableAndVisible());
+		boolean visible = isVisible();
 		
 		//PJPJPJ only allow picking if we can see the object 
 		setPickable(visible);
@@ -385,7 +396,8 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		setVisible(getFilledModelNode(), visible 
 			&& (drawingMode == null 
 				|| drawingMode == HomeEnvironment.DrawingMode.FILL
-				|| drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE), materials);
+				|| drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE), 
+			materials);
 			
 		//hide the outline if showing but this is not visible
 		if(!visible && isShowOutline)
@@ -401,11 +413,129 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		setCullFace(getFilledModelNode(), piece.isModelMirrored(), piece.isBackFaceShown());
 	}
 
+  /**
+   * Sets the transformations applied to piece model parts.
+   */
+  private void updatePieceOfFurnitureModelTransformations() {
+    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    Node filledModelNode = getFilledModelNode();
+    if (filledModelNode != null 
+    	&& ((Group)filledModelNode).getChild(0).getUserData() != DEFAULT_BOX
+        && updateModelTransformations(this)) {
+      TransformGroup normalizationTransformGroup = (TransformGroup)filledModelNode;
+      // Update normalized transform group
+      Transform3D modelTransform = ModelManager.getInstance().
+          getNormalizedTransform(normalizationTransformGroup.getChild(0), piece.getModelRotation(), 1, piece.isModelCenteredAtOrigin());
+      normalizationTransformGroup.setTransform(modelTransform);
+      Node outlineModelNode = getOutlineModelNode();
+      if (outlineModelNode != null) {
+        ((TransformGroup)outlineModelNode).setTransform(modelTransform);
+      }
+    }
+  }
 	
+
+	/**
+   * Sets the transformations applied to <code>node</code> children
+   * and returns <code>true</code> if a transformation was changed.
+   */
+  private boolean updateModelTransformations(Node node) {
+    boolean modifiedTransformations = false;
+    Transformation[] transformations = ((HomePieceOfFurniture)getUserData()).getModelTransformations();
+    List<String> updatedTransformations = null;
+    if (transformations != null) {
+      for (Transformation transformation : transformations) {
+        String transformUserData = transformation.getName() + ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX;
+        if (updatedTransformations == null) {
+          updatedTransformations = new ArrayList<String>();
+        }
+        updatedTransformations.add(transformUserData);
+        modifiedTransformations |= updateTransformation(node, transformUserData, transformation.getMatrix());
+      }
+    }
+    modifiedTransformations |= setNotUpdatedTranformationsToIdentity(node, updatedTransformations);
+    return modifiedTransformations;
+  }
+
+  /**
+   * Sets the transformation matrix of the children which user data is equal to <code>transformGroupUserData</code>.
+   */
+  private boolean updateTransformation(Node node, String transformGroupUserData, float[][] matrix) {
+    boolean modifiedTransformations = false;
+    if (node instanceof Group) {
+      if (node instanceof TransformGroup
+          && transformGroupUserData.equals(node.getUserData())) {
+        Transform3D transform = new Transform3D();
+        TransformGroup group = (TransformGroup)node;
+        group.getTransform(transform);
+        Matrix4f transformMatrix = new Matrix4f();
+        transform.get(transformMatrix);
+        if (matrix [0] [0] != transformMatrix.m00
+            || matrix [0] [1] != transformMatrix.m01
+            || matrix [0] [2] != transformMatrix.m02
+            || matrix [0] [3] != transformMatrix.m03
+            || matrix [1] [0] != transformMatrix.m10
+            || matrix [1] [1] != transformMatrix.m11
+            || matrix [1] [2] != transformMatrix.m12
+            || matrix [1] [3] != transformMatrix.m13
+            || matrix [2] [0] != transformMatrix.m20
+            || matrix [2] [1] != transformMatrix.m21
+            || matrix [2] [2] != transformMatrix.m22
+            || matrix [2][3] != transformMatrix.m23) {
+          transformMatrix.setRow(0, matrix[0]);
+          transformMatrix.setRow(1, matrix[1]);
+          transformMatrix.setRow(2, matrix[2]);
+          transformMatrix.setRow(3, new float [] {0, 0, 0, 1});
+          transform.set(transformMatrix);
+          group.setTransform(transform);
+          modifiedTransformations = true;
+        }
+      } else {
+        Iterator<Node> enumeration = ((Group)node).getAllChildren();
+        while (enumeration.hasNext()) {
+          modifiedTransformations |= updateTransformation(enumeration.next(), transformGroupUserData, matrix);
+        }
+      }
+    }
+    // No Link parsing
+
+    return modifiedTransformations;
+  }
+
+  /**
+   * Sets the transformation matrix of the children which user data is not in <code>updatedTransformations</code> to identity.
+   */
+  private boolean setNotUpdatedTranformationsToIdentity(Node node, List<String> updatedTransformations) {
+    boolean modifiedTransformations = false;
+    if (node instanceof Group) {
+      if (node instanceof TransformGroup
+          && node.getUserData() instanceof String
+          && ((String)node.getUserData()).endsWith(ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX)
+          && (updatedTransformations == null
+              || !updatedTransformations.contains(node.getUserData()))) {
+        TransformGroup group = (TransformGroup)node;
+        Transform3D transform = new Transform3D();
+        group.getTransform(transform);
+        if ((transform.getType() & Transform3D.IDENTITY) != Transform3D.IDENTITY) {
+          transform.setIdentity();
+          group.setTransform(transform);
+          modifiedTransformations = true;
+        }
+      }
+      Iterator<Node> enumeration = ((Group)node).getAllChildren();
+      while (enumeration.hasNext()) {
+        modifiedTransformations |= setNotUpdatedTranformationsToIdentity(enumeration.next(), updatedTransformations);
+      }
+    }
+
+    return modifiedTransformations;
+  }
+
 	private BranchGroup modelBranch;
 	private Node filledModelNode;
 	private Node outlineModelNode;
-	/**
+	
+  /**
 	 * Updates transform group children with <code>modelMode</code>.
 	 */
 	private void updatePieceOfFurnitureModelNode(Node modelNode, 
@@ -419,6 +549,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		modelBranch = new BranchGroup();
 		modelBranch.setName("modelBranch");
 		modelBranch.setPickable(true);
+		modelBranch.setCapability(Node.ALLOW_PARENT_READ);
 		modelBranch.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
 		filledModelNode = normalization;
 		modelBranch.addChild(filledModelNode);
@@ -432,11 +563,15 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		} else {
 			outlineModelNode = null;
 		}
+		
+		HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    	if (piece.isDoorOrWindow()) {
+    		//PJ TODO: why?
+      	  //setTransparentShapeNotPickable(modelNode);
+    	}
 		 
 		// Remove previous nodes    
 		pieceTransformGroup.removeAllChildren();
-		
-		HomePieceOfFurniture piece = (HomePieceOfFurniture) getUserData();
 		if (piece.isHorizontallyRotated()) {
 	      // Update piece transformation to ensure its center is correctly placed
 	      updatePieceOfFurnitureTransform();
@@ -515,6 +650,12 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		Appearance boxAppearance = new SimpleShaderAppearance();
 		boxAppearance.setMaterial(material);
 		Box box = new Box(0.5f, 0.5f, 0.5f, boxAppearance);
+    	box.getShape(Box.FRONT).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    	box.getShape(Box.BACK).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    	box.getShape(Box.BOTTOM).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    	box.getShape(Box.TOP).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    	box.getShape(Box.LEFT).setCapability(Node.ALLOW_PICKABLE_WRITE);
+    	box.getShape(Box.RIGHT).setCapability(Node.ALLOW_PICKABLE_WRITE);
 	    box.setUserData(DEFAULT_BOX);
 	    return box;
 	}
@@ -544,8 +685,10 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 			Appearance outlineAppearance = new SimpleShaderAppearance(Object3DBranch.OUTLINE_COLOR);
 			((Shape3D) node).setAppearance(outlineAppearance);
 			outlineAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
-			RenderingAttributes renderingAttributes = new RenderingAttributes();
+			//allow texture to be read (ModelPreviewComponent needs this)
+			outlineAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
 			
+			RenderingAttributes renderingAttributes = new RenderingAttributes();			
 			renderingAttributes.setStencilEnable(true);
 			int outlineStencilMask = Object3DBranch.FURN_STENCIL_MASK;
 			renderingAttributes.setStencilWriteMask(outlineStencilMask);
@@ -992,6 +1135,16 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 	}
 
 	/**
+   * Returns <code>true</code> if this 3D piece is visible.
+   */
+  private boolean isVisible() {
+    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
+    return piece.isVisible()
+        && (piece.getLevel() == null
+            || piece.getLevel().isViewableAndVisible());
+  }
+
+  /**
 	 * Returns <code>true</code> if this piece of furniture belongs to <code>selectedItems</code>.
 	 */
 	private boolean isSelected(List<? extends Selectable> selectedItems) {

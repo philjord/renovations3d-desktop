@@ -34,7 +34,8 @@ public class UserPreferencesController implements Controller {
   /**
    * The properties that may be edited by the view associated to this controller. 
    */
-  public enum Property {LANGUAGE, UNIT, MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME, 
+  public enum Property {LANGUAGE, UNIT, CURRENCY, VALUE_ADDED_TAX_ENABLED,
+      MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME,
       FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,   
       NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_FLOOR_THICKNESS, FURNITURE_CATALOG_VIEWED_IN_TREE, 
       NAVIGATION_PANEL_VISIBLE, AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, OBSERVER_CAMERA_SELECTED_AT_CHANGE,
@@ -48,6 +49,8 @@ public class UserPreferencesController implements Controller {
 
   private String                        language;
   private LengthUnit                    unit;
+  private String                        currency;
+  private boolean                       valueAddedTaxEnabled;
   private boolean                       furnitureCatalogViewedInTree;
   private boolean                       navigationPanelVisible;
   private boolean                       aerialViewCenteredOnSelectionEnabled;
@@ -130,6 +133,8 @@ public class UserPreferencesController implements Controller {
   protected void updateProperties() {
     setLanguage(this.preferences.getLanguage());
     setUnit(this.preferences.getLengthUnit());
+    setCurrency(this.preferences.getCurrency());
+    setValueAddedTaxEnabled(this.preferences.isValueAddedTaxEnabled());
     setFurnitureCatalogViewedInTree(this.preferences.isFurnitureCatalogViewedInTree());
     setNavigationPanelVisible(this.preferences.isNavigationPanelVisible());
     setAerialViewCenteredOnSelectionEnabled(this.preferences.isAerialViewCenteredOnSelectionEnabled());
@@ -202,6 +207,49 @@ public class UserPreferencesController implements Controller {
    */
   public LengthUnit getUnit() {
     return this.unit;
+  }
+
+  /**
+   * Sets the edited currency.
+   * @since 6.0
+   */
+  public void setCurrency(String currency) {
+    if (currency != this.currency) {
+      String oldCurrency = this.currency;
+      this.currency = currency;
+      this.propertyChangeSupport.firePropertyChange(Property.CURRENCY.name(), oldCurrency, currency);
+      if (currency == null) {
+        setValueAddedTaxEnabled(false);
+      }
+    }
+  }
+
+  /**
+   * Returns the edited currency.
+   * @since 6.0
+   */
+  public String getCurrency() {
+    return this.currency;
+  }
+
+  /**
+   * Sets whether Value Added Tax should be taken in account in prices.
+   * @since 6.0
+   */
+  public void setValueAddedTaxEnabled(boolean valueAddedTaxEnabled) {
+    if (this.valueAddedTaxEnabled != valueAddedTaxEnabled) {
+      this.valueAddedTaxEnabled = valueAddedTaxEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.VALUE_ADDED_TAX_ENABLED.name(),
+          !valueAddedTaxEnabled, valueAddedTaxEnabled);
+    }
+  }
+
+  /**
+   * Returns <code>true</code> if Value Added Tax should be taken in account in prices.
+   * @since 6.0
+   */
+  public boolean isValueAddedTaxEnabled() {
+    return this.valueAddedTaxEnabled;
   }
 
   /**
@@ -601,6 +649,8 @@ public class UserPreferencesController implements Controller {
   public void modifyUserPreferences() {
     this.preferences.setLanguage(getLanguage());
     this.preferences.setUnit(getUnit());
+    this.preferences.setCurrency(getCurrency());
+    this.preferences.setValueAddedTaxEnabled(isValueAddedTaxEnabled());
     this.preferences.setFurnitureCatalogViewedInTree(isFurnitureCatalogViewedInTree());
     this.preferences.setNavigationPanelVisible(isNavigationPanelVisible());
     this.preferences.setAerialViewCenteredOnSelectionEnabled(isAerialViewCenteredOnSelectionEnabled());

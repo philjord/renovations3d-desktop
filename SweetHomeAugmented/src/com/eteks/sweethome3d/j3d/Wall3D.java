@@ -22,6 +22,7 @@ package com.eteks.sweethome3d.j3d;
 import javaawt.EventQueue;
 import javaawt.Rectangle;
 import javaawt.Shape;
+import javaawt.geom.AffineTransform;
 import javaawt.geom.Area;
 import javaawt.geom.GeneralPath;
 import javaawt.geom.Line2D;
@@ -66,6 +67,7 @@ import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
+import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Wall;
 
 /**
@@ -611,11 +613,16 @@ public class Wall3D extends Object3DBranch {
     // Generate geometry around non rectangular doors and windows placed in straight walls along the same axis 
     if (!roundWall && intersectingDoorOrWindows.size() > 0) {
       final double epsilon = Math.PI / 720; // Quarter of a degree
-      final ArrayList<HomePieceOfFurniture> missingModels = new ArrayList<HomePieceOfFurniture>(intersectingDoorOrWindows.size());
+      final ArrayList<HomeDoorOrWindow> missingModels = new ArrayList<HomeDoorOrWindow>(intersectingDoorOrWindows.size());
       // Compute geometry for doors or windows that have a known front area
-      for (final HomePieceOfFurniture doorOrWindow : intersectingDoorOrWindows) {
-        if (doorOrWindow instanceof DoorOrWindow
-            && !"M0,0 v1 h1 v-1 z".equals(((DoorOrWindow)doorOrWindow).getCutOutShape())) {
+      for (final HomePieceOfFurniture piece : intersectingDoorOrWindows) {
+        if (piece instanceof HomeDoorOrWindow) {
+          HomeDoorOrWindow doorOrWindow = (HomeDoorOrWindow)piece;
+          if (!PieceOfFurniture.DEFAULT_CUT_OUT_SHAPE.equals(doorOrWindow.getCutOutShape())
+              || doorOrWindow.getWallWidth() != 1
+              || doorOrWindow.getWallLeft() != 0
+              || doorOrWindow.getWallHeight() != 1
+              || doorOrWindow.getWallTop() != 0) {
           double angleDifference = Math.abs(wallYawAngle - doorOrWindow.getAngle()) % (2 * Math.PI);
           if (angleDifference < epsilon
               || angleDifference > 2 * Math.PI - epsilon
@@ -624,7 +631,7 @@ public class Wall3D extends Object3DBranch {
             ModelRotationTuple rotatedModel = doorOrWindowRotatedModels.get(doorOrWindow);
             if (rotatedModel != null 
                 && (missingModels.size() == 0 || !waitDoorOrWindowModelsLoadingEnd)) {
-              createGeometriesSurroundingDoorOrWindow(doorOrWindow, rotatedModelsFrontAreas.get(rotatedModel), frontOrBackSide,
+                createGeometriesSurroundingDoorOrWindow((HomeDoorOrWindow)doorOrWindow, rotatedModelsFrontAreas.get(rotatedModel), frontOrBackSide,
                   wall, sideGeometries, topGeometries, 
                   wallSideOrBaseboardPoints, wallElevation, cosWallYawAngle, sinWallYawAngle, topLineAlpha, topLineBeta,
                   texture, textureReferencePoint, wallSide);
@@ -634,9 +641,10 @@ public class Wall3D extends Object3DBranch {
           }
         }
       }
+      }
       if (missingModels.size() > 0) {
         final ModelManager modelManager = ModelManager.getInstance();
-        for (final HomePieceOfFurniture doorOrWindow : (List<HomePieceOfFurniture>)missingModels.clone()) {
+        for (final HomeDoorOrWindow doorOrWindow : (List<HomeDoorOrWindow>)missingModels.clone()) {
           double angleDifference = Math.abs(wallYawAngle - doorOrWindow.getAngle()) % (2 * Math.PI);
           final int frontOrBackSide = Math.abs(angleDifference - Math.PI) < epsilon ? 1 : -1;
           // Load the model of the door or window to compute its front area  
@@ -1063,7 +1071,7 @@ public class Wall3D extends Object3DBranch {
   /**
    * Creates the geometry surrounding the given non rectangular door or window. 
    */
-  private void createGeometriesSurroundingDoorOrWindow(HomePieceOfFurniture doorOrWindow, 
+  private void createGeometriesSurroundingDoorOrWindow(HomeDoorOrWindow doorOrWindow,
                                                        Area doorOrWindowFrontArea,
                                                        float frontOrBackSide,
                                                        Wall wall, List<Geometry> wallGeometries, 
@@ -1074,6 +1082,21 @@ public class Wall3D extends Object3DBranch {
                                                        double topLineAlpha, double topLineBeta,
                                                        HomeTexture texture, float [] textureReferencePoint, 
                                                        int wallSide) {
+    if (doorOrWindow.getModelTransformations() != null) {
+      doorOrWindowFrontArea = new Area(doorOrWindowFrontArea);
+      doorOrWindowFrontArea.transform(AffineTransform.getTranslateInstance(0.5, 0.5));
+      doorOrWindowFrontArea.transform(AffineTransform.getScaleInstance(
+          doorOrWindow.getWidth() * doorOrWindow.getWallWidth(),
+          doorOrWindow.getHeight() * doorOrWindow.getWallHeight()));
+      doorOrWindowFrontArea.transform(AffineTransform.getTranslateInstance(
+          doorOrWindow.getWallLeft() * doorOrWindow.getWidth(),
+          (1 - doorOrWindow.getWallHeight() - doorOrWindow.getWallTop()) * doorOrWindow.getHeight()));
+      doorOrWindowFrontArea.transform(AffineTransform.getScaleInstance(
+          1 / doorOrWindow.getWidth(),
+          1 / doorOrWindow.getHeight()));
+      doorOrWindowFrontArea.transform(AffineTransform.getTranslateInstance(-0.5, -0.5));
+    }
+
     Area fullFaceArea = new Area(FULL_FACE_CUT_OUT_AREA);
     fullFaceArea.subtract(doorOrWindowFrontArea);
     if (!fullFaceArea.isEmpty()) {
@@ -1381,6 +1404,7 @@ public class Wall3D extends Object3DBranch {
                                     (Group)getChild(5),  // Main group
                                     (Group)getChild(7)}; // Top group
     for (int i = 0; i < wallLeftSideGroups.length; i++) {
+      boolean ignoreDrawingMode = wallLeftSideGroups [i].numChildren() == 1;
       if (i == 1) {
         // Fill wall baseboards
         Baseboard leftSideBaseboard = wall.getLeftSideBaseboard();
@@ -1392,7 +1416,7 @@ public class Wall3D extends Object3DBranch {
             color = wall.getLeftSideColor();
           }
           updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(), 
-              texture, waitTextureLoadingEnd, color, wall.getLeftSideShininess());
+              texture, waitTextureLoadingEnd, color, wall.getLeftSideShininess(), ignoreDrawingMode);
         }
         Baseboard rightSideBaseboard = wall.getRightSideBaseboard();
         if (rightSideBaseboard != null) {
@@ -1403,19 +1427,19 @@ public class Wall3D extends Object3DBranch {
             color = wall.getRightSideColor();
           }
           updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(), 
-              texture, waitTextureLoadingEnd, color, wall.getRightSideShininess());
+              texture, waitTextureLoadingEnd, color, wall.getRightSideShininess(), ignoreDrawingMode);
         }
       } else if (i != 3 || wallsTopColor == null) {
         updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(), 
-            wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess());
+            wall.getLeftSideTexture(), waitTextureLoadingEnd, wall.getLeftSideColor(), wall.getLeftSideShininess(), ignoreDrawingMode);
         updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(), 
-            wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess());
+            wall.getRightSideTexture(), waitTextureLoadingEnd, wall.getRightSideColor(), wall.getRightSideShininess(), ignoreDrawingMode);
       } else {
         // Fill wall top with a separate color
         updateFilledWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(0)).getAppearance(), 
-            null, waitTextureLoadingEnd, wallsTopColor, 0);
+            null, waitTextureLoadingEnd, wallsTopColor, 0, ignoreDrawingMode);
         updateFilledWallSideAppearance(((Shape3D)wallRightSideGroups [i].getChild(0)).getAppearance(), 
-            null, waitTextureLoadingEnd, wallsTopColor, 0);
+            null, waitTextureLoadingEnd, wallsTopColor, 0, ignoreDrawingMode);
       }
       if (wallLeftSideGroups [i].numChildren() > 1) {
         updateOutlineWallSideAppearance(((Shape3D)wallLeftSideGroups [i].getChild(1)).getAppearance());
@@ -1431,7 +1455,8 @@ public class Wall3D extends Object3DBranch {
                                               final HomeTexture wallSideTexture,
                                               boolean waitTextureLoadingEnd,
                                               Integer wallSideColor, 
-                                              float shininess) {
+                                              float shininess,
+                                              boolean ignoreDrawingMode) {
     if (wallSideTexture == null) {
       wallSideAppearance.setMaterial(getMaterial(wallSideColor, wallSideColor, shininess));
       wallSideAppearance.setTexture(null);
@@ -1458,7 +1483,8 @@ public class Wall3D extends Object3DBranch {
     // Update wall side visibility
     RenderingAttributes renderingAttributes = wallSideAppearance.getRenderingAttributes();
     HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
-    renderingAttributes.setVisible(drawingMode == null
+    renderingAttributes.setVisible(ignoreDrawingMode
+        || drawingMode == null
         || drawingMode == HomeEnvironment.DrawingMode.FILL 
         || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE);
   }
@@ -1525,14 +1551,9 @@ public class Wall3D extends Object3DBranch {
         ModelRotationTuple tuple = (ModelRotationTuple)obj;
         if (this.model.equals(tuple.model)
             && this.rotation.length == tuple.rotation.length) {
-          for (int i = 0; i < this.rotation.length; i++) {
-            if (!Arrays.equals(this.rotation [i], tuple.rotation [i])) {
-              return false;
-            }
+          return Arrays.deepEquals(this.rotation, tuple.rotation);
           }
-          return true;
         }
-      }
       return false;
     }
   }

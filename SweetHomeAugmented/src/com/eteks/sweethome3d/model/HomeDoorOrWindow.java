@@ -30,13 +30,17 @@ import java.io.ObjectInputStream;
 public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWindow {
   private static final long serialVersionUID = 1L;
 
-  private final float   wallThickness;
-  private final float   wallDistance;
+  private float         wallThickness;
+  private float         wallDistance;
+  private float         wallWidth;
+  private float         wallLeft;
+  private float         wallHeight;
+  private float         wallTop;
   private boolean       wallCutOutOnBothSides; // false for version < 5.5
   private boolean       widthDepthDeformable;
-  private final Sash [] sashes;
-  private String  cutOutShape;
-  private boolean boundToWall;
+  private Sash []       sashes;
+  private String  		cutOutShape;
+  private boolean 		boundToWall;
 
 
   /**
@@ -47,6 +51,10 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     super(doorOrWindow);
     this.wallThickness = doorOrWindow.getWallThickness();
     this.wallDistance = doorOrWindow.getWallDistance();
+    this.wallWidth = 1;
+    this.wallLeft = 0;
+    this.wallHeight = 1;
+    this.wallTop = 0;
     this.wallCutOutOnBothSides = doorOrWindow.isWallCutOutOnBothSides();
     this.widthDepthDeformable = doorOrWindow.isWidthDepthDeformable();
     this.sashes = doorOrWindow.getSashes();
@@ -58,13 +66,17 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
    * and reads object from <code>in</code> stream with default reading method.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-	this.cutOutShape = "M0,0 v1 h1 v-1 z";
+    this.cutOutShape = PieceOfFurniture.DEFAULT_CUT_OUT_SHAPE;
     this.widthDepthDeformable = true;
+    this.wallWidth = 1;
+    this.wallLeft = 0;
+    this.wallHeight = 1;
+    this.wallTop = 0;
      in.defaultReadObject();
   }
   
   /**
-   * Returns the default thickness of the wall in which this door or window should be placed.
+   * Returns the thickness of the wall in which this door or window should be placed.
    * @return a value in percentage of the depth of the door or the window.
    */
   public float getWallThickness() {
@@ -72,13 +84,103 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
   }
   
   /**
-   * Returns the default distance that should lie at the back side of this door or window.
+   * Sets the thickness of the wall in which this door or window should be placed.
+   * @param wallThickness a value in percentage of the depth of the door or the window.
+   * @since 6.0
+   */
+  public void setWallThickness(float wallThickness) {
+    this.wallThickness = wallThickness;
+  }
+
+  /**
+   * Returns the distance between the back side of this door or window and the wall where it's located.
    * @return a distance in percentage of the depth of the door or the window.
    */
   public float getWallDistance() {
     return this.wallDistance;
   }
     
+  /**
+   * Sets the distance between the back side of this door or window and the wall where it's located.
+   * @param wallDistance a distance in percentage of the depth of the door or the window.
+   * @since 6.0
+   */
+  public void setWallDistance(float wallDistance) {
+    this.wallDistance = wallDistance;
+  }
+
+  /**
+   * Returns the width of the wall part in which this door or window should be placed.
+   * @return a value in percentage of the width of the door or the window.
+   * @since 6.0
+   */
+  public float getWallWidth() {
+    return this.wallWidth;
+  }
+
+  /**
+   * Sets the width of the wall part in which this door or window should be placed.
+   * @param wallWidth a value in percentage of the width of the door or the window.
+   * @since 6.0
+   */
+  public void setWallWidth(float wallWidth) {
+    this.wallWidth = wallWidth;
+  }
+
+  /**
+   * Returns the distance between the left side of this door or window and the wall part where it should be placed.
+   * @return a distance in percentage of the width of the door or the window.
+   * @since 6.0
+   */
+  public float getWallLeft() {
+    return this.wallLeft;
+  }
+
+  /**
+   * Sets the distance between the left side of this door or window and the wall part where it should be placed.
+   * @param wallLeft a distance in percentage of the width of the door or the window.
+   * @since 6.0
+   */
+  public void setWallLeft(float wallLeft) {
+    this.wallLeft = wallLeft;
+  }
+
+  /**
+   * Returns the height of the wall part in which this door or window should be placed.
+   * @return a value in percentage of the height of the door or the window.
+   * @since 6.0
+   */
+  public float getWallHeight() {
+    return this.wallHeight;
+  }
+
+  /**
+   * Sets the height of the wall part in which this door or window should be placed.
+   * @param wallHeight a value in percentage of the height of the door or the window.
+   * @since 6.0
+   */
+  public void setWallHeight(float wallHeight) {
+    this.wallHeight = wallHeight;
+  }
+
+  /**
+   * Returns the distance between the left side of this door or window and the wall part where it should be placed.
+   * @return a distance in percentage of the height of the door or the window.
+   * @since 6.0
+   */
+  public float getWallTop() {
+    return this.wallTop;
+  }
+
+  /**
+   * Sets the distance between the top side of this door or window and the wall part where it should be placed.
+   * @param wallTop a distance in percentage of the height of the door or the window.
+   * @since 6.0
+   */
+  public void setWallTop(float wallTop) {
+    this.wallTop = wallTop;
+  }
+
   /**
    * Returns a copy of the sashes attached to this door or window.
    * If no sash is defined an empty array is returned. 
@@ -89,6 +191,17 @@ public class HomeDoorOrWindow extends HomePieceOfFurniture implements DoorOrWind
     } else {
       return this.sashes.clone();
     }
+  }
+
+  /**
+   * Sets the sashes attached to this door or window.
+   * @param sashes sashes of this window.
+   * @since 6.0
+   */
+  public void setSashes(Sash [] sashes) {
+    this.sashes = sashes.length == 0
+        ? sashes
+        : sashes.clone();
   }
 
   /**

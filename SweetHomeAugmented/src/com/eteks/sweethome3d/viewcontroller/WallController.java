@@ -1179,6 +1179,7 @@ public class WallController implements Controller {
         float baseboardMaxHeight = this.sloppingWallHeightAtEnd != null
             ? Math.max(this.sloppingWallHeightAtEnd, slopingWallHeightAtStart) 
             : slopingWallHeightAtStart;
+        baseboardMaxHeight = Math.max(baseboardMaxHeight, this.preferences.getLengthUnit().getMinimumLength());
         getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
         getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
       }
@@ -1207,6 +1208,7 @@ public class WallController implements Controller {
         float baseboardMaxHeight = this.slopingWallHeightAtStart != null
             ? Math.max(this.slopingWallHeightAtStart, sloppingWallHeightAtEnd) 
             : sloppingWallHeightAtEnd;
+        baseboardMaxHeight = Math.max(baseboardMaxHeight, this.preferences.getLengthUnit().getMinimumLength());
         getLeftSideBaseboardController().setMaxHeight(baseboardMaxHeight);
         getRightSideBaseboardController().setMaxHeight(baseboardMaxHeight);
       }
@@ -1256,6 +1258,26 @@ public class WallController implements Controller {
     return this.arcExtentInDegrees;
   }
   
+  /**
+   * Returns the length of wall after applying the edited arc extent.
+   * @return the arc length or null if data is missing to compute it
+   * @since 6.0
+   */
+  public Float getArcLength() {
+    Float xStart = getXStart();
+    Float yStart = getYStart();
+    Float xEnd = getXEnd();
+    Float yEnd = getYEnd();
+    Float arcExtentInDegrees = getArcExtentInDegrees();
+    if (xStart != null && yStart != null && xEnd != null && yEnd != null && arcExtentInDegrees != null) {
+      Wall wall = new Wall(xStart, yStart, xEnd, yEnd, 0.00001f, 0);
+      wall.setArcExtent((float)Math.toRadians(arcExtentInDegrees));
+      return wall.getLength();
+    } else {
+      return null;
+    }
+  }
+
   /**
    * Controls the modification of selected walls in edited home.
    */

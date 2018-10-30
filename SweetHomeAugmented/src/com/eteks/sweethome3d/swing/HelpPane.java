@@ -170,10 +170,11 @@ public class HelpPane extends JRootPane implements HelpView {
         new GridBagConstraints(2, 0, 1, 1, 1, 0, GridBagConstraints.CENTER, 
             GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
     
+    int standardGap = Math.round(5 * SwingTools.getResolutionScale());
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       toolBar.add(this.searchLabel,
           new GridBagConstraints(3, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-              GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+              GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
     }
     toolBar.add(this.searchTextField,
         new GridBagConstraints(4, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
@@ -183,7 +184,7 @@ public class HelpPane extends JRootPane implements HelpView {
     if (!OperatingSystem.isMacOSXLeopardOrSuperior()) {
       toolBar.add(new JButton(actions.get(ActionType.SEARCH)),
           new GridBagConstraints(5, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-              GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));          
+              GridBagConstraints.NONE, new Insets(0, standardGap, 0, 0), 0, 0));
     }
     // Remove focusable property on buttons
     for (int i = 0, n = toolBar.getComponentCount(); i < n; i++) {      

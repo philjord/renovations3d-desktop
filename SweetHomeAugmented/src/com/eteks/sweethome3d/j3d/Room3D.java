@@ -44,6 +44,7 @@ import org.jogamp.vecmath.Point3f;
 import org.jogamp.vecmath.TexCoord2f;
 
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
@@ -74,6 +75,16 @@ public class Room3D extends Object3DBranch {
    */
   public Room3D(Room room, Home home,
                 boolean ignoreCeilingPart,
+                boolean waitTextureLoadingEnd) {
+    this(room, home, ignoreCeilingPart, true, waitTextureLoadingEnd);
+  }
+
+  /**
+   * Creates the 3D room matching the given home <code>room</code>.
+   */
+  public Room3D(Room room, Home home,
+                boolean ignoreCeilingPart,
+                boolean ignoreDrawingMode,
                 boolean waitTextureLoadingEnd) {
     setUserData(room);
     this.home = home;
@@ -763,26 +774,33 @@ public class Room3D extends Object3DBranch {
     Room room = (Room)getUserData();
     // only allow picking if we can see the floor and only pick the floor itself
 	((Shape3D)getChild(FLOOR_PART)).setPickable(room.isFloorVisible());
-	  
+	  	  
+	Shape3D roomFloorShape3D = (Shape3D)getChild(FLOOR_PART);
     boolean ignoreFloorTransparency = room.getLevel() == null || room.getLevel().getElevation() <= 0;
-    updateRoomPartAppearance(((Shape3D)getChild(FLOOR_PART)).getAppearance(), 
-        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(), room.isFloorVisible(), ignoreFloorTransparency);
+    updateFilledRoomPartAppearance(roomFloorShape3D.getAppearance(),
+        room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(),
+        room.isFloorVisible(), ignoreFloorTransparency, true);
+    
+      
+    Shape3D roomCeilingShape3D = (Shape3D)getChild(CEILING_PART);
     // Ignore ceiling transparency for rooms without level for backward compatibility 
     boolean ignoreCeillingTransparency = room.getLevel() == null; 
-    updateRoomPartAppearance(((Shape3D)getChild(CEILING_PART)).getAppearance(), 
-        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(), room.isCeilingVisible(), ignoreCeillingTransparency);
+    updateFilledRoomPartAppearance(roomCeilingShape3D.getAppearance(),
+        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(),
+        room.isCeilingVisible(), ignoreCeillingTransparency, true);     
     }
   
   /**
-   * Sets room part appearance with its color, texture and visibility.
+   * Sets filled room part appearance with its color, texture and visibility.
    */
-  private void updateRoomPartAppearance(final Appearance roomPartAppearance, 
+  private void updateFilledRoomPartAppearance(final Appearance roomPartAppearance,
                                         final HomeTexture roomPartTexture,
                                         boolean waitTextureLoadingEnd,
                                         Integer roomPartColor,
                                         float shininess,
                                         boolean visible,
-                                        boolean ignoreTransparency) {
+                                        boolean ignoreTransparency,
+                                        boolean ignoreDrawingMode) {
     if (roomPartTexture == null) {
       roomPartAppearance.setMaterial(getMaterial(roomPartColor, roomPartColor, shininess));
       roomPartAppearance.setTexture(null);
@@ -813,9 +831,27 @@ public class Room3D extends Object3DBranch {
     }
     // Update room part visibility
     RenderingAttributes renderingAttributes = roomPartAppearance.getRenderingAttributes();
-    renderingAttributes.setVisible(visible);
+    HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+    renderingAttributes.setVisible(visible
+        && (ignoreDrawingMode
+            || drawingMode == null
+            || drawingMode == HomeEnvironment.DrawingMode.FILL
+            || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
   }
-
+  
+  /**
+   * Sets outline wall side visibility.
+   */
+  private void updateOutlineRoomPartAppearance(final Appearance roomPartAppearance,
+                                               boolean visible) {
+    // Update room part visibility
+    RenderingAttributes renderingAttributes = roomPartAppearance.getRenderingAttributes();
+    HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+    renderingAttributes.setVisible(visible
+        && (drawingMode == HomeEnvironment.DrawingMode.OUTLINE
+            || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
+  }
+  
 	@Override
 	public void showOutline(boolean isSelected)
 	{

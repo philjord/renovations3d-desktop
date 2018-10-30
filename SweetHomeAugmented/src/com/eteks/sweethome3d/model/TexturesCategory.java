@@ -57,8 +57,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
   public List<CatalogTexture> getTextures() {
     //return Collections.unmodifiableList(this.textures);
     // make it properly synched
-    synchronized(this.textures)
-    {
+    synchronized(this.textures) {
       return Collections.unmodifiableList(new ArrayList<CatalogTexture>(this.textures));
     }
   }
@@ -95,8 +94,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
     if (index < 0) {
       index = -index - 1;
     } 
-    synchronized(this.textures)
-    { 
+    synchronized(this.textures) { 
       this.textures.add(index, texture);
     }
   }
@@ -113,8 +111,7 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
           this.name + " doesn't contain texture " + texture.getName());
     }
     //  Make a copy of the list to avoid conflicts in the list returned by getTextures
-    synchronized(this.textures)
-    {      
+    synchronized(this.textures) {      
       this.textures = new ArrayList<CatalogTexture>(this.textures);
       this.textures.remove(textureIndex);
     }

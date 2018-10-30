@@ -143,7 +143,7 @@ public class ModelMaterialsComponent extends JButton implements View {
       this.materialsLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
           ModelMaterialsComponent.class, "materialsLabel.text"));
       this.materialsList = new JList(new MaterialsListModel(controller));
-      this.materialsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      this.materialsList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       this.materialsList.setCellRenderer(new MaterialListCellRenderer());
       
       this.previewLabel = new JLabel(SwingTools.getLocalizedLabelText(preferences, 
@@ -156,6 +156,7 @@ public class ModelMaterialsComponent extends JButton implements View {
             previewComponent.setModel(controller.getModel(), controller.isBackFaceShown(), controller.getModelRotation(),
                 controller.getModelWidth(), controller.getModelDepth(), controller.getModelHeight());
             previewComponent.setModelMaterials(materialsListModel.getMaterials());
+            previewComponent.setModelTranformations(controller.getModelTransformations());
             materialsListModel.addListDataListener(new ListDataListener() {
                 public void contentsChanged(ListDataEvent ev) {
                   previewComponent.setModelMaterials(materialsListModel.getMaterials());
@@ -185,10 +186,12 @@ public class ModelMaterialsComponent extends JButton implements View {
       final ChangeListener defaultChoiceChangeListener = new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
             if (defaultColorAndTextureRadioButton.isEnabled() && defaultColorAndTextureRadioButton.isSelected()) {
-              HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
+              for (int index : materialsList.getSelectedIndices()) {
+                HomeMaterial material = (HomeMaterial)materialsList.getModel().getElementAt(index);
               ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
                   new HomeMaterial(material.getName(), null, null, material.getShininess()),
-                  materialsList.getSelectedIndex());
+                    index);
+              }
             }
           }
         };
@@ -199,10 +202,12 @@ public class ModelMaterialsComponent extends JButton implements View {
       final ChangeListener invisibleChoiceChangeListener = new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
             if (invisibleRadioButton.isEnabled() && invisibleRadioButton.isSelected()) {
-              HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
+              for (int index : materialsList.getSelectedIndices()) {
+                HomeMaterial material = (HomeMaterial)materialsList.getModel().getElementAt(index);
               ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
                   new HomeMaterial(material.getName(), 0, null, material.getShininess()),
-                  materialsList.getSelectedIndex());
+                    index);
+              }
             }
           }
         };
@@ -213,16 +218,17 @@ public class ModelMaterialsComponent extends JButton implements View {
       final ChangeListener colorChoiceChangeListener = new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
             if (colorRadioButton.isEnabled() && colorRadioButton.isSelected()) {
-              HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
-              int selectedMaterialIndex = materialsList.getSelectedIndex();
+              for (int index : materialsList.getSelectedIndices()) {
+                HomeMaterial material = (HomeMaterial)materialsList.getModel().getElementAt(index);
               Integer defaultColor = ((MaterialsListModel)materialsList.getModel()).
-                  getDefaultMaterialAt(selectedMaterialIndex).getColor();
+                    getDefaultMaterialAt(index).getColor();
               Integer color = defaultColor != colorButton.getColor()
                   ? colorButton.getColor()
                   : null;
               ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
                   new HomeMaterial(material.getName(), color, null, material.getShininess()),
-                  selectedMaterialIndex);
+                    index);
+              }
             }
           }
         };
@@ -246,16 +252,17 @@ public class ModelMaterialsComponent extends JButton implements View {
       final ChangeListener textureChoiceChangeListener = new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
             if (textureRadioButton.isEnabled() && textureRadioButton.isSelected()) {
-              HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
-              int selectedMaterialIndex = materialsList.getSelectedIndex();
+              for (int index : materialsList.getSelectedIndices()) {
+                HomeMaterial material = (HomeMaterial)materialsList.getModel().getElementAt(index);
               HomeTexture defaultTexture = ((MaterialsListModel)materialsList.getModel()).
-                  getDefaultMaterialAt(selectedMaterialIndex).getTexture();
+                    getDefaultMaterialAt(index).getTexture();
               HomeTexture texture = defaultTexture != textureController.getTexture()
                   ? textureController.getTexture()
                   : null;
               ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
                   new HomeMaterial(material.getName(), null, texture, material.getShininess()),
-                  selectedMaterialIndex);
+                    index);
+              }
             }
           }
         };
@@ -294,11 +301,13 @@ public class ModelMaterialsComponent extends JButton implements View {
       this.shininessSlider.setMajorTickSpacing(16);
       final ChangeListener shininessChangeListener = new ChangeListener() {
           public void stateChanged(ChangeEvent ev) {
-            HomeMaterial material = (HomeMaterial)materialsList.getSelectedValue();
+            for (int index : materialsList.getSelectedIndices()) {
+              HomeMaterial material = (HomeMaterial)materialsList.getModel().getElementAt(index);
             int shininess = shininessSlider.getValue();
             ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
                 new HomeMaterial(material.getName(), material.getColor(), material.getTexture(), shininess / 128f),
-                materialsList.getSelectedIndex());
+                  index);
+            }
           }
         };
       this.shininessSlider.addChangeListener(shininessChangeListener);
@@ -548,46 +557,48 @@ public class ModelMaterialsComponent extends JButton implements View {
      * Layouts components in panel with their labels. 
      */
     private void layoutComponents() {
+      int standardGap = Math.round(5 * SwingTools.getResolutionScale());
       // Preview
       add(this.previewLabel, new GridBagConstraints(
           0, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 10), 0, 0));
-      this.previewComponent.setPreferredSize(new Dimension(150, 150));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 10), 0, 0));
+      float resolutionScale = SwingTools.getResolutionScale();
+      this.previewComponent.setPreferredSize(new Dimension((int)(250 * resolutionScale), (int)(250 * resolutionScale)));
       add(this.previewComponent, new GridBagConstraints(
-          0, 1, 1, 7, 0, 0, GridBagConstraints.NORTH,
-          GridBagConstraints.NONE, new Insets(2, 0, 0, 15), 0, 0));
+          0, 1, 1, 7, 0.5, 1, GridBagConstraints.NORTH,
+          GridBagConstraints.BOTH, new Insets(2, 0, 0, 15), 0, 0));
       
       // Materials list
       add(this.materialsLabel, new GridBagConstraints(
           1, 0, 1, 1, 0, 0, GridBagConstraints.LINE_START,
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 15), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 15), 0, 0));
       JScrollPane scrollPane = new JScrollPane(this.materialsList);
       Dimension preferredSize = scrollPane.getPreferredSize();
       scrollPane.setPreferredSize(new Dimension(Math.min(200, preferredSize.width), preferredSize.height));
       add(scrollPane, new GridBagConstraints(
-          1, 1, 1, 7, 1, 1, GridBagConstraints.CENTER,
+          1, 1, 1, 7, 0.5, 1, GridBagConstraints.CENTER,
           GridBagConstraints.BOTH, new Insets(0, 0, 0, 15), 0, 0));
       SwingTools.installFocusBorder(this.materialsList);
       
       // Color and Texture 
       add(this.colorAndTextureLabel, new GridBagConstraints(
           2, 0, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       add(this.defaultColorAndTextureRadioButton, new GridBagConstraints(
           2, 1, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       add(this.invisibleRadioButton, new GridBagConstraints(
           2, 2, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       add(this.colorRadioButton, new GridBagConstraints(
           2, 3, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, standardGap), 0, 0));
       add(this.colorButton, new GridBagConstraints(
           3, 3, 1, 1, 0, 0, GridBagConstraints.CENTER, 
-          GridBagConstraints.NONE, new Insets(0, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, standardGap, 0), 0, 0));
       add(this.textureRadioButton, new GridBagConstraints(
           2, 4, 1, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(0, 0, 0, 5), 0, 0));
+          GridBagConstraints.NONE, new Insets(0, 0, 0, standardGap), 0, 0));
       add(this.textureComponent, new GridBagConstraints(
           3, 4, 1, 1, 0, 0, GridBagConstraints.CENTER, 
           GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
@@ -596,10 +607,10 @@ public class ModelMaterialsComponent extends JButton implements View {
       // Shininess 
       add(this.shininessLabel, new GridBagConstraints(
           2, 5, 2, 1, 0, 0, GridBagConstraints.LINE_START, 
-          GridBagConstraints.NONE, new Insets(15, 0, 5, 0), 0, 0));
+          GridBagConstraints.NONE, new Insets(15, 0, standardGap, 0), 0, 0));
       add(this.shininessSlider, new GridBagConstraints(
           2, 6, 2, 1, 0, 0, GridBagConstraints.NORTH, 
-          GridBagConstraints.HORIZONTAL, new Insets(0, 0, 5, 0), -20, 0));
+          GridBagConstraints.HORIZONTAL, new Insets(0, 0, standardGap, 0), -20, 0));
     }
     
     public void displayView(View parent) {
@@ -771,16 +782,15 @@ public class ModelMaterialsComponent extends JButton implements View {
         if (listModel.getSize() > 1) {
           if (getDelay() != 1000) {
             setDelay(1000);
-            int selectedIndex = materialsList.getSelectedIndex();
-            if (selectedIndex != -1) {
+            for (int index : materialsList.getSelectedIndices()) {
               if (materials == null) {
                 materials = new HomeMaterial [listModel.getSize()];
               } else {
                 materials = materials.clone();
               }
-              HomeMaterial defaultMaterial = listModel.getDefaultMaterialAt(selectedIndex);
-              HomeMaterial selectedMaterial = materials [selectedIndex] != null 
-                  ? materials [selectedIndex]
+              HomeMaterial defaultMaterial = listModel.getDefaultMaterialAt(index);
+              HomeMaterial selectedMaterial = materials [index] != null
+                  ? materials [index]
                   : defaultMaterial;
               int blinkColor = materialsList.getSelectionBackground().darker().getRGB();
               if (selectedMaterial.getTexture() == null) {
@@ -799,7 +809,7 @@ public class ModelMaterialsComponent extends JButton implements View {
                   blinkColor = new Color(selectedColor).brighter().brighter().getRGB();
                 }
               }
-              materials [selectedIndex] = 
+              materials [index] =
                   new HomeMaterial(selectedMaterial.getName(), blinkColor, null, selectedMaterial.getShininess());
               previewComponent.setModelMaterials(materials);
             }

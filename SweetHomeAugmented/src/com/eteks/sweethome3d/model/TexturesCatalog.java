@@ -38,8 +38,7 @@ public class TexturesCatalog {
    */
   public synchronized List<TexturesCategory> getCategories() {
     //PJ to avoid concurrent mod exceptions
-    synchronized(this.categories)
-    {
+    synchronized(this.categories) {
       return Collections.unmodifiableList(new ArrayList<TexturesCategory>(this.categories));
     }
   }
@@ -85,8 +84,7 @@ public class TexturesCatalog {
     if (index < 0) {
       category = new TexturesCategory(category.getName());
     //PJ to avoid concurrent mod exceptions
-      synchronized(this.categories)
-      {
+      synchronized(this.categories) {
         this.categories.add(-index - 1, category);
       }
     } else {
@@ -117,8 +115,7 @@ public class TexturesCatalog {
         if (category.getTexturesCount() == 0) {
           //  Make a copy of the list to avoid conflicts in the list returned by getCategories
         //PJ to avoid concurrent mod exceptions
-          synchronized(this.categories)
-          {
+          synchronized(this.categories) {
             this.categories = new ArrayList<TexturesCategory>(this.categories);
             this.categories.remove(category);
           }
