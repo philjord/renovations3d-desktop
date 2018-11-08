@@ -2081,15 +2081,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		skyBackgroundColoringAttributes.setCapability(ColoringAttributes.ALLOW_COLOR_WRITE);
 		skyBackgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_READ);
     	skyBackgroundTextureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_WRITE);
-		
-		//PJPJPJPJ allow updatable shader building
-		skyBackgroundAppearance.setUpdatableCapabilities();
-
+		skyBackgroundAppearance.setUpdatableCapabilities();//PJ allow updatable shader building
 		Geometry topHalfSphereGeometry = createHalfSphereGeometry(true);
 		final Shape3D topHalfSphere = new Shape3D(topHalfSphereGeometry, skyBackgroundAppearance);
-		topHalfSphere.setName("halfSphere");
 		BranchGroup backgroundBranch = new BranchGroup();
-		backgroundBranch.setName("backgroundBranch");
 		backgroundBranch.addChild(topHalfSphere);
 		
 		final SimpleShaderAppearance bottomAppearance = new SimpleShaderAppearance();
@@ -2097,8 +2092,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    bottomRenderingAttributes.setVisible(false);
 	    bottomAppearance.setRenderingAttributes(bottomRenderingAttributes);
 	    bottomRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-	    //PJPJPJPJ allow updatable shader building
-	    bottomAppearance.setUpdatableCapabilities();
+	    bottomAppearance.setUpdatableCapabilities();//PJ allow updatable shader building
 	    Shape3D bottomHalfSphere = new Shape3D(createHalfSphereGeometry(false), bottomAppearance);
 	    backgroundBranch.addChild(bottomHalfSphere);
 
@@ -2117,9 +2111,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    groundBackgroundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
 	    groundBackgroundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
 	    groundRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-
-	    //PJPJPJPJ allow updatable shader building
-	    groundBackgroundAppearance.setUpdatableCapabilities();
+	    groundBackgroundAppearance.setUpdatableCapabilities();//PJ allow updatable shader building
 	    
 	    GeometryInfo geometryInfo = new GeometryInfo (GeometryInfo.QUAD_ARRAY);
 	    geometryInfo.setCoordinates(new Point3f [] {
@@ -2135,7 +2127,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    geometryInfo.setNormals(new Vector3f [] {new Vector3f(0, 1, 0)});
 	    geometryInfo.setNormalIndices(new int [] {0, 0, 0, 0, 0, 0, 0, 0});
 	    
-	    //PJPJPJPJ
+	    //PJ quads not supported and a better getgeometry call
 	  	geometryInfo.convertToIndexedTriangles();		
 	    Shape3D groundBackground = new Shape3D(geometryInfo.getIndexedGeometryArray(true,true,true,true,true), groundBackgroundAppearance);
 	    backgroundBranch.addChild(groundBackground);
@@ -2255,16 +2247,16 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
       geometryInfo.setColors(colors);
     }
 
-		//PJPJPJPJ
-		geometryInfo.convertToIndexedTriangles();
+    //PJPJPJPJ quads not supported, better get call
+	geometryInfo.convertToIndexedTriangles();
 
-		//geometryInfo.indexify();
-		//geometryInfo.compact();
-		//new Stripifier().stripify(geometryInfo);
-		Geometry halfSphereGeometry = geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
-		halfSphereGeometry.setName("Sky");
-		return halfSphereGeometry;
-	}
+	//geometryInfo.indexify();
+	//geometryInfo.compact();
+	//new Stripifier().stripify(geometryInfo);
+	Geometry halfSphereGeometry = geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
+	halfSphereGeometry.setName("Sky");
+	return halfSphereGeometry;
+  }
 
 	/**
 	 * Updates <code>backgroundAppearance</code> color and texture from <code>home</code> sky color and texture.

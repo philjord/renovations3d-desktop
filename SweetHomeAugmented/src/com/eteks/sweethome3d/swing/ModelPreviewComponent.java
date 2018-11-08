@@ -72,18 +72,15 @@ import org.jogamp.java3d.GraphicsConfigTemplate3D;
 import org.jogamp.java3d.Group;
 import org.jogamp.java3d.Light;
 import org.jogamp.java3d.Link;
-import org.jogamp.java3d.Morph;
 import org.jogamp.java3d.Node;
 import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
-import org.jogamp.java3d.Switch;
 import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.Transform3D;
 import org.jogamp.java3d.TransformGroup;
 import org.jogamp.java3d.View;
 import org.jogamp.java3d.utils.geometry.Cone;
 import org.jogamp.java3d.utils.geometry.Cylinder;
-import org.jogamp.java3d.utils.geometry.Primitive;
 import org.jogamp.java3d.utils.pickfast.PickCanvas;
 import org.jogamp.java3d.utils.picking.PickResult;
 import org.jogamp.java3d.PickInfo;
@@ -123,7 +120,7 @@ public class ModelPreviewComponent extends JComponent {
   private JPanel                  component3DPanel;
   
   private Component               component3D;
-  private Canvas3D                canvas3D;    //PJPJPJPJPJ
+  private Canvas3D                canvas3D;
   private BranchGroup             sceneTree;
   private float                   viewYaw   = (float) Math.PI / 8;
   private float                   viewPitch = -(float) Math.PI / 16;
