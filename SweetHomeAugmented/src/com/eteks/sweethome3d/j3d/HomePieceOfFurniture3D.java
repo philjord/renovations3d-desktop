@@ -246,6 +246,17 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 	  updateLight();
 	  updatePieceOfFurnitureVisibility();
 	}
+	public void update(boolean waitTextureLoadingEnd) {
+      if (isVisible()) {
+        updatePieceOfFurnitureModelTransformations();
+		updatePieceOfFurnitureTransform();
+		updatePieceOfFurnitureModelMirrored();
+		updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);
+      }
+	  updateLight();
+	  updatePieceOfFurnitureVisibility();
+	}
+	
 
 	/**
 	 * Sets the transformation applied to piece model to match
