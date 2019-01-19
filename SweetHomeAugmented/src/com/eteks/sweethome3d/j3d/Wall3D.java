@@ -205,10 +205,8 @@ public class Wall3D extends Object3DBranch {
   
 	//PJPJPJ outlining
 	@Override
-	public void showOutline(boolean showOutline)
-	{
-		for (int i = 0; i < 8; i++)
-		{
+	public void showOutline(boolean showOutline) {
+		for (int i = 0; i < 8; i++) {
 			Shape3D outlineShape = (Shape3D) ((Group) this.getChild(i)).getChild(1);
 			RenderingAttributes ra1 = outlineShape.getAppearance().getRenderingAttributes();
 			ra1.setVisible(showOutline);
@@ -222,8 +220,7 @@ public class Wall3D extends Object3DBranch {
 	}
 	private boolean isShowOutline = false;
 	@Override
-	public boolean isShowOutline()
-	{
+	public boolean isShowOutline() {
 		return isShowOutline;
 	}
 
@@ -298,11 +295,13 @@ public class Wall3D extends Object3DBranch {
 		// Now put all geometries into one large geometry array for better rendering performance
 		if (wallGeometries[i].size() > 0) {
 			GeometryInfo gi = GeometryMerger.mergeGeometryArray(((List<GeometryArray>) wallGeometries[i]));
-			Geometry wallGeometry = makePickable(gi.getIndexedGeometryArray(true,true,true,true,true));			
-			wallFilledShapes[i].addGeometry(wallGeometry);
-			if (wallOutlineShapes[i] != null) {
-				wallOutlineShapes[i].addGeometry(wallGeometry);
-			}			
+			if (gi != null) {
+				Geometry wallGeometry = makePickable(gi.getIndexedGeometryArray(true,true,true,true,true));			
+				wallFilledShapes[i].addGeometry(wallGeometry);
+				if (wallOutlineShapes[i] != null) {
+					wallOutlineShapes[i].addGeometry(wallGeometry);
+				}
+			}
 		}
       }
     }
