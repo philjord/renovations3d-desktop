@@ -619,6 +619,19 @@ public class UserPreferencesController implements Controller {
     //  this.homeController.checkUpdates(false);
     //}
   }
+  
+  /** 
+   * Allows other properties to publish themselves without requiring a method in this class
+   * Note they must store and retrieve values outside this preferences system.
+   * They also have to piggy-back on an existing Property
+   * 
+   * @param propertyName
+   * @param oldValue
+   * @param newValue
+   */
+  public void firePropertyChange(Property property, Object oldValue, Object newValue) {
+	  this.propertyChangeSupport.firePropertyChange(property.name(), oldValue, newValue);
+  }
 
   /**
    * Returns <code>true</code> if language libraries can be imported.

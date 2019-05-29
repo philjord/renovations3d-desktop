@@ -41,6 +41,8 @@ import java.util.PropertyPermission;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
+import com.eteks.sweethome3d.viewcontroller.UserPreferencesController.Property;
+
 /**
  * User preferences.
  * @author Emmanuel Puybaret
@@ -173,6 +175,19 @@ public abstract class UserPreferences {
   //PJPJPJ to allow a singleton prefs to drop it's references to a loaded home on a reload of a new home
   public void clearPropertyChangeListeners() {
 	  this.propertyChangeSupport = new PropertyChangeSupport(this);
+  }
+  
+  /** 
+   * Allows other properties to publish themselves without requiring a method in this class
+   * Note they must store and retrieve values outside this preferences system.
+   * They also have to piggy-back on an existing Property
+   * 
+   * @param propertyName
+   * @param oldValue
+   * @param newValue
+   */
+  public void firePropertyChange(Property property, Object oldValue, Object newValue) {
+	  this.propertyChangeSupport.firePropertyChange(property.name(), oldValue, newValue);
   }
   
   /**
