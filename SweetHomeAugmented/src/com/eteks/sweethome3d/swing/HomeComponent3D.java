@@ -31,6 +31,8 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import javaawt.GraphicsConfiguration;
 import javaawt.GraphicsEnvironment;
+import javaawt.Point;
+
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -801,8 +803,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	private void updateNavigationPanelImage() {
 		if (this.navigationPanel != null 
 				&& this.navigationPanel.isVisible()) {
-			java.awt.Rectangle componentBounds = this.navigationPanel.getBounds();
-	Rectangle imageSize = new Rectangle(this.component3D.getX(), this.component3D.getY());
+		java.awt.Rectangle componentBounds = this.navigationPanel.getBounds();
+			Rectangle imageSize = new Rectangle(this.component3D.getX(), this.component3D.getY());
       imageSize.add(componentBounds.x + componentBounds.width, 
           componentBounds.y + componentBounds.height);
       if (!imageSize.isEmpty()) {
@@ -1477,7 +1479,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Adds AWT mouse listeners to <code>component3D</code> that calls back <code>controller</code> methods.  
    */
   private void addMouseListeners(final HomeController3D controller, final Component component3D) {
-    MouseInputAdapter mouseListener = new MouseInputAdapter() {
+    /*MouseInputAdapter mouseListener = new MouseInputAdapter() {
         private int        xLastMouseMove;
         private int        yLastMouseMove;
         private Component  grabComponent;
@@ -1558,7 +1560,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 			 * This implementation doesn't cover all the possible cases (mouseEntered and mouseExited
 			 * events are managed only during mouseDragged event).
 			 */
-			private boolean retargetMouseEventToNavigationPanelChildren(MouseEvent ev) {
+	/*		private boolean retargetMouseEventToNavigationPanelChildren(MouseEvent ev) {
 				if (navigationPanel != null 
 						&& navigationPanel.isVisible())	{
 					if (this.grabComponent != null 
@@ -1615,12 +1617,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 					}
 				}
 				return null;
-			}
+			}*/
 
 			/**
 			 * Dispatches the given event to its component and returns <code>true</code> if component needs to be redrawn.
 			 */
-        private boolean dispatchRetargetedEvent(MouseEvent ev) {
+    /*    private boolean dispatchRetargetedEvent(MouseEvent ev) {
 				ev.getComponent().dispatchEvent(ev);
           if (!RepaintManager.currentManager(ev.getComponent()).getDirtyRegion((JComponent)ev.getComponent()).isEmpty()) {
 					updateNavigationPanelImage();
@@ -1628,12 +1630,12 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 					return true;
 				}
 				return false;
-			}
+			}*/
 
 			/**
 			 * Returns a new <code>MouseEvent</code> derived from the one given in parameter.
 			 */
-        private MouseEvent deriveEvent(MouseEvent ev, Component component, int id, int x, int y) {
+     /*   private MouseEvent deriveEvent(MouseEvent ev, Component component, int id, int x, int y) {
           return new MouseEvent(component, id, ev.getWhen(), 
               ev.getModifiersEx() | ev.getModifiers(), x, y, 
               ev.getClickCount(), ev.isPopupTrigger(), ev.getButton());
@@ -1662,7 +1664,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
         public void mousePressed(MouseEvent e) {
 				requestFocusInWindow();
 			}
-		});
+		});*/
 
 		//PJPJPJPJP///////////////////////////////////////////////////////////////////////////////////////
 		MouseListener mouseListener2 = new MouseListener() {
@@ -1671,16 +1673,11 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 			private Component grabComponent;
 			private Component previousMouseEventTarget;
 
-			public void mousePressed(com.jogamp.newt.event.MouseEvent ev)
-			{
-				if (!retargetMouseEventToNavigationPanelChildren(ev))
-				{
-					if (false)
-					{//ev.isPopupTrigger()) {
+			public void mousePressed(com.jogamp.newt.event.MouseEvent ev) {
+				if (!retargetMouseEventToNavigationPanelChildren(ev)) {
+					if (false) {//ev.isPopupTrigger()) {
 						mouseReleased(ev);
-					}
-					else if (isEnabled())
-					{
+					} else if (isEnabled()) {
 						requestFocusInWindow();
 						this.xLastMouseMove = ev.getX();
 						this.yLastMouseMove = ev.getY();
@@ -1688,39 +1685,29 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 				}
 			}
 
-			public void mouseReleased(com.jogamp.newt.event.MouseEvent ev)
-			{
-				if (!retargetMouseEventToNavigationPanelChildren(ev))
-				{
-					if (false)
-					{//ev.isPopupTrigger()) {
+			public void mouseReleased(com.jogamp.newt.event.MouseEvent ev) {
+				if (!retargetMouseEventToNavigationPanelChildren(ev)) {
+					if (false) {//ev.isPopupTrigger()) {
 						JPopupMenu componentPopupMenu = getComponentPopupMenu();
-						if (componentPopupMenu != null)
-						{
+						if (componentPopupMenu != null) {
 							componentPopupMenu.show(HomeComponent3D.this, ev.getX(), ev.getY());
 						}
 					}
 				}
 			}
 
-			public void mouseClicked(com.jogamp.newt.event.MouseEvent ev)
-			{
+			public void mouseClicked(com.jogamp.newt.event.MouseEvent ev) {
 				retargetMouseEventToNavigationPanelChildren(ev);
 			}
 
-			public void mouseMoved(com.jogamp.newt.event.MouseEvent ev)
-			{
+			public void mouseMoved(com.jogamp.newt.event.MouseEvent ev) {
 				retargetMouseEventToNavigationPanelChildren(ev);
 			}
 
-			public void mouseDragged(com.jogamp.newt.event.MouseEvent ev)
-			{
-				if (!retargetMouseEventToNavigationPanelChildren(ev))
-				{
-					if (isEnabled())
-					{
-						if (ev.isAltDown())
-						{
+			public void mouseDragged(com.jogamp.newt.event.MouseEvent ev) {
+				if (!retargetMouseEventToNavigationPanelChildren(ev)) {
+					if (isEnabled()) {
+						if (ev.isAltDown()) {
 							// Mouse move along Y axis while alt is down changes camera location
 							float delta = 1.25f * (this.yLastMouseMove - ev.getY());
 							// Multiply delta by 5 if shift is down
@@ -1729,9 +1716,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 								delta *= 5;
 							}
 							controller.moveCamera(delta);
-						}
-						else
-						{
+						} else {
 							final float ANGLE_FACTOR = 0.005f;
 							// Mouse move along X axis changes camera yaw 
 							float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
@@ -1753,30 +1738,22 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 				}
 			}
 
-			public void mouseEntered(com.jogamp.newt.event.MouseEvent ev)
-			{
-
+			public void mouseEntered(com.jogamp.newt.event.MouseEvent ev) {
 			}
 
-			public void mouseExited(com.jogamp.newt.event.MouseEvent ev)
-			{
-
+			public void mouseExited(com.jogamp.newt.event.MouseEvent ev) {
 			}
 
-			public void mouseWheelMoved(com.jogamp.newt.event.MouseEvent ev)
-			{
-				if (isEnabled())
-				{
+			public void mouseWheelMoved(com.jogamp.newt.event.MouseEvent ev) {
+				if (isEnabled()) {
 					// Mouse wheel changes camera location 
 					float delta = -2.5f * -ev.getRotation()[1];//ev.getWheelRotation();
 					// Multiply delta by 5 if shift is down
-					if (ev.isShiftDown())
-					{
+					if (ev.isShiftDown()) {
 						delta *= 5;
 					}
 					controller.moveCamera(delta);
 				}
-
 			}
 
 			/**
@@ -1786,88 +1763,95 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 			 * This implementation doesn't cover all the possible cases (mouseEntered and mouseExited
 			 * events are managed only during mouseDragged event).
 			 */
-			private boolean retargetMouseEventToNavigationPanelChildren(com.jogamp.newt.event.MouseEvent ev)
-			{
-				/*  if (navigationPanel != null 
+			private boolean retargetMouseEventToNavigationPanelChildren(com.jogamp.newt.event.MouseEvent ev) {
+				if (navigationPanel != null 
 				      && navigationPanel.isVisible()) {
 				    if (this.grabComponent != null
-				&& (ev.getID() == MouseEvent.MOUSE_RELEASED
-				    || ev.getID() == MouseEvent.MOUSE_DRAGGED)) {
-				      Point point = SwingUtilities.convertPoint(ev.getComponent(), ev.getPoint(), this.grabComponent);
-				      dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, ev.getID(), point.x, point.y));
-				      if (ev.getID() == MouseEvent.MOUSE_RELEASED) {
-				this.grabComponent = null;
+				    		&& (ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_RELEASED
+				    		|| ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_DRAGGED)) {
+				      Point point = new Point(ev.getX(), ev.getY());//PJ very poor not going to work SwingUtilities.convertPoint(ev.getSource(), new Point(ev.getX(), ev.getY()), this.grabComponent);
+				      dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, ev.getEventType(), point.x, point.y));
+				      if (ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_DRAGGED) {
+				    	  this.grabComponent = null;
 				      } else {
-				if (this.previousMouseEventTarget == null
-				    && this.grabComponent.contains(point)) {
-				  dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, MouseEvent.MOUSE_ENTERED, point.x, point.y));
-				  this.previousMouseEventTarget = this.grabComponent;
-				} else if (this.previousMouseEventTarget != null
-				    && !this.grabComponent.contains(point)) { 
-				  dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, MouseEvent.MOUSE_EXITED, point.x, point.y));
-				  this.previousMouseEventTarget = null;
-				}
+						if (this.previousMouseEventTarget == null
+						    && this.grabComponent.contains(point.x,point.y)) {
+						  dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_ENTERED, point.x, point.y));
+						  this.previousMouseEventTarget = this.grabComponent;
+						} else if (this.previousMouseEventTarget != null
+						    && !this.grabComponent.contains(point.x,point.y)) { 
+						  dispatchRetargetedEvent(deriveEvent(ev, this.grabComponent, com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_EXITED, point.x, point.y));
+						  this.previousMouseEventTarget = null;
+						}
 				      }
 				      return true;
 				    } else {                
 				      Component mouseEventTarget = retargetMouseEvent(navigationPanel, ev);
 				      if (mouseEventTarget != null) {
-				this.previousMouseEventTarget = mouseEventTarget;
-				return true;
+						this.previousMouseEventTarget = mouseEventTarget;
+						return true;
 				      }
 				    }
-				  }*/
+				  }
 				return false;
 			}
 
-			private Component retargetMouseEvent(Component component, com.jogamp.newt.event.MouseEvent ev)
-			{
-				/*  if (component.getBounds().contains(ev.getPoint())) {
+			private Component retargetMouseEvent(Component component, com.jogamp.newt.event.MouseEvent ev) {
+				  if (component.getBounds().contains(ev.getX(), ev.getY())) {
 				    if (component instanceof Container) {
 				      Container container = (Container)component;
 				      for (int i = container.getComponentCount() - 1; i >= 0; i--) {
-				Component c = container.getComponent(i);
-				MouseEvent retargetedEvent = deriveEvent(ev, component, ev.getID(), 
-				    ev.getX() - component.getX(), ev.getY() - component.getY());
-				Component mouseEventTarget = retargetMouseEvent(c, retargetedEvent);
-				if (mouseEventTarget != null) {
-				  return mouseEventTarget;
-				}
+						Component c = container.getComponent(i);
+						com.jogamp.newt.event.MouseEvent retargetedEvent = deriveEvent(ev, component, ev.getEventType(), 
+						    ev.getX() - component.getX(), ev.getY() - component.getY());
+						Component mouseEventTarget = retargetMouseEvent(c, retargetedEvent);
+						if (mouseEventTarget != null) {
+						  return mouseEventTarget;
+						}
 				      }
 				    }
 				    int newX = ev.getX() - component.getX();
 				    int newY = ev.getY() - component.getY();
-				    if (dispatchRetargetedEvent(deriveEvent(ev, component, ev.getID(), newX, newY))) {              
-				      if (ev.getID() == MouseEvent.MOUSE_PRESSED) {
-				this.grabComponent = component;
+				    if (dispatchRetargetedEvent(deriveEvent(ev, component, ev.getEventType(), newX, newY))) {              
+				      if (ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_PRESSED) {
+				    	  this.grabComponent = component;
 				      }  
 				      return component;
 				    } 
-				  } */
+				  } 
 				return null;
 			}
 
 			/**
 			 * Dispatches the given event to its component and returns <code>true</code> if component needs to be redrawn.
 			 */
-			private boolean dispatchRetargetedEvent(com.jogamp.newt.event.MouseEvent ev)
-			{
-				/* ev.getComponent().dispatchEvent(ev);
-				 if (!RepaintManager.currentManager(ev.getComponent()).getDirtyRegion((JComponent)ev.getComponent()).isEmpty()) {
+			private boolean dispatchRetargetedEvent(com.jogamp.newt.event.MouseEvent ev) {
+				// this is the thing that makes a button press etc this right here!
+				int id = ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_CLICKED ? MouseEvent.MOUSE_CLICKED :						
+						ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_PRESSED ? MouseEvent.MOUSE_PRESSED :
+					ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_RELEASED ? MouseEvent.MOUSE_RELEASED :
+						ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_MOVED ? MouseEvent.MOUSE_MOVED :
+							ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_DRAGGED ? MouseEvent.MOUSE_DRAGGED 
+									: 0	;
+				
+				// Notice the modifiers aren't dont yet					
+				MouseEvent ev2 =  new MouseEvent((Component)ev.getSource(), id , ev.getWhen(), 0,// ev.getModifiers(),
+						ev.getX(), ev.getY(), ev.getClickCount(), false, ev.getButton());
+				((Component)ev.getSource()).dispatchEvent(ev2);
+				 if (!RepaintManager.currentManager((Component)ev.getSource()).getDirtyRegion((JComponent)ev.getSource()).isEmpty()) {
 				   updateNavigationPanelImage();
 				   component3D.repaint();
 				   return true;
-				 }*/
+				 }
 				return false;
 			}
 
 			/**
 			 * Returns a new <code>MouseEvent</code> derived from the one given in parameter.
 			 */
-			private MouseEvent deriveEvent(MouseEvent ev, Component component, int id, int x, int y)
-			{
-				return new MouseEvent(component, id, ev.getWhen(), ev.getModifiersEx() | ev.getModifiers(), x, y, ev.getClickCount(),
-						ev.isPopupTrigger(), ev.getButton());
+			private com.jogamp.newt.event.MouseEvent deriveEvent(com.jogamp.newt.event.MouseEvent ev, Component component, short id, int x, int y) {
+				return new com.jogamp.newt.event.MouseEvent(id, component, ev.getWhen(), ev.getModifiers(), x, y, ev.getClickCount(),
+						  ev.getButton(), ev.getRotation(), ev.getRotationScale());
 			}
 
 		};
