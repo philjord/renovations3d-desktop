@@ -35,6 +35,7 @@ import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeEnvironment;
+import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.Level;
@@ -396,9 +397,12 @@ public class HomeController3D implements Controller {
     private float       minDistanceToAerialViewCenter;
     private float       maxDistanceToAerialViewCenter;
     private boolean     aerialViewCenteredOnSelectionEnabled;
+    private boolean     previousSelectionEmpty;
+    private float       distanceToCenterWithSelection = -1;
+
     private PropertyChangeListener objectChangeListener = new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          updateCameraFromHomeBounds(false);
+          updateCameraFromHomeBounds(false, false);
         }
       };
     private CollectionListener<Level> levelsListener = new CollectionListener<Level>() {
@@ -408,7 +412,7 @@ public class HomeController3D implements Controller {
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
-          updateCameraFromHomeBounds(false);
+          updateCameraFromHomeBounds(false, false);
         }
       };
     private CollectionListener<Wall> wallsListener = new CollectionListener<Wall>() {
@@ -418,19 +422,19 @@ public class HomeController3D implements Controller {
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
-          updateCameraFromHomeBounds(false);
+          updateCameraFromHomeBounds(false, false);
         }
       };
     private CollectionListener<HomePieceOfFurniture> furnitureListener = new CollectionListener<HomePieceOfFurniture>() {
         public void collectionChanged(CollectionEvent<HomePieceOfFurniture> ev) {
           if (ev.getType() == CollectionEvent.Type.ADD) {
-            ev.getItem().addPropertyChangeListener(objectChangeListener);
+            addPropertyChangeListener(ev.getItem(), objectChangeListener);
             updateCameraFromHomeBounds(home.getFurniture().size() == 1
                 && home.getWalls().isEmpty()
-                && home.getRooms().isEmpty());
+                && home.getRooms().isEmpty(), false);
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
-            ev.getItem().removePropertyChangeListener(objectChangeListener);
-            updateCameraFromHomeBounds(false);
+            removePropertyChangeListener(ev.getItem(), objectChangeListener);
+            updateCameraFromHomeBounds(false, false);
           } 
         }
       };
@@ -441,7 +445,7 @@ public class HomeController3D implements Controller {
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
-          updateCameraFromHomeBounds(false);
+          updateCameraFromHomeBounds(false, false);
         }
       };
     private CollectionListener<Polyline> polylinesListener = new CollectionListener<Polyline>() {
@@ -451,7 +455,7 @@ public class HomeController3D implements Controller {
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
           }
-          updateCameraFromHomeBounds(false);
+          updateCameraFromHomeBounds(false, false);
         }
       };
     private CollectionListener<Label> labelsListener = new CollectionListener<Label>() {
@@ -461,12 +465,14 @@ public class HomeController3D implements Controller {
           } else if (ev.getType() == CollectionEvent.Type.DELETE) {
             ev.getItem().removePropertyChangeListener(objectChangeListener);
           } 
-          updateCameraFromHomeBounds(false);
+          updateCameraFromHomeBounds(false, false);
         }
       };
     private SelectionListener selectionListener = new SelectionListener() {
         public void selectionChanged(SelectionEvent ev) {
-          updateCameraFromHomeBounds(false);
+          boolean selectionEmpty = ev.getSelectedItems().isEmpty();
+          updateCameraFromHomeBounds(false, previousSelectionEmpty && !selectionEmpty);
+          previousSelectionEmpty = selectionEmpty;
         }
       };
 
@@ -477,10 +483,31 @@ public class HomeController3D implements Controller {
         this.userPreferencesChangeListener = new UserPreferencesChangeListener(this);
       }
 
+    private void addPropertyChangeListener(HomePieceOfFurniture piece, PropertyChangeListener listener) {
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture child : ((HomeFurnitureGroup)piece).getFurniture()) {
+          addPropertyChangeListener(child, listener);
+        }
+      } else {
+        piece.addPropertyChangeListener(listener);
+      }
+    }
+
+    private void removePropertyChangeListener(HomePieceOfFurniture piece, PropertyChangeListener listener) {
+      if (piece instanceof HomeFurnitureGroup) {
+        for (HomePieceOfFurniture child : ((HomeFurnitureGroup)piece).getFurniture()) {
+          removePropertyChangeListener(child, listener);
+        }
+      } else {
+        piece.removePropertyChangeListener(listener);
+      }
+    }
+
     @Override
     public void enter() {
       this.topCamera = home.getCamera();
-      updateCameraFromHomeBounds(false);
+      this.previousSelectionEmpty = home.getSelectedItems().isEmpty();
+      updateCameraFromHomeBounds(false, false);
       for (Level level : home.getLevels()) {
         level.addPropertyChangeListener(this.objectChangeListener);
       }
@@ -490,7 +517,7 @@ public class HomeController3D implements Controller {
       }
       home.addWallsListener(this.wallsListener);
       for (HomePieceOfFurniture piece : home.getFurniture()) {
-        piece.addPropertyChangeListener(this.objectChangeListener);
+        addPropertyChangeListener(piece, this.objectChangeListener);
       }
       home.addFurnitureListener(this.furnitureListener);
       for (Room room : home.getRooms()) {
@@ -515,17 +542,27 @@ public class HomeController3D implements Controller {
      */
     public void setAerialViewCenteredOnSelectionEnabled(boolean aerialViewCenteredOnSelectionEnabled) {
       this.aerialViewCenteredOnSelectionEnabled = aerialViewCenteredOnSelectionEnabled;
-      updateCameraFromHomeBounds(false);
+      updateCameraFromHomeBounds(false, false);
     }
     
     /**
      * Updates camera location from home bounds.
      */
-    private void updateCameraFromHomeBounds(boolean firstPieceOfFurnitureAddedToEmptyHome) {
+    private void updateCameraFromHomeBounds(boolean firstPieceOfFurnitureAddedToEmptyHome, boolean selectionChange) {
       if (this.aerialViewBoundsLowerPoint == null) {
         updateAerialViewBoundsFromHomeBounds(this.aerialViewCenteredOnSelectionEnabled);
       }
-      float distanceToCenter = getCameraToAerialViewCenterDistance();
+      float distanceToCenter;
+      if (selectionChange
+          && preferences.isAerialViewCenteredOnSelectionEnabled()
+          && this.distanceToCenterWithSelection != -1) {
+        distanceToCenter = this.distanceToCenterWithSelection;
+      } else {
+        distanceToCenter = getCameraToAerialViewCenterDistance();
+      }
+      if (!home.getSelectedItems().isEmpty()) {
+        this.distanceToCenterWithSelection = distanceToCenter;
+      }
       updateAerialViewBoundsFromHomeBounds(this.aerialViewCenteredOnSelectionEnabled);
       updateCameraIntervalToAerialViewCenter();
       placeCameraAt(distanceToCenter, firstPieceOfFurnitureAddedToEmptyHome);
@@ -794,7 +831,7 @@ public class HomeController3D implements Controller {
       this.topCamera.setCamera(camera);
       this.topCamera.setTime(camera.getTime());
       this.topCamera.setLens(camera.getLens());
-      updateCameraFromHomeBounds(false);
+      updateCameraFromHomeBounds(false, false);
     }
     
     @Override
@@ -803,9 +840,9 @@ public class HomeController3D implements Controller {
       for (Wall wall : home.getWalls()) {
         wall.removePropertyChangeListener(this.objectChangeListener);
       }
-      home.removeWallsListener(wallsListener);
+      home.removeWallsListener(this.wallsListener);
       for (HomePieceOfFurniture piece : home.getFurniture()) {
-        piece.removePropertyChangeListener(this.objectChangeListener);
+        removePropertyChangeListener(piece, this.objectChangeListener);
       }
       home.removeFurnitureListener(this.furnitureListener);
       for (Room room : home.getRooms()) {

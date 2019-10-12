@@ -658,7 +658,7 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		material.setAmbientColor(
 				new Color3f(color.darker().getRed() / 255f, color.darker().getGreen() / 255f, color.darker().getBlue() / 255f));
 
-		Appearance boxAppearance = new SimpleShaderAppearance();
+		SimpleShaderAppearance boxAppearance = new SimpleShaderAppearance();
 		boxAppearance.setMaterial(material);
 		Box box = new Box(0.5f, 0.5f, 0.5f, boxAppearance);
     	box.getShape(Box.FRONT).setCapability(Node.ALLOW_PICKABLE_WRITE);

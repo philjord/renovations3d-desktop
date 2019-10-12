@@ -1505,7 +1505,7 @@ public class HomeController implements Controller {
         }
       }
     }
-    addPastedItems(items, pastedItemsDelta, pastedItemsDelta, false, "undoPasteName");
+    addPastedItems(items, null, pastedItemsDelta, pastedItemsDelta, null, "undoPasteName");
   }
 
   /**
@@ -1521,14 +1521,24 @@ public class HomeController implements Controller {
    * and posts a drop operation to undo support.
    */
   public void drop(final List<? extends Selectable> items, View destinationView, float dx, float dy) {
-    addPastedItems(items, dx, dy, destinationView == getPlanController().getView(), "undoDropName");
+    addPastedItems(items, destinationView, dx, dy, null, "undoDropName");
+  }
+
+  /**
+   * Adds items to home before the given item
+   * and posts a drop operation to undo support.
+   * @since 6.3
+   */
+  public void drop(List<? extends Selectable> items,  View destinationView, Selectable beforeItem) {
+    addPastedItems(items, destinationView, 0, 0, beforeItem, "undoDropName");
   }
 
   /**
    * Adds items to home.
    */
   private void addPastedItems(List<? extends Selectable> items,
-                              float dx, float dy, final boolean isDropInPlanView, 
+                              final View destinationView,
+                              float dx, float dy, Selectable beforeItem,
                               final String presentationNameKey) {
     if (items.size() > 1
         || (items.size() == 1
@@ -1544,17 +1554,22 @@ public class HomeController implements Controller {
       // Start a compound edit that adds walls, furniture, rooms, dimension lines, polylines and labels to home
       UndoableEditSupport undoSupport = getUndoableEditSupport();
       undoSupport.beginUpdate();
+      if (destinationView == getFurnitureController().getView()) {
+        getFurnitureController().addFurniture(Home.getFurnitureSubList(items), (HomePieceOfFurniture)beforeItem);
+      } else {
       getPlanController().addItems(items);
+      }
       List<HomePieceOfFurniture> addedFurniture = Home.getFurnitureSubList(items);
-      adjustFurnitureSizeAndElevation(addedFurniture, dx == 0 && dy == 0);
+      adjustFurnitureSizeAndElevation(addedFurniture, dx == 0 && dy == 0 && destinationView == null);
       getPlanController().moveItems(items, dx, dy);
-      if (isDropInPlanView 
-          && this.preferences.isMagnetismEnabled()
+      if (destinationView == getPlanController().getView()) {
+        if (this.preferences.isMagnetismEnabled()
           && items.size() == 1
           && addedFurniture.size() == 1) {
         // Adjust piece when it's dropped in plan view  
         getPlanController().adjustMagnetizedPieceOfFurniture((HomePieceOfFurniture)items.get(0), dx, dy);
       } 
+      }
       undoSupport.postEdit(new AbstractUndoableEdit() {      
           @Override
           public String getPresentationName() {
@@ -1572,14 +1587,14 @@ public class HomeController implements Controller {
    * This method should be called after the given furniture is added to the plan, 
    * to ensure its size in plan is adjusted too. 
    */
-  private void adjustFurnitureSizeAndElevation(List<HomePieceOfFurniture> furniture, boolean keepDoorsAndWindowDepth) {
+  private void adjustFurnitureSizeAndElevation(List<HomePieceOfFurniture> furniture, boolean keepDoorAndWindowDepth) {
     if (this.preferences.isMagnetismEnabled()) {
       for (HomePieceOfFurniture piece : furniture) {
         if (!(piece instanceof HomeFurnitureGroup)
             && piece.isResizable()) {
           piece.setWidth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getWidth(), 0.1f));
           // Don't adjust depth of doors or windows otherwise they may be misplaced in a wall 
-          if (!(piece instanceof HomeDoorOrWindow) || !keepDoorsAndWindowDepth) {
+          if (!(piece instanceof HomeDoorOrWindow) || !keepDoorAndWindowDepth) {
             piece.setDepth(this.preferences.getLengthUnit().getMagnetizedLength(piece.getDepth(), 0.1f));
           }
           piece.setHeight(this.preferences.getLengthUnit().getMagnetizedLength(piece.getHeight(), 0.1f));
@@ -1761,6 +1776,7 @@ public class HomeController implements Controller {
       polylineController.setStartArrowStyle(clipboardPolyline.getStartArrowStyle());
       polylineController.setEndArrowStyle(clipboardPolyline.getEndArrowStyle());
       polylineController.setDashStyle(clipboardPolyline.getDashStyle());
+      polylineController.setDashPattern(clipboardPolyline.getDashPattern());
       polylineController.setDashOffset(clipboardPolyline.getDashOffset());
       polylineController.setColor(clipboardPolyline.getColor());
       polylineController.modifyPolylines();
@@ -1770,9 +1786,11 @@ public class HomeController implements Controller {
       labelController.setColor(clipboardLabel.getColor());
       TextStyle labelStyle = clipboardLabel.getStyle();
       if (labelStyle != null) {
+        labelController.setAlignment(labelStyle.getAlignment());
         labelController.setFontName(labelStyle.getFontName());
         labelController.setFontSize(labelStyle.getFontSize());
       } else {
+        labelController.setAlignment(null);
         labelController.setFontName(null);
         labelController.setFontSize(this.preferences.getDefaultTextStyle(Label.class).getFontSize());
       }
@@ -1915,6 +1933,7 @@ public class HomeController implements Controller {
   /**
    * Returns a map with entries containing furniture name associated to their id.
    */
+  //PJ made public for renovations3d
   public Map<String, String> getCatalogFurnitureNames(FurnitureCatalog catalog) {
     Map<String, String> furnitureNames = new HashMap<String, String>();
     for (FurnitureCategory category : catalog.getCategories()) {
@@ -1930,6 +1949,7 @@ public class HomeController implements Controller {
   /**
    * Renames the given <code>piece</code> from the piece name with the same id in <code>furnitureNames</code>. 
    */
+  //PJ made public for renovations3d
   public void renameToCatalogName(HomePieceOfFurniture piece,
                                    Map<String, String> furnitureNames,
                                    String groupName) {

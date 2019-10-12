@@ -4237,7 +4237,9 @@ public class PlanController extends FurnitureController implements Controller {
                 List<HomePieceOfFurniture> groupFurniture = ((HomeFurnitureGroup)selectedItem).getFurniture();
                 for (int i = groupFurniture.size() - 1; i >= 0; i--) {
                   HomePieceOfFurniture piece = groupFurniture.get(i);
-                  if (!selectedItems.contains(piece) 
+                  if ((!basePlanLocked
+                        || !isItemPartOfBasePlan(piece))
+                      && !selectedItems.contains(piece)
                       && piece.containsPoint(x, y, margin)) {
                     return Arrays.asList(new Selectable [] {piece});
                   }
@@ -10254,9 +10256,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void moveMouse(float x, float y) {
       if (this.alignmentActivated) {
-        PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(
-            this.selectedPiece.getX() + this.oldNameXOffset, 
-            this.selectedPiece.getY() + this.oldNameYOffset, 
+        PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(getXLastMousePress(), getYLastMousePress(),
             x, y, preferences.getLengthUnit(), getView().getPixelLength(), 4);
         x = alignedPoint.getX();
         y = alignedPoint.getY();
@@ -12229,9 +12229,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void moveMouse(float x, float y) {
       if (this.alignmentActivated) {
-        PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(
-            this.selectedRoom.getXCenter() + this.oldNameXOffset, 
-            this.selectedRoom.getYCenter() + this.oldNameYOffset, 
+        PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(getXLastMousePress(), getYLastMousePress(),
             x, y, preferences.getLengthUnit(), getView().getPixelLength(), 4);
         x = alignedPoint.getX();
         y = alignedPoint.getY();
@@ -12398,9 +12396,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void moveMouse(float x, float y) {
       if (this.alignmentActivated) {
-        PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(
-            this.selectedRoom.getXCenter() + this.oldAreaXOffset, 
-            this.selectedRoom.getYCenter() + this.oldAreaYOffset, 
+        PointWithAngleMagnetism alignedPoint = new PointWithAngleMagnetism(getXLastMousePress(), getYLastMousePress(),
             x, y, preferences.getLengthUnit(), getView().getPixelLength(), 4);
         x = alignedPoint.getX();
         y = alignedPoint.getY();

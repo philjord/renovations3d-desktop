@@ -116,7 +116,7 @@ public class Ground3D extends Object3DBranch {
     groundShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     addChild(groundShape);
     
-    Appearance backgroundImageAppearance = new SimpleShaderAppearance();
+    SimpleShaderAppearance backgroundImageAppearance = new SimpleShaderAppearance();
     backgroundImageAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_COLOR, 0));
     backgroundImageAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
     backgroundImageAppearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
@@ -126,7 +126,7 @@ public class Ground3D extends Object3DBranch {
     RenderingAttributes renderingAttributes = new RenderingAttributes();
     renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);    
     backgroundImageAppearance.setRenderingAttributes(renderingAttributes);
-    ((SimpleShaderAppearance)backgroundImageAppearance).setUpdatableCapabilities();
+    backgroundImageAppearance.setUpdatableCapabilities();
     
     TransformGroup transformGroup = new TransformGroup();
     // Allow the change of the transformation that sets background image size and position
@@ -249,6 +249,9 @@ public class Ground3D extends Object3DBranch {
     }
     
     Area areaRemovedFromGround = new Area();
+    if (backgroundImageRectangle != null) {
+      areaRemovedFromGround.add(new Area(backgroundImageRectangle));
+    }
     // Compute the union of the rooms, the underground walls and furniture areas
     Map<Level, LevelAreas> undergroundLevelAreas = new HashMap<Level, LevelAreas>();
     for (Room room : home.getRooms()) {
@@ -369,9 +372,7 @@ public class Ground3D extends Object3DBranch {
       addAreaGeometry(groundShape, groundTexture, outsideGroundArea, 0);
     }
     groundArea.subtract(areaRemovedFromGround);
-    if (backgroundImageRectangle != null) {
-      groundArea.subtract(new Area(backgroundImageRectangle));
-    }
+
     // Add level areas for ground level at index 0 because it's the highest level in the list 
     undergroundAreas.add(0, new LevelAreas(new Level("Ground", 0, 0, 0), groundArea));
     float previousLevelElevation = 0;

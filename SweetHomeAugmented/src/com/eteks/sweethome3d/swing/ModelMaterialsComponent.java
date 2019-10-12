@@ -220,9 +220,8 @@ public class ModelMaterialsComponent extends JButton implements View {
             if (colorRadioButton.isEnabled() && colorRadioButton.isSelected()) {
               for (int index : materialsList.getSelectedIndices()) {
                 HomeMaterial material = (HomeMaterial)materialsList.getModel().getElementAt(index);
-              Integer defaultColor = ((MaterialsListModel)materialsList.getModel()).
-                    getDefaultMaterialAt(index).getColor();
-              Integer color = defaultColor != colorButton.getColor()
+                HomeMaterial defaultMaterial = ((MaterialsListModel)materialsList.getModel()).getDefaultMaterialAt(index);
+                Integer color = defaultMaterial.getColor() != colorButton.getColor() || defaultMaterial.getTexture() != null
                   ? colorButton.getColor()
                   : null;
               ((MaterialsListModel)materialsList.getModel()).setMaterialAt(
@@ -618,11 +617,10 @@ public class ModelMaterialsComponent extends JButton implements View {
       final JOptionPane optionPane = new JOptionPane(this, JOptionPane.PLAIN_MESSAGE, 
           JOptionPane.OK_CANCEL_OPTION);
       JComponent parentComponent = SwingUtilities.getRootPane((JComponent)parent);
-      if (parentComponent != null) {
-        optionPane.setComponentOrientation(parentComponent.getComponentOrientation());
-      }
       final JDialog dialog = optionPane.createDialog(parentComponent, controller.getDialogTitle());
-      dialog.applyComponentOrientation(ComponentOrientation.getOrientation(Locale.getDefault()));
+      dialog.applyComponentOrientation(parentComponent != null
+          ? parentComponent.getComponentOrientation()
+          : ComponentOrientation.getOrientation(Locale.getDefault()));
       dialog.setResizable(true);
       // Pack again because resize decorations may have changed dialog preferred size
       dialog.pack();
@@ -731,20 +729,21 @@ public class ModelMaterialsComponent extends JButton implements View {
        * Sets the material at the given <code>index</code>.
        */
       public void setMaterialAt(HomeMaterial material, int index) {
-        if (this.materials != null
-            && material.getColor() == null
+        if (material.getColor() == null
             && material.getTexture() == null
             && material.getShininess() == null) {
-          this.materials [index] = null;
-          boolean containsOnlyNull = true;
-          for (HomeMaterial m : this.materials) {
-            if (m != null) {
-              containsOnlyNull = false;
-              break;
-            }
-          }
-          if (containsOnlyNull) {
-            this.materials = null;
+          if (this.materials != null) {
+	          this.materials [index] = null;
+	          boolean containsOnlyNull = true;
+	          for (HomeMaterial m : this.materials) {
+	            if (m != null) {
+	              containsOnlyNull = false;
+	              break;
+	            }
+	          }
+	          if (containsOnlyNull) {
+	            this.materials = null;
+	          }
           }
         } else {
           if (this.materials == null || this.materials.length != this.defaultMaterials.length) {

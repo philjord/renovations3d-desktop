@@ -326,6 +326,7 @@ public class FurnitureCatalogListPanel extends JPanel implements View {
         furnitureCatalogPanel.searchLabel.setText(SwingTools.getLocalizedLabelText(preferences,
             FurnitureCatalogListPanel.class, "searchLabel.text"));
         furnitureCatalogPanel.setMnemonics(preferences);
+        furnitureCatalogPanel.invalidate();
         // Categories listed in combo box are updated through collectionChanged
       }
     }
