@@ -21,8 +21,8 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.6.0_45"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/SweetHome3D"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-core"/>
-	<classpathentry kind="lib" path="E:/Java/sweethome3d/workspace/SweetHome3D/lib/java3d-1.6/jogl-all.jar"/>
-	<classpathentry kind="lib" path="E:/Java/sweethome3d/workspace/SweetHome3D/lib/java3d-1.6/gluegen-rt.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils"/>
+	<classpathentry kind="lib" path="C:/temp/jogamp-all-platforms/gluegen-2.4-b931-20200113-windows-amd64/jar/gluegen-rt.jar" sourcepath="C:/temp/jogamp-all-platforms/gluegen-2.4-b931-20200113-windows-amd64/gluegen-java-src.zip"/>
+	<classpathentry kind="lib" path="C:/temp/jogamp-all-platforms/jogl-2.4-b1502-20200116-windows-amd64/jar/jogl-all.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

@@ -96,7 +96,6 @@
         <javaElement handleIdentifier="=batik-svgparser-andy/src"/>
         <javaElement handleIdentifier="=java3d-core/src\/main\/java&lt;org.jogamp.java3d{LineStripArrayRetained.java"/>
         <javaElement handleIdentifier="=java3d-utils/src\/main\/java&lt;org.jogamp.java3d.utils.universe{ConfigPhysicalEnvironment.java"/>
-        <file path="/java3d-utils/src/main/java/org/jogamp/java3d/utils/shader/fixed_function_shader.frag"/>
         <javaElement handleIdentifier="=java3d-core/src\/main\/java&lt;org.jogamp.java3d{IndexedLineArrayRetained.java"/>
         <javaElement handleIdentifier="=java3d-core/src\/main\/java&lt;org.jogamp.java3d{NoopDrawingSurfaceObject.java"/>
         <javaElement handleIdentifier="=java3d-core/src\/main\/java&lt;org.jogamp.java3d{BoundingBox.java"/>
@@ -413,7 +412,6 @@
         <javaElement handleIdentifier="=java3d-core/src\/main\/java&lt;org.jogamp.java3d{BoundingPolytope.java"/>
         <javaElement handleIdentifier="=java3d-core/src\/main\/java&lt;org.jogamp.java3d{Shape3DCompileRetained.java"/>
         <file path="/java3d-core/COPYRIGHT.txt"/>
-        <file path="/java3d-utils/src/main/java/org/jogamp/java3d/utils/shader/fixed_function_shader.vert"/>
         <file path="/java3d-core/README.md"/>
         <javaElement handleIdentifier="=java3d-utils/src\/main\/java&lt;org.jogamp.java3d.utils.universe{MultiTransformGroup.java"/>
         <javaElement handleIdentifier="=java3d-utils-and/src\/classes\/share&lt;org.jogamp.java3d"/>
