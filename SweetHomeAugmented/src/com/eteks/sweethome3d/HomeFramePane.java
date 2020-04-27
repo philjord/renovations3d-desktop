@@ -321,7 +321,7 @@ public class HomeFramePane extends JRootPane implements View {
     Number screenWidth = home.getNumericProperty(SCREEN_WIDTH_VISUAL_PROPERTY);
     Number screenHeight = home.getNumericProperty(SCREEN_HEIGHT_VISUAL_PROPERTY);
     
-    Dimension screenSize = getUserScreenSize();
+    final Dimension screenSize = getUserScreenSize();
     // If home frame bounds exist and screen resolution didn't reduce 
     if (x != null && y != null 
         && width != null && height != null 
@@ -332,11 +332,13 @@ public class HomeFramePane extends JRootPane implements View {
       if (maximized) {
         if (OperatingSystem.isMacOSX() 
             && OperatingSystem.isJavaVersionGreaterOrEqual("1.7")) {
-          // Display the frame at its maximum size because calling setExtendedState to maximize 
-          // the frame moves it to the bottom left at its minimum size  
+          // Display the frame at its max size because calling setExtendedState will create
+          // an animation starting at its minimum size with dividers wrongly placed at the end
           Insets insets = frame.getInsets();
           frame.setSize(screenSize.width + insets.left + insets.right, 
               screenSize.height + insets.bottom);
+          // Set maximized flag to ensure future resizing will remove it
+          frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         } else if (OperatingSystem.isLinux()) {
           EventQueue.invokeLater(new Runnable() {
             public void run() {

@@ -1206,7 +1206,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         this.lastMousePressedLocation = ev.getPoint();
         if (isEnabled() && !ev.isPopupTrigger()) {
           requestFocusInWindow();          
-          if (ev.getButton() == MouseEvent.BUTTON1) {
+          if (SwingUtilities.isLeftMouseButton(ev)) {
             boolean alignmentActivated = OperatingSystem.isWindows() || OperatingSystem.isMacOSX() 
                 ? ev.isShiftDown()
                 : ev.isShiftDown() && !ev.isAltDown();
@@ -1227,7 +1227,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
 
       @Override
       public void mouseReleased(MouseEvent ev) {
-        if (isEnabled() && !ev.isPopupTrigger() && ev.getButton() == MouseEvent.BUTTON1) {
+        if (isEnabled() && !ev.isPopupTrigger() && SwingUtilities.isLeftMouseButton(ev)) {
           controller.releaseMouse(convertXPixelToModel(ev.getX()), convertYPixelToModel(ev.getY()));
         }
       }
@@ -4596,10 +4596,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         g2D.draw(new Line2D.Float(0, -dimensionLine.getOffset(), 0, -5));
         g2D.draw(new Line2D.Float(dimensionLineLength, -dimensionLine.getOffset(), dimensionLineLength, -5));
         
-        float displayedValue = feedback
-            ? this.preferences.getLengthUnit().getMagnetizedLength(dimensionLineLength, getPixelLength())
-            : dimensionLineLength;
-        String lengthText = this.preferences.getLengthUnit().getFormat().format(displayedValue);
+        String lengthText = this.preferences.getLengthUnit().getFormat().format(dimensionLineLength);
         TextStyle lengthStyle = dimensionLine.getLengthStyle();
         if (lengthStyle == null) {
           lengthStyle = this.preferences.getDefaultTextStyle(dimensionLine.getClass());
@@ -4620,7 +4617,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           // Draw text outline with half transparent background color
           g2D.setPaint(backgroundColor);
           Composite oldComposite = setTransparency(g2D, 0.7f);
-          g2D.setStroke(new BasicStroke(3 / planScale * this.resolutionScale));
+          g2D.setStroke(new BasicStroke(4 / planScale * this.resolutionScale, BasicStroke.CAP_SQUARE, BasicStroke.CAP_ROUND));
           FontRenderContext fontRenderContext = g2D.getFontRenderContext();
           TextLayout textLayout = new TextLayout(lengthText, font, fontRenderContext);
           g2D.draw(textLayout.getOutline(new AffineTransform()));
@@ -4970,10 +4967,12 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                   Paint pointPaint, Stroke pointStroke) {
     g2D.setPaint(pointPaint);         
     g2D.setStroke(pointStroke);
-    g2D.draw(new Ellipse2D.Float((float)locationFeedback.getX() - 5f / planScale, 
-        (float)locationFeedback.getY() - 5f / planScale, 10f / planScale, 10f / planScale));
+    Ellipse2D.Float circle = new Ellipse2D.Float((float)locationFeedback.getX() - 10f / planScale,
+        (float)locationFeedback.getY() - 10f / planScale, 20f / planScale, 20f / planScale);
+    g2D.fill(circle);
     g2D.setPaint(feedbackPaint);         
     g2D.setStroke(new BasicStroke(1 / planScale * this.resolutionScale));
+    g2D.draw(circle);
     g2D.draw(new Line2D.Float((float)locationFeedback.getX(), 
         (float)locationFeedback.getY() - 5f / planScale, 
         (float)locationFeedback.getX(), 

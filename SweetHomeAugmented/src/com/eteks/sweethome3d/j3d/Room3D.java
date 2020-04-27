@@ -106,6 +106,9 @@ public class Room3D extends Object3DBranch {
     
     if (ignoreCeilingPart) {
       removeChild(CEILING_PART);
+    } else {
+      // Avoid making ceiling pickable because they can't be viewed from top
+      getChild(CEILING_PART).setPickable(false);
     }
     
     // allow picking, but note it is on the floor and varies based on floor visibility
