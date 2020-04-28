@@ -1032,7 +1032,8 @@ public class ModelManager {
         turnOffLightsShareAndModulateTextures(modelNode, new IdentityHashMap<Texture, Texture>());        
         updateDeformableModelHierarchy(modelNode);
         checkAppearancesName(modelNode);
-        replaceMultipleSharedShapes(modelNode);
+        //PJPJ this seems wasteful possibly an optimization for 1.6
+        //replaceMultipleSharedShapes(modelNode);
         modelNode.setUserData(content);      
         modelNode.setPickable(true);        
         return modelNode;
