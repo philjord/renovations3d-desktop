@@ -43,10 +43,12 @@ import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Label;
 import com.eteks.sweethome3d.model.TextStyle;
 
+import javaawt.BasicStroke;
 import javaawt.Color;
 import javaawt.Font;
 import javaawt.Graphics2D;
 import javaawt.RenderingHints;
+import javaawt.VMFont;
 import javaawt.geom.Rectangle2D;
 import javaawt.image.BufferedImage;
 
@@ -105,50 +107,53 @@ public class Label3D extends Object3DBranch {
             || label.getLevel().isViewableAndVisible())) {
       String text = label.getText();
       Integer color = label.getColor();
-//      Integer outlineColor = label.getOutlineColor();
+      Integer outlineColor = label.getOutlineColor();
       if (!text.equals(this.text)
           || (style == null && this.style != null)
           || (style != null && !style.equals(this.style))
           || (color == null && this.color != null)
           || (color != null && !color.equals(this.color))) {
-        // If text, style and color changed, recompute label texture  
-    	 // TextPaint mTextPaint = new TextPaint(Paint.ANTI_ALIAS_FLAG);
-         // mTextPaint.setTypeface(Typeface.DEFAULT_BOLD);
-         // mTextPaint.setTextSize(defaultTextSize);
-         // FontMetrics fm = mTextPaint.getFontMetrics();          
-          
-//        int fontStyle = Font.PLAIN;
-//        if (style.isBold()) {
-//          fontStyle = Font.BOLD;
-//        }
-//        if (style.isItalic()) {
-//          fontStyle |= Font.ITALIC;
-//        }
-//        Font defaultFont; 
-//        if (style.getFontName() != null) {
-//          defaultFont = new Font(style.getFontName(), fontStyle, 1);
-//        } else {
-//          defaultFont = UIManager.getFont("TextField.font");
-//        }
-//        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
-//        Font font = defaultFont.deriveFont(fontStyle, style.getFontSize() - stroke.getLineWidth());
-//  
+        // If text, style and color changed, recompute label texture            
+       /* int fontStyle = Font.PLAIN;
+        if (style.isBold()) {
+          fontStyle = Font.BOLD;
+        }
+        if (style.isItalic()) {
+        fontStyle |= Font.ITALIC;
+        }
+        Font defaultFont; 
+        if (style.getFontName() != null) {
+          defaultFont = new VMFont(getFont(), 12);//new Font(style.getFontName(), fontStyle, 1);
+        } else {
+          defaultFont = new VMFont(Typeface.DEFAULT, 12);//UIManager.getFont("TextField.font");
+        }*/
+        BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
         BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();
-//        FontMetrics fontMetrics = g2D.getFontMetrics(font);
+        Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();        
+        g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+        //FontMetrics fontMetrics = g2D.getFontMetrics(font);
         Font font = g2D.getFont();// we get the system default font 
         font.setSize((int) style.getFontSize());
+       
+        String [] lines = text.split("\n");
+        float [] lineWidths = new float [lines.length];
+        float textWidth = -Float.MAX_VALUE;
+        float baseLineShift = 0;
+        for (int i = 0; i < lines.length; i++) {
+          Rectangle2D lineBounds = font.getStringBounds(lines [i]);
+          if (i == 0) {
+            baseLineShift = -(float)lineBounds.getY() + (float)lineBounds.getHeight() * (lines.length - 1);
+          }
+          lineWidths [i] = (float)lineBounds.getWidth() + 2 * stroke.getLineWidth();
+          if (style.isItalic()) {
+          //  lineWidths [i] += fontMetrics.getAscent() * 0.2;
+          }
+          textWidth = Math.max(lineWidths [i], textWidth);
+        }
         g2D.dispose();
         
-        //Rectangle2D textBounds = fontMetrics.getStringBounds(text, g2D);
-        Rectangle2D textBounds = font.getStringBounds(text);   
-        
-        
-        float textWidth = (float)textBounds.getWidth();// stroke width is generally 0 -> + 2 * stroke.getLineWidth();
-//        if (style.isItalic()) {
- //         textWidth += fontMetrics.getAscent() * 0.2;
- //       }
-        float textHeight = (float)textBounds.getHeight(); // stroke width is generally 0 -> + 2 * stroke.getLineWidth();
+        float textHeight = (float)font.getStringBounds("A").getHeight() * lines.length + 2 * stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
         int width;
         int height;
@@ -173,22 +178,34 @@ public class Label3D extends Object3DBranch {
           g2D.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
           // PJ affines are used as save/restore points in android g2D.setTransform(AffineTransform.getScaleInstance(scale, scale));
           g2D.scale(scale, scale);
-          // stroke width is generally 0 -> g2D.translate(stroke.getLineWidth() / 2, -(float)(textBounds.getY()));
-          g2D.translate(0, -(float)(textBounds.getY()));
-          
-         /* if (outlineColor != null) {
-            g2D.setColor(new Color(outlineColor));
-            g2D.setStroke(stroke);
-            TextLayout textLayout = new TextLayout(text, font, g2D.getFontRenderContext());
-            g2D.draw(textLayout.getOutline(null));
-          }*/
-          
-          g2D.setFont(font);
-          //g2D.setColor(color != null ?  new Color(color) : new Color(0xff000000));//UIManager.getColor("TextField.foreground"));
-          //FIXME: my bit shifting on the setColor above is wrong somehow?, but setPaint gets it right
-          g2D.setPaint(color != null ?  new Color(color) : new Color(0xff000000));
-          
-          g2D.drawString(text, 0f, 0f);
+          g2D.translate(0, baseLineShift);
+          for (int i = lines.length - 1; i >= 0; i--) {
+            String line = lines [i];
+            float translationX;
+            if (style.getAlignment() == TextStyle.Alignment.LEFT) {
+              translationX = 0;
+            } else if (style.getAlignment() == TextStyle.Alignment.RIGHT) {
+              translationX = textWidth - lineWidths [i];
+            } else { // CENTER
+              translationX = (textWidth - lineWidths [i]) / 2;
+            }
+            translationX += stroke.getLineWidth() / 2;
+            g2D.translate(translationX, 0);
+            if (outlineColor != null) {
+              g2D.setColor(new Color(outlineColor));
+              g2D.setStroke(stroke);
+              if (line.length() > 0) {
+                //TextLayout textLayout = new TextLayout(line, font, g2D.getFontRenderContext());
+                //g2D.draw(textLayout.getOutline(null));
+              }
+            }
+            g2D.setFont(font);
+            //g2D.setColor(color != null ?  new Color(color) : new Color(0xff000000));//UIManager.getColor("TextField.foreground"));
+            //FIXME: my bit shifting on the setColor above is wrong somehow?, but setPaint gets it right
+            g2D.setPaint(color != null ?  new Color(color) : new Color(0xff000000));
+            g2D.drawString(line, 0f, 0f);
+            g2D.translate(-translationX, -font.getStringBounds("A").getHeight());
+          }
           g2D.dispose();
           
           Transform3D scaleTransform = new Transform3D();
@@ -239,7 +256,9 @@ public class Label3D extends Object3DBranch {
               TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
           appearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
           appearance.setUpdatableCapabilities();
-          Box box = new Box(0.5f, 0f, 0.5f, Box.ENABLE_GEOMETRY_PICKING, appearance);
+          
+          // Do not share box geometry or cleaning up the universe after an offscreen rendering may cause some bugs
+          Box box = new Box(0.5f, 0f, 0.5f, Box.GEOMETRY_NOT_SHARED | Box.GENERATE_NORMALS | Box.ENABLE_GEOMETRY_PICKING, appearance);
           Shape3D shape = box.getShape(Box.TOP);
           box.removeChild(shape);         
           makePickable(shape); //PJPJP for selection
@@ -296,8 +315,7 @@ public class Label3D extends Object3DBranch {
 
           transformGroup.addChild(shape);    
           transformGroup.addChild(olShape); // outline is child 1
-          addChild(group);
-     
+          addChild(group);     
         }
         
         TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
