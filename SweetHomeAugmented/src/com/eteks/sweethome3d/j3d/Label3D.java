@@ -128,6 +128,7 @@ public class Label3D extends Object3DBranch {
           defaultFont = new VMFont(Typeface.DEFAULT, 12);//UIManager.getFont("TextField.font");
         }*/
         BasicStroke stroke = new BasicStroke(outlineColor != null ? style.getFontSize() * 0.05f : 0f); 
+        
         BufferedImage dummyImage = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g2D = (Graphics2D)dummyImage.getGraphics();        
         g2D.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -136,6 +137,7 @@ public class Label3D extends Object3DBranch {
         Font font = g2D.getFont();// we get the system default font 
         font.setSize((int) style.getFontSize());
        
+        float lineHeight = (float)font.getStringBounds("[").getHeight() * 1.1f; //force a line gap, cos getHeight on Android is a bit small
         String [] lines = text.split("\n");
         float [] lineWidths = new float [lines.length];
         float textWidth = -Float.MAX_VALUE;
@@ -143,7 +145,7 @@ public class Label3D extends Object3DBranch {
         for (int i = 0; i < lines.length; i++) {
           Rectangle2D lineBounds = font.getStringBounds(lines [i]);
           if (i == 0) {
-            baseLineShift = -(float)lineBounds.getY() + (float)lineBounds.getHeight() * (lines.length - 1);
+            baseLineShift = -(float)lineBounds.getY() + lineHeight * (lines.length - 1);
           }
           lineWidths [i] = (float)lineBounds.getWidth() + 2 * stroke.getLineWidth();
           if (style.isItalic()) {
@@ -153,7 +155,7 @@ public class Label3D extends Object3DBranch {
         }
         g2D.dispose();
         
-        float textHeight = (float)font.getStringBounds("A").getHeight() * lines.length + 2 * stroke.getLineWidth();
+        float textHeight = lineHeight * lines.length + 2 * stroke.getLineWidth();
         float textRatio = (float)Math.sqrt((float)textWidth / textHeight);
         int width;
         int height;
@@ -204,7 +206,7 @@ public class Label3D extends Object3DBranch {
             //FIXME: my bit shifting on the setColor above is wrong somehow?, but setPaint gets it right
             g2D.setPaint(color != null ?  new Color(color) : new Color(0xff000000));
             g2D.drawString(line, 0f, 0f);
-            g2D.translate(-translationX, -font.getStringBounds("A").getHeight());
+            g2D.translate(-translationX, -lineHeight);
           }
           g2D.dispose();
           
@@ -220,7 +222,7 @@ public class Label3D extends Object3DBranch {
           } else { // CENTER
             translationX = 0;
           }
-          this.baseLineTransform.setTranslation(new Vector3d(translationX, 0, textHeight / 2 - 0));
+          this.baseLineTransform.setTranslation(new Vector3d(translationX, 0, textHeight / 2 - baseLineShift));
           this.baseLineTransform.mul(scaleTransform);
           this.texture = new TextureLoader(textureImage).getTexture();
           this.text = text;
