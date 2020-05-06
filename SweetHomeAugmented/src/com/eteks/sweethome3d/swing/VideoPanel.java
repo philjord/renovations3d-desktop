@@ -142,6 +142,8 @@ import com.eteks.sweethome3d.viewcontroller.Object3DFactory;
 import com.eteks.sweethome3d.viewcontroller.VideoController;
 import com.eteks.sweethome3d.viewcontroller.View;
 
+import javaawt.image.VMBufferedImage;
+
 /**
  * A panel used for video creation. 
  * @author Emmanuel Puybaret
@@ -1847,8 +1849,7 @@ public class VideoPanel extends JPanel implements DialogView {
     public BufferedImage renderImageAt(Camera frameCamera, boolean last) throws IOException {
       try {
         checkLaunchingThreadIsntInterrupted();
-        //this.renderer.render(this.image, frameCamera, null);   
-        //PJPJPJPJPJ dumped
+        this.renderer.render(new VMBufferedImage(this.image), frameCamera, null);   
         checkLaunchingThreadIsntInterrupted();
         return image;
       } catch(InterruptedIOException ex) {
