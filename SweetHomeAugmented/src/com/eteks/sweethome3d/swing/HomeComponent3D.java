@@ -236,11 +236,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private BufferedImage                            navigationPanelImage;
   private Area                                     lightScopeOutsideWallsAreaCache;
 	
-	//PJPJPJPJ
 	private Canvas3D canvas3D;
 	private SelectionListener selectionOutliningListener;
-
-	 /**
+	private HomeComponent3DMouseHandler homeComponent3DMouseHandler;
+	/**
 	   * Creates a 3D component that displays <code>home</code> walls, rooms and furniture, 
 	   * with no controller.
 	   * @throws IllegalStateException  if the 3D component couldn't be created.
@@ -329,21 +328,14 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		// Add an ancestor listener to create canvas 3D and its universe once this component is made visible 
 		// and clean up universe once its parent frame is disposed
 		addAncestorListener(preferences, controller, displayShadowOnFloor);
-		
-		
-		//PJPJPJ for outlining
 		selectionOutliningListener = new SelectionOutliningListener();		
 	    home.addSelectionListener(selectionOutliningListener);
 	}
 	
-	
-	private class SelectionOutliningListener implements SelectionListener
-	{
+	private class SelectionOutliningListener implements SelectionListener {
 		@Override
-		public void selectionChanged(SelectionEvent selectionEvent)
-		{
-			for(Selectable sel : homeObjects.keySet())
-			{
+		public void selectionChanged(SelectionEvent selectionEvent) {
+			for(Selectable sel : homeObjects.keySet()) {
 				boolean isSelected = selectionEvent.getSelectedItems().contains(sel);
 				Object3DBranch obj3D = homeObjects.get(sel);
 				obj3D.showOutline(isSelected);				
@@ -351,9 +343,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		}	
 	}
 	
-	
-	//PJPJP
-	HomeComponent3DMouseHandler homeComponent3DMouseHandler;
 	 /**
 	   * Adds an ancestor listener to this component to manage the creation of the canvas and its universe 
 	   * and clean up the universe.  
@@ -411,8 +400,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 					// Bind universe to canvas3D
 					onscreenUniverse.getViewer().getView().addCanvas3D(canvas3D);
 					component3D.setFocusable(false);
-					updateNavigationPanelImage();
-					
+					updateNavigationPanelImage();					
 					
 					//PJPJPJ mouse iteraction with picking
 					homeComponent3DMouseHandler = new HomeComponent3DMouseHandler(home, preferences, controller);
@@ -462,11 +450,9 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 			}
 		} else {
 			this.component3D = new JPanel();
-			//PJPJPJPJ
 			canvas3D = Component3DManager.getInstance().getOnscreenCanvas3D(configuration, new Component3DManager.RenderingObserver() {
-				//PJPJPJ    
 				//private Shape3D dummyShape;
-
+				
               public void canvas3DSwapped(Canvas3D canvas3D) {
 				}
 
@@ -478,23 +464,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 					// if it's modified in the EDT while this method draws it
 					BufferedImage navigationPanelImage = HomeComponent3D.this.navigationPanelImage;
 					// Render navigation panel upon canvas 3D if it exists
-					if (navigationPanelImage != null)
-					{
-						//PJPJPJ
-						/* if (JAVA3D_1_5) {
-						   // Render trivial transparent shape to reset the possible transformation set on the last rendered texture 
-						   // See https://jogamp.org/bugzilla/show_bug.cgi?id=1006#c1
-						   if (this.dummyShape == null) {
-						     PointArray dummyGeometry = new PointArray(1, PointArray.COORDINATES);
-						     dummyGeometry.setCoordinates(0, new float [] {0, 0, 0});
-						     Appearance appearance = new Appearance();
-						     appearance.setTransparencyAttributes(new TransparencyAttributes(TransparencyAttributes.FASTEST, 1));
-						     this.dummyShape = new Shape3D(dummyGeometry, appearance);
-						   }
-						   
-						   canvas3D.getGraphicsContext3D().draw(this.dummyShape);
-						 }*/
-
+					if (navigationPanelImage != null) {
 						J3DGraphics2D g2D = canvas3D.getGraphics2D();
 						g2D.drawImage(new VMBufferedImage(navigationPanelImage), null, 0, 0);
 						g2D.flush(true);
@@ -521,9 +491,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
 			public void layoutContainer(Container parent) {
 				component3D.setBounds(0, 0, Math.max(1, parent.getWidth()), Math.max(1, parent.getHeight()));
-				//PJPJPJPJ
 				canvas3D.setSize(Math.max(1, parent.getWidth()), Math.max(1, parent.getHeight()));
-
 				if (navigationPanel != null 
 			              && navigationPanel.isVisible()) {
 					// Ensure that navigationPanel is always in top corner             
@@ -534,9 +502,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		});
 
 		canvasPanel.add(this.component3D);
-
 		canvas3D.addNotify();
-
 		setLayout(new GridLayout());
 	    add(canvasPanel);
 	    if (controller != null) {
@@ -583,9 +549,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     super.setVisible(visible);
     if (this.component3D != null) {
       this.component3D.setVisible(visible);
-
-			//PJPJPJPJ do something interesting here
-			this.canvas3D.setVisible(visible);
+		this.canvas3D.setVisible(visible);
 		}
 	}
 
@@ -843,7 +807,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	private SimpleUniverse createUniverse(boolean displayShadowOnFloor,
 	                                        boolean listenToHomeUpdates, 
 	                                        boolean waitForLoading) {
-		//PJPJPJ
 		javaawt.image.BufferedImage.installBufferedImageDelegate(VMBufferedImage.class);
 		javaawt.imageio.ImageIO.installBufferedImageImpl(VMImageIO.class);
 		javaawt.EventQueue.installEventQueueImpl(VMEventQueue.class);
@@ -1011,7 +974,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		// Empty temporarily selection to create the off screen image
 		List<Selectable> emptySelection = Collections.emptyList();
 		this.home.setSelectedItems(emptySelection);
-		//PJPJPJ
 		return (BufferedImage) Component3DManager.getInstance().getOffScreenImage(view, width, height).getDelegate();
     } finally {
         // Restore selection
@@ -1112,8 +1074,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    }
 	    view.setFieldOfView(fieldOfView);
 	    double frontClipDistance = 2.5f;
-	    // It's recommended to keep ratio between back and front clip distances under 3000
-	    final float frontBackDistanceRatio = 3000;
+    float frontBackDistanceRatio = 500000; // More than 10 km for a 2.5 cm front distance
+    if (Component3DManager.getInstance().getDepthSize() <= 16) {
+      // It's recommended to keep ratio between back and front clip distances under 3000 for a 16 bit Z-buffer
+      frontBackDistanceRatio = 3000;
 	    BoundingBox approximateHomeBounds = getApproximateHomeBounds();
 	    // If camera is out of home bounds, adjust the front clip distance to the distance to home bounds 
 	    if (approximateHomeBounds != null
@@ -1123,6 +1087,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	        frontClipDistance = Math.max(frontClipDistance, 0.1f * distanceToClosestBoxSide);
 	      }
 	    }
+    }
 	    if (camera.getZ() > 0 && width != 0 && height != 0) {
 	      float halfVerticalFieldOfView = (float)Math.atan(Math.tan(fieldOfView / 2) * height / width);
 	      float fieldOfViewBottomAngle = camera.getPitch() + halfVerticalFieldOfView;
@@ -1484,13 +1449,13 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
    * Adds AWT mouse listeners to <code>component3D</code> that calls back <code>controller</code> methods.  
    */
   private void addMouseListeners(final HomeController3D controller, final Component component3D) {
-    	//PJPJPJPJP///////////////////////////////////////////////////////////////////////////////////////
-		MouseListener mouseListener2 = new MouseListener() {
+    	MouseListener mouseListener2 = new MouseListener() {
 			private int xLastMouseMove;
 			private int yLastMouseMove;
 			private Component grabComponent;
 			private Component previousMouseEventTarget;
 
+			@Override
 			public void mousePressed(com.jogamp.newt.event.MouseEvent ev) {
 				if (!retargetMouseEventToNavigationPanelChildren(ev)) {
 					if (false) {//ev.isPopupTrigger()) {
@@ -1503,6 +1468,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 				}
 			}
 
+			@Override
 			public void mouseReleased(com.jogamp.newt.event.MouseEvent ev) {
 				if (!retargetMouseEventToNavigationPanelChildren(ev)) {
 					if (false) {//ev.isPopupTrigger()) {
@@ -1514,14 +1480,17 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 				}
 			}
 
+			@Override
 			public void mouseClicked(com.jogamp.newt.event.MouseEvent ev) {
 				retargetMouseEventToNavigationPanelChildren(ev);
 			}
 
+			@Override
 			public void mouseMoved(com.jogamp.newt.event.MouseEvent ev) {
 				retargetMouseEventToNavigationPanelChildren(ev);
 			}
 
+			@Override
 			public void mouseDragged(com.jogamp.newt.event.MouseEvent ev) {
 				if (!retargetMouseEventToNavigationPanelChildren(ev)) {
 					if (isEnabled()) {
@@ -1529,8 +1498,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 							// Mouse move along Y axis while alt is down changes camera location
 							float delta = 1.25f * (this.yLastMouseMove - ev.getY());
 							// Multiply delta by 5 if shift is down
-							if (ev.isShiftDown())
-							{
+							if (ev.isShiftDown()) {
 								delta *= 5;
 							}
 							controller.moveCamera(delta);
@@ -1539,8 +1507,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 							// Mouse move along X axis changes camera yaw 
 							float yawDelta = ANGLE_FACTOR * (ev.getX() - this.xLastMouseMove);
 							// Multiply yaw delta by 5 if shift is down
-							if (ev.isShiftDown())
-							{
+							if (ev.isShiftDown()) {
 								yawDelta *= 5;
 							}
 							controller.rotateCameraYaw(yawDelta);
@@ -1652,7 +1619,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 							ev.getEventType() == com.jogamp.newt.event.MouseEvent.EVENT_MOUSE_DRAGGED ? MouseEvent.MOUSE_DRAGGED 
 									: 0	;
 				
-				// Notice the modifiers aren't dont yet					
+				// Notice the modifiers aren't done yet					
 				MouseEvent ev2 =  new MouseEvent((Component)ev.getSource(), id , ev.getWhen(), 0,// ev.getModifiers(),
 						ev.getX(), ev.getY(), ev.getClickCount(), false, ev.getButton());
 				((Component)ev.getSource()).dispatchEvent(ev2);
@@ -1675,9 +1642,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		};
 
 		canvas3D.getGLWindow().addMouseListener(mouseListener2);
-		//canvas3D.getGLWindow().addMouseMotionListener(mouseListener);
-		//canvas3D.getGLWindow().addMouseWheelListener(mouseWheelListener);
-		//PJPJPJPJP///////////////////////////////////////////////////////////////////////////////////////
 	}
 
 	/**
@@ -1851,8 +1815,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	                                      boolean waitForLoading) {
 		BranchGroup root = new BranchGroup();
 		root.setName("Universe Root");
-		root.setPickable(true);
-		
+		root.setPickable(true);		
 		// Build scene tree
 		root.addChild(createHomeTree(displayShadowOnFloor, listenToHomeUpdates, waitForLoading));
 		Node backgroundNode = createBackgroundNode(listenToHomeUpdates, waitForLoading);
@@ -1928,7 +1891,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 	    geometryInfo.setCoordinateIndices(new int [] {0, 1, 2, 3, 4, 5, 6, 7});
 	    geometryInfo.setNormals(new Vector3f [] {new Vector3f(0, 1, 0)});
 	    geometryInfo.setNormalIndices(new int [] {0, 0, 0, 0, 0, 0, 0, 0});
-	    
 	    //PJ quads not supported and a better getgeometry call
 	  	geometryInfo.convertToIndexedTriangles();		
 	    Shape3D groundBackground = new Shape3D(geometryInfo.getIndexedGeometryArray(true,true,true,true,true), groundBackgroundAppearance);
@@ -2048,10 +2010,8 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
     if (colors != null) {
       geometryInfo.setColors(colors);
     }
-
     //PJPJPJPJ quads not supported, better get call
 	geometryInfo.convertToIndexedTriangles();
-
 	//geometryInfo.indexify();
 	//geometryInfo.compact();
 	//new Stripifier().stripify(geometryInfo);
@@ -2440,7 +2400,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 		//  Allow group to have new children
 		homeGroup.setCapability(Group.ALLOW_CHILDREN_WRITE);
 		homeGroup.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-		
 		homeGroup.setPickable(true);
 		return homeGroup;
 	}

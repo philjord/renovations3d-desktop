@@ -84,6 +84,7 @@ import java.io.OutputStream;
 import java.lang.ref.WeakReference;
 import java.net.URL;
 import java.security.AccessControlException;
+import java.text.DecimalFormat;
 import java.text.Format;
 import java.text.NumberFormat;
 import java.text.ParseException;
@@ -1634,11 +1635,22 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
                                                              UserPreferences preferences) {
     InternationalFormatter formatter;
     if (editableProperty == PlanController.EditableProperty.ANGLE) {      
-      formatter = new NumberFormatter(NumberFormat.getNumberInstance());
+      DecimalFormat format = new DecimalFormat("0.#");
+      try {
+        format = new CalculatorFormat(format, null);
+      } catch (LinkageError ex) {
+        // Don't allow math expressions if Jeks Parser library isn't available
+      }
+      formatter = new NumberFormatter(format);
     } else {
       Format lengthFormat = preferences.getLengthUnit().getFormat();
-      if (lengthFormat instanceof NumberFormat) {
-        formatter = new NumberFormatter((NumberFormat)lengthFormat);
+      if (lengthFormat instanceof DecimalFormat) {
+        try {
+          lengthFormat = new CalculatorFormat((DecimalFormat)lengthFormat, preferences.getLengthUnit());
+        } catch (LinkageError ex) {
+          // Don't allow math expressions if Jeks Parser library isn't available
+        }
+        formatter = new NumberFormatter((DecimalFormat)lengthFormat);
       } else {
         formatter = new InternationalFormatter(lengthFormat);
       }
@@ -3516,23 +3528,23 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     float wallPaintScale = paintMode == PaintMode.PRINT 
         ? planScale / 72 * 150 // Adjust scale to 150 dpi for print
         : planScale / this.resolutionScale;
-  /*  Composite oldComposite = null;
+    Composite oldComposite = null;
     if (paintMode == PaintMode.PAINT
         && this.backgroundPainted 
         && this.backgroundImageCache != null
         && this.wallsDoorsOrWindowsModification) {
       // Paint walls with half transparent paint when a wall or a door/window in the base plan is being handled
       oldComposite = setTransparency(g2D, 0.5f);
-    }*/
+    }
     for (Map.Entry<Collection<Wall>, Area> areaEntry : wallAreas.entrySet()) {
       TextureImage wallPattern = areaEntry.getKey().iterator().next().getPattern();
       fillAndDrawWallsArea(g2D, areaEntry.getValue(), planScale, 
           getWallPaint(wallPaintScale, backgroundColor, foregroundColor, 
               wallPattern != null ? wallPattern : this.preferences.getWallPattern()), foregroundColor, paintMode);
     }
-/*    if (oldComposite != null) {
+    if (oldComposite != null) {
       g2D.setComposite(oldComposite);
-    }*/
+    }
   }
 
   /**
@@ -3956,8 +3968,6 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     if (cutOutShape != null
         && !PieceOfFurniture.DEFAULT_CUT_OUT_SHAPE.equals(cutOutShape)) {
       // In case of a complex cut out, compute location and width of the window hole at wall intersection
-    	// In case of a complex cut out, compute location and width of the window hole at wall intersection
-    	//PJPJPJPJ
       javaawt.Shape shape = ModelManager.getInstance().getShape(cutOutShape);
       javaawt.geom.Rectangle2D b2D = shape.getBounds2D(); 
       Rectangle2D bounds = new Rectangle2D.Double(b2D.getX(),b2D.getY(),b2D.getWidth(),b2D.getHeight());
@@ -5868,7 +5878,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
     // (don't give focus to tool tip window otherwise plan component window will lose focus)
     this.toolTipKeyListener = new KeyListener() {
         private int focusedTextFieldIndex;
-        private JTextComponent focusedTextField;
+        private JFormattedTextField focusedTextField;
   
         {
           // Simulate focus on first text field
@@ -5879,6 +5889,7 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
           if (this.focusedTextField != null) {
             this.focusedTextField.getCaret().setVisible(false);
             this.focusedTextField.getCaret().setSelectionVisible(false);        
+            this.focusedTextField.setValue(this.focusedTextField.getValue());
           }
           this.focusedTextFieldIndex = textFieldIndex;
           this.focusedTextField = toolTipEditableTextFields.get(toolTipEditedProperties [textFieldIndex]);
