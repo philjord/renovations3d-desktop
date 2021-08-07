@@ -436,9 +436,28 @@ public class OBJWriter extends FilterWriter {
                    //   }
                    // }
                   //}
+                        
+	              // Find a unique texture file name which is not case sensitive
+	              String textureFileBaseName = this.mtlFileName.substring(0, this.mtlFileName.length() - 4)
+	                  + "_" + appearanceName;
+	              Collection<File> textureFiles = this.textures.values();
+	              boolean fileExists = true;
+	              for (int i = 0; fileExists; i++) {
+	                if (i == 0) {
+	                  textureFile = new File(textureFileBaseName + "." + fileExtension);
+	                } else {
+	                  textureFile = new File(textureFileBaseName + "_" + i + "." + fileExtension);
+	                }
+	
+	                fileExists = false;
+	                for (File file : textureFiles) {
+	                  if (textureFile.getName().equalsIgnoreCase(file.getName())) {
+	                    fileExists = true;
+	                    break;
+	                  }
+	                }
+	              }
                   // Store texture
-                  textureFile = new File(this.mtlFileName.substring(0, this.mtlFileName.length() - 4) 
-                      + "_" + appearanceName + "." + fileExtension);
                   this.textures.put(texture, textureFile);
                 }
               }
@@ -1755,7 +1774,7 @@ public class OBJWriter extends FilterWriter {
             return false;
           }
         } catch (NoSuchMethodError ex) {
-          // Don't compares name with Java 3D < 1.4 where getName was added              }
+          // Don't compare name with Java 3D < 1.4 where getName was added
         }
 
         return true;
@@ -1799,7 +1818,7 @@ public class OBJWriter extends FilterWriter {
           code += name.hashCode();
         }
       } catch (NoSuchMethodError ex) {
-        // Don't take name into account with Java 3D < 1.4 where getName was added              }
+        // Don't take name into account with Java 3D < 1.4 where getName was added
       }
       return code;
     }

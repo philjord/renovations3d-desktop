@@ -187,7 +187,7 @@ public class HomeController3D implements Controller {
    * Stores a clone of the current camera in home under the given <code>name</code>.
    */
   public void storeCamera(String name) {
-    Camera camera = this.home.getCamera().clone();
+    Camera camera = (Camera)this.home.getCamera().duplicate();
     camera.setName(name);
     List<Camera> homeStoredCameras = this.home.getStoredCameras();
     ArrayList<Camera> storedCameras = new ArrayList<Camera>(homeStoredCameras.size() + 1);
@@ -479,7 +479,6 @@ public class HomeController3D implements Controller {
       private UserPreferencesChangeListener userPreferencesChangeListener;
 
       public TopCameraState(UserPreferences preferences) {
-        this.aerialViewCenteredOnSelectionEnabled = preferences.isAerialViewCenteredOnSelectionEnabled();
         this.userPreferencesChangeListener = new UserPreferencesChangeListener(this);
       }
 
@@ -507,6 +506,7 @@ public class HomeController3D implements Controller {
     public void enter() {
       this.topCamera = home.getCamera();
       this.previousSelectionEmpty = home.getSelectedItems().isEmpty();
+      this.aerialViewCenteredOnSelectionEnabled = preferences.isAerialViewCenteredOnSelectionEnabled();
       updateCameraFromHomeBounds(false, false);
       for (Level level : home.getLevels()) {
         level.addPropertyChangeListener(this.objectChangeListener);

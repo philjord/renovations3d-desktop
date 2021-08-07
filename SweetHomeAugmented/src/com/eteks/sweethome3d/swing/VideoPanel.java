@@ -1133,7 +1133,7 @@ public class VideoPanel extends JPanel implements DialogView {
         || !compareCameraLocation(lastCamera, camera)) {
       // Record only new locations
       cameraPath = new ArrayList<Camera>(cameraPath);
-      Camera recordedCamera = camera.clone();
+      Camera recordedCamera = (Camera)camera.duplicate();
       recordedCamera.setLens(Camera.Lens.PINHOLE);
       recordedCamera.setTime(this.controller.getTime());
       cameraPath.add(recordedCamera);
@@ -1492,7 +1492,7 @@ public class VideoPanel extends JPanel implements DialogView {
     EventQueue.invokeLater(new Runnable() {
         public void run() {
           String messageFormat = preferences.getLocalizedString(VideoPanel.class, messageKey);
-          JOptionPane.showMessageDialog(SwingUtilities.getRootPane(VideoPanel.this), String.format(messageFormat, messageDetail), 
+          SwingTools.showMessageDialog(VideoPanel.this, String.format(messageFormat, messageDetail),
               preferences.getLocalizedString(VideoPanel.class, "videoError.title"), JOptionPane.ERROR_MESSAGE);
         }
       });

@@ -22,7 +22,6 @@ package com.eteks.sweethome3d.viewcontroller;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
-import javaxswing.undo.AbstractUndoableEdit;
 import javaxswing.undo.CannotRedoException;
 import javaxswing.undo.CannotUndoException;
 import javaxswing.undo.UndoableEdit;
@@ -287,9 +286,8 @@ public class CompassController implements Controller {
    * Undoable edit for compass. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class CompassUndoableEdit extends AbstractUndoableEdit {
+  private static class CompassUndoableEdit extends LocalizedUndoableEdit {
     private final Compass compass;
-    private final UserPreferences preferences;
     private final float oldX;
     private final float oldY;
     private final float oldDiameter;
@@ -310,8 +308,8 @@ public class CompassController implements Controller {
     public CompassUndoableEdit(Compass compass, UserPreferences preferences, float newX, float newY,
                                float newDiameter, boolean newVisible, float newNorthDirection, 
                                float newLatitude, float newLongitude, String newTimeZone) {
+      super(preferences, CompassController.class, "undoModifyCompassName");
       this.compass = compass;
-      this.preferences = preferences;
       this.oldX = compass.getX();
       this.oldY = compass.getY();
       this.oldDiameter = compass.getDiameter();
@@ -342,11 +340,6 @@ public class CompassController implements Controller {
       super.redo();
       doModifyCompass(this.compass, this.newX, this.newY, this.newDiameter, this.newVisible, 
           this.newNorthDirection, this.newLatitude, this.newLongitude, this.newTimeZone);
-    }
-  
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(CompassController.class, "undoModifyCompassName");
     }
   }
   

@@ -367,7 +367,6 @@ public class ModelPreviewComponent extends JComponent {
 
   /**
    * A <code>JCanvas</code> canvas that sends a notification when it's drawn.
- * @param pi 
    */
   //PJPJPJPJ
 /*  private static class JCanvas3DWithNotifiedPaint extends JCanvas3D {
@@ -383,7 +382,28 @@ public class ModelPreviewComponent extends JComponent {
       super.paintComponent(g);
       this.homeComponent3D.canvas3DSwapped();
     }
-  }*/
+  }
+
+  /**
+   * Returns the canvas 3D instance associated to this component.
+   */
+  private Canvas3D getCanvas3D() {
+	  return this.canvas3D;
+   /* if (this.component3D instanceof Canvas3D) {
+      return (Canvas3D)this.component3D;
+    } else if (this.component3D != null) {
+      try {
+        // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
+        return (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(this.component3D);
+      } catch (Exception ex) {
+        UnsupportedOperationException ex2 = new UnsupportedOperationException();
+        ex2.initCause(ex);
+        throw ex2;
+      }
+    } else {
+      return null;
+    }*/
+  }
  
   /**
    * Adds an AWT mouse listener to component that will update view platform transform.  
@@ -406,8 +426,7 @@ public class ModelPreviewComponent extends JComponent {
         private BoundingBox    modelBounds;
 
         private Point getMouseLocation(MouseEvent ev) {
-          if (!OperatingSystem.isMacOSX()
-              && OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+          if (OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
             try {
               // Dirty hack that scales mouse coordinates with xcale and yscale private fields of Canvas3D
               Field xscaleField = Canvas3D.class.getDeclaredField("xscale");
@@ -435,12 +454,7 @@ public class ModelPreviewComponent extends JComponent {
               && getModelNode() != null) {
             ModelManager modelManager = ModelManager.getInstance();
             this.boundedPitch = !modelManager.containsDeformableNode(getModelNode());
-            Canvas3D canvas = canvas3D;
-            //if (component3D instanceof JCanvas3D) {
-            //  canvas = ((JCanvas3D)component3D).getOffscreenCanvas3D();
-            //} else {
-            //  canvas = (Canvas3D)component3D;
-            //}
+            Canvas3D canvas = getCanvas3D();
             PickCanvas pickCanvas = new PickCanvas(canvas, getModelNode());
             pickCanvas.setTolerance(0.0f); // make sure it's a ray not a cone
             pickCanvas.setFlags(PickInfo.NODE | PickInfo.SCENEGRAPHPATH);
@@ -450,10 +464,10 @@ public class ModelPreviewComponent extends JComponent {
             if (pi != null) {
               PickResult result = new PickResult(pi.getSceneGraphPath(), pickCanvas.getPickShape());            
               this.pickedTransformGroup = (TransformGroup)result.getNode(PickResult.TRANSFORM_GROUP);
-              if (pickedTransformGroup != null) {
+              if (this.pickedTransformGroup != null) {
                 // The pivot node is the first sibling node which is not a transform group
                 Group group = (Group)this.pickedTransformGroup.getParent();
-                int i = group.indexOfChild(pickedTransformGroup) - 1;
+                int i = group.indexOfChild(this.pickedTransformGroup) - 1;
                 while (i >= 0 && (group.getChild(i) instanceof TransformGroup)) {
                   i--;
                 }
@@ -718,19 +732,7 @@ public class ModelPreviewComponent extends JComponent {
    * Creates universe bound to the 3D component.
    */
   private void createUniverse() {
-   /* Canvas3D canvas3D;
-    if (this.component3D instanceof Canvas3D) {
-      canvas3D = (Canvas3D)this.component3D;
-    } else {
-      try {
-        // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
-        canvas3D = (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(this.component3D);
-      } catch (Exception ex) {
-        UnsupportedOperationException ex2 = new UnsupportedOperationException();
-        ex2.initCause(ex);
-        throw ex2;
-      }
-    } */   
+    Canvas3D canvas3D = getCanvas3D();
     // Create a universe bound to component 3D
     ViewingPlatform viewingPlatform = new ViewingPlatform();
     Viewer viewer = new Viewer(canvas3D);

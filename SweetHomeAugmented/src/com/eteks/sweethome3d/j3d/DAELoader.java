@@ -349,12 +349,15 @@ public class DAELoader extends LoaderBase implements Loader {
           } 
         } else if (this.verticesId != null && "input".equals(name)) {
           String sourceAnchor = attributes.getValue("source").substring(1);
-          if ("POSITION".equals(attributes.getValue("semantic"))) {
-            this.positions.put(this.verticesId, this.sources.get(sourceAnchor));
-          } else if ("NORMAL".equals(attributes.getValue("semantic"))) {
-            this.normals.put(this.verticesId, this.sources.get(sourceAnchor));
-          } else if ("TEXCOORD".equals(attributes.getValue("semantic"))) {
-            this.textureCoordinates.put(this.verticesId, this.sources.get(sourceAnchor));
+          float [] source = this.sources.get(sourceAnchor);
+          if (source != null) {
+            if ("POSITION".equals(attributes.getValue("semantic"))) {
+              this.positions.put(this.verticesId, source);
+            } else if ("NORMAL".equals(attributes.getValue("semantic"))) {
+              this.normals.put(this.verticesId, source);
+            } else if ("TEXCOORD".equals(attributes.getValue("semantic"))) {
+              this.textureCoordinates.put(this.verticesId, source);
+            }
           }
         } else if (this.verticesId == null && "input".equals(name)) {
           String sourceAnchor = attributes.getValue("source").substring(1);
@@ -801,7 +804,10 @@ public class DAELoader extends LoaderBase implements Loader {
      */
     private void handleGeometryElementsEnd(String name, String parent) {
       if ("mesh".equals(parent) && "source".equals(name)) {
-        this.sources.put(this.meshSourceId, this.floats);
+        if (this.floats != null) {
+          this.sources.put(this.meshSourceId, this.floats);
+          this.floats = null;
+        }
         this.meshSourceId = null;
       } else if ("mesh".equals(parent) && "vertices".equals(name)) {
         this.verticesId = null;

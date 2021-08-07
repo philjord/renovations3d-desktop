@@ -24,10 +24,6 @@ import javaawt.geom.GeneralPath;
 import javaawt.geom.Line2D;
 import javaawt.geom.Point2D;
 import javaawt.geom.Rectangle2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
-import java.io.IOException;
-import java.io.ObjectInputStream;
 
 /**
  * A dimension line in plan.
@@ -50,7 +46,6 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
   private TextStyle           lengthStyle;
   private Level               level;
 
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape shapeCache;
 
   /**
@@ -58,6 +53,16 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
    * to (<code>xEnd</code>, <code>yEnd</code>), with a given offset.
    */
   public DimensionLine(float xStart, float yStart, float xEnd, float yEnd, float offset) {
+    this(createId("dimensionLine"), xStart, yStart, xEnd, yEnd, offset);
+  }
+
+  /**
+   * Creates a dimension line from (<code>xStart</code>,<code>yStart</code>)
+   * to (<code>xEnd</code>, <code>yEnd</code>), with a given offset.
+   * @since 6.4
+   */
+  public DimensionLine(String id, float xStart, float yStart, float xEnd, float yEnd, float offset) {
+    super(id);
     this.xStart = xStart;
     this.yStart = yStart;
     this.xEnd = xEnd;
@@ -65,29 +70,6 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
     this.offset = offset;
   }
   
-  /**
-   * Initializes new dimension line transient fields  
-   * and reads its properties from <code>in</code> stream with default reading method.
-   */
-  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
-    in.defaultReadObject();
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this dimension line.
-   */
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this dimension line.
-   */
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
-  }
-
   /**
    * Returns the start point abscissa of this dimension line.
    */
@@ -104,7 +86,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldXStart = this.xStart;
       this.xStart = xStart;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.X_START.name(), oldXStart, xStart);
+      firePropertyChange(Property.X_START.name(), oldXStart, xStart);
     }
   }
 
@@ -124,7 +106,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldYStart = this.yStart;
       this.yStart = yStart;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
+      firePropertyChange(Property.Y_START.name(), oldYStart, yStart);
     }
   }
 
@@ -144,7 +126,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldXEnd = this.xEnd;
       this.xEnd = xEnd;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
+      firePropertyChange(Property.X_END.name(), oldXEnd, xEnd);
     }
   }
 
@@ -164,7 +146,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldYEnd = this.yEnd;
       this.yEnd = yEnd;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
+      firePropertyChange(Property.Y_END.name(), oldYEnd, yEnd);
     }
   }
 
@@ -184,7 +166,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
       float oldOffset = this.offset;
       this.offset = offset;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.OFFSET.name(), oldOffset, offset);
+      firePropertyChange(Property.OFFSET.name(), oldOffset, offset);
     }
   }
 
@@ -210,7 +192,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
     if (lengthStyle != this.lengthStyle) {
       TextStyle oldLengthStyle = this.lengthStyle;
       this.lengthStyle = lengthStyle;
-      this.propertyChangeSupport.firePropertyChange(Property.LENGTH_STYLE.name(), oldLengthStyle, lengthStyle);
+      firePropertyChange(Property.LENGTH_STYLE.name(), oldLengthStyle, lengthStyle);
     }
   }
 
@@ -231,7 +213,7 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
     if (level != this.level) {
       Level oldLevel = this.level;
       this.level = level;
-      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+      firePropertyChange(Property.LEVEL.name(), oldLevel, level);
     }
   }
 
@@ -375,7 +357,6 @@ public class DimensionLine extends HomeObject implements Selectable, Elevatable 
   @Override
   public DimensionLine clone() {
     DimensionLine clone = (DimensionLine)super.clone();
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
     clone.level = null;
     return clone;
   }

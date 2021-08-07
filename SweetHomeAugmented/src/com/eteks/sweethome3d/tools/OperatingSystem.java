@@ -58,7 +58,7 @@ public class OperatingSystem {
       EDITOR_SUB_FOLDER = resource.getString("editorSubFolder");
       APPLICATION_SUB_FOLDER = resource.getString("applicationSubFolder");
     }*/
-	  EDITOR_SUB_FOLDER = "editorSubFolder";
+	EDITOR_SUB_FOLDER = "editorSubFolder";
     APPLICATION_SUB_FOLDER = "applicationSubFolder";
     
     String temporarySubFolder;
@@ -142,6 +142,14 @@ public class OperatingSystem {
         && compareVersions(System.getProperty("os.version"), "10.13") >= 0;
   }
   
+  /**
+   * Returns <code>true</code> if current operating is Mac OS X 10.16 or superior.
+   * @since 6.5
+   */
+  public static boolean isMacOSXBigSurOrSuperior() {
+    return isMacOSX()
+        && compareVersions(System.getProperty("os.version"), "10.16") >= 0;
+  }
   /**
    * Returns <code>true</code> if the given version is greater than or equal to the version 
    * of the current JVM. 
@@ -393,13 +401,19 @@ public class OperatingSystem {
                 for (File siblingTemporaryFolder : siblingTemporaryFolders) {
                   if (siblingTemporaryFolder.exists()
                       && now - siblingTemporaryFolder.lastModified() > age) {
-                    File [] temporaryFiles = siblingTemporaryFolder.listFiles();
-                    for (File temporaryFile : temporaryFiles) {
-                      temporaryFile.delete();
-                    }
-                    siblingTemporaryFolder.delete();
+                    delete(siblingTemporaryFolder);
                   }
                 }
+              }
+
+              private void delete(File fileOrFolder) {
+                if (fileOrFolder.isDirectory()) {
+                  File [] files = fileOrFolder.listFiles();
+                  for (File file : files) {
+                    delete(file);
+                  }
+                }
+                fileOrFolder.delete();
               }
             }, deleteDelay);
         }

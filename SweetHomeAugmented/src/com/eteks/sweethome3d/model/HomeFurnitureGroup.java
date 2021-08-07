@@ -41,8 +41,6 @@ import java.util.List;
 public class HomeFurnitureGroup extends HomePieceOfFurniture {
   private static final long serialVersionUID = 1L;
   
-  private static final float [][] IDENTITY = new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
-
   private List<HomePieceOfFurniture> furniture;
   private boolean                    resizable;
   private boolean                    deformable;
@@ -91,7 +89,20 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   public HomeFurnitureGroup(List<HomePieceOfFurniture> furniture,
                             float angle, boolean modelMirrored,
                             String name) {
-    super(furniture.get(0));
+    this(createId("furnitureGroup"), furniture, angle, modelMirrored, name);
+  }
+
+  /**
+   * Creates a group from the given <code>furniture</code> list.
+   * The level of each piece of furniture of the group will be reset to <code>null</code> and if they belong to levels
+   * with different elevations, their elevation will be updated to be relative to the elevation of the lowest level.
+   * @since 6.4
+   */
+  public HomeFurnitureGroup(String id,
+                            List<HomePieceOfFurniture> furniture,
+                            float angle, boolean modelMirrored,
+                            String name) {
+    super(id, furniture.get(0));
     this.furniture = Collections.unmodifiableList(furniture); 
     this.resizable = true;
     this.deformable = true;
@@ -105,11 +116,15 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     }
     
     setName(name);
+    setCatalogId(null);
+    setDescription(null);
+    setInformation(null);
+    setCreator(null);
     setNameVisible(false);
     setNameXOffset(0);
     setNameYOffset(0);
+    setNameAngle(0);
     setNameStyle(null);
-    setDescription(null);
     super.setMovable(movable);
     super.setAngle(angle);
     super.setModelMirrored(modelMirrored);
@@ -295,7 +310,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
-   * Returns the furniture of this group and of all its subgroups.  
+   * Returns the furniture of this group and of all its subgroups, including the possible child furniture groups.
    * @since 5.0
    */
   public List<HomePieceOfFurniture> getAllFurniture() {
@@ -348,20 +363,20 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
-   * Returns <code>null</code>.
+   * Returns the catalog ID of this group.
    */
   @Override
   public String getCatalogId() {
-    return null;
+    return super.getCatalogId();
   }
 
   /**
-   * Returns <code>null</code>.
+   * Returns the information associated with this group.
    * @since 4.2
    */
   @Override
   public String getInformation() {
-    return null;
+    return super.getInformation();
   }
   
   /**
@@ -525,11 +540,27 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
 
   /**
+   * @throws IllegalStateException
+   * @since 6.5
+   */
+  public void setIcon(Content icon) {
+    throw new IllegalStateException("Can't set icon of a group");
+  }
+
+  /**
    * Returns <code>null</code>.
    */
   @Override
   public Content getPlanIcon() {
     return null;
+  }
+
+  /**
+   * @throws IllegalStateException
+   * @since 6.5
+   */
+  public void setPlanIcon(Content planIcon) {
+    throw new IllegalStateException("Can't set plan icon of a group");
   }
 
   /**
@@ -542,10 +573,10 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   
   /**
    * @throws IllegalStateException
+   * @since 6.5
    */
-  @Override
-  public void setModelSize(Long modelSize) {
-    throw new IllegalStateException("Can't set model size of a group");
+  public void setModel(Content model) {
+    throw new IllegalStateException("Can't set model of a group");
   }
   
   /**
@@ -558,11 +589,29 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * @throws IllegalStateException
+   * @since 5.5
+   */
+  @Override
+  public void setModelSize(Long modelSize) {
+    throw new IllegalStateException("Can't set model size of a group");
+  }
+
+  /**
    * Returns an identity matrix.
    */
   @Override
   public float [][] getModelRotation() {
-    return IDENTITY;
+    return IDENTITY_ROTATION;
+  }
+
+  /**
+   * @throws IllegalStateException
+   * @since 6.5
+   */
+  @Override
+  public void setModelRotation(float [][] modelRotation) {
+    throw new IllegalStateException("Can't set model rotation of a group");
   }
   
   /**
@@ -572,6 +621,23 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   @Override
   public boolean isModelCenteredAtOrigin() {
     return true;
+  }
+
+  /**
+   * Returns <code>false</code>.
+   */
+  @Override
+  public boolean isBackFaceShown() {
+    return false;
+  }
+
+  /**
+   * @throws IllegalStateException
+   * @since 6.5
+   */
+  @Override
+  public void setBackFaceShown(boolean backFaceShown) {
+    throw new IllegalStateException("Can't set back face shown attribute of a group");
   }
 
   /**
@@ -585,6 +651,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
 
   /**
    * Sets the transformations of this group.
+   * @since 6.0
    */
   @Override
   public void setModelTransformations(Transformation [] modelTransformations) {
@@ -623,12 +690,21 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
-   * Returns <code>null</code>.
+   * @throws IllegalStateException
+   * @since 6.5
+   */
+  @Override
+  public void setStaircaseCutOutShape(String staircaseCutOutShape) {
+    throw new IllegalStateException("Can't set staircase cut out shape of a group");
+  }
+
+  /**
+   * Returns the creator set for this group.
    * @since 4.2
    */
   @Override
   public String getCreator() {
-    return null;
+    return super.getCreator();
   }
   
   /**
@@ -734,14 +810,6 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
       }
     }
     return priceValueAddedTaxIncluded;
-  }
-  
-  /**
-   * Returns <code>false</code>.
-   */
-  @Override
-  public boolean isBackFaceShown() {
-    return false;
   }
   
   /**
@@ -873,9 +941,9 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     if (y != getY()) {
       float dy = y - getY();
       for (HomePieceOfFurniture piece : this.furniture) {
-        piece.addPropertyChangeListener(this.furnitureListener);
-        piece.setY(piece.getY() + dy);
         piece.removePropertyChangeListener(this.furnitureListener);
+        piece.setY(piece.getY() + dy);
+        piece.addPropertyChangeListener(this.furnitureListener);
       }
       super.setY(y);
     }
@@ -1093,6 +1161,25 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
   }
   
   /**
+   * Returns a copy of this object and its children with new ids.
+   * @since 6.4
+   */
+  @Override
+  public HomeObject duplicate() {
+    HomeFurnitureGroup copy = (HomeFurnitureGroup)super.duplicate();
+    // Replace cloned furniture by duplicated furniture
+     ArrayList<HomePieceOfFurniture> duplicatedFurniture = new ArrayList<HomePieceOfFurniture>(copy.furniture.size());
+    for (HomePieceOfFurniture piece : copy.furniture) {
+      piece.removePropertyChangeListener(copy.furnitureListener);
+      HomePieceOfFurniture duplicatedPiece = (HomePieceOfFurniture)piece.duplicate();
+      duplicatedFurniture.add(duplicatedPiece);
+      duplicatedPiece.addPropertyChangeListener(copy.furnitureListener);
+    }
+    copy.furniture = Collections.unmodifiableList(duplicatedFurniture);
+    return copy;
+  }
+
+  /**
    * Returns a clone of this group with cloned furniture.
    */
   @Override
@@ -1101,12 +1188,7 @@ public class HomeFurnitureGroup extends HomePieceOfFurniture {
     // Deep clone furniture managed by this group
     clone.furniture = new ArrayList<HomePieceOfFurniture>(this.furniture.size());
     for (HomePieceOfFurniture piece : this.furniture) {
-      HomePieceOfFurniture pieceClone = piece.clone();
-      clone.furniture.add(pieceClone);
-      if (piece instanceof HomeDoorOrWindow
-          && ((HomeDoorOrWindow)piece).isBoundToWall()) {
-        ((HomeDoorOrWindow)pieceClone).setBoundToWall(true);
-      }
+      clone.furniture.add(piece.clone());
     }
     clone.furniture = Collections.unmodifiableList(clone.furniture);
     clone.addFurnitureListener();

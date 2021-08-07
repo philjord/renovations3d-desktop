@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javaxswing.undo.AbstractUndoableEdit;
 import javaxswing.undo.CannotRedoException;
 import javaxswing.undo.CannotUndoException;
 import javaxswing.undo.UndoableEdit;
@@ -116,7 +115,7 @@ public class LevelController implements Controller {
    */
   protected void updateProperties() {
     Level selectedLevel = this.home.getSelectedLevel();
-    setLevels(duplicate(this.home.getLevels().toArray(new Level [0])));
+    setLevels(clone(this.home.getLevels().toArray(new Level [0])));
     if (selectedLevel == null) {
       setSelectedLevelIndex(null);
       setName(null); // Nothing to edit
@@ -136,7 +135,7 @@ public class LevelController implements Controller {
     }
   }  
   
-  private Level [] duplicate(Level[] levels) {
+  private Level [] clone(Level[] levels) {
     for (int i = 0; i < levels.length; i++) {
       levels [i] = levels [i].clone();
     }
@@ -416,11 +415,11 @@ public class LevelController implements Controller {
       
       ModifiedLevel modifiedLevel = new ModifiedLevel(selectedLevel);
       // Apply modification
-      doModifyLevel(home, modifiedLevel, name, viewable, elevation, floorThickness, height, elevationIndex);
+      doModifyLevel(this.home, modifiedLevel, name, viewable, elevation, floorThickness, height, elevationIndex);
       if (this.undoSupport != null) {
         UndoableEdit undoableEdit = new LevelModificationUndoableEdit(
-            this.home, this.preferences, oldSelection, modifiedLevel, 
-            name, viewable,  elevation, floorThickness, height, elevationIndex);
+            this.home, this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]),
+            modifiedLevel, name, viewable,  elevation, floorThickness, height, elevationIndex);
         this.undoSupport.postEdit(undoableEdit);
       }
       if (name != null) {
@@ -433,10 +432,9 @@ public class LevelController implements Controller {
    * Undoable edit for level modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class LevelModificationUndoableEdit extends AbstractUndoableEdit {
+  private static class LevelModificationUndoableEdit extends LocalizedUndoableEdit {
     private final Home             home;
-    private final UserPreferences  preferences;
-    private final List<Selectable> oldSelection;
+    private final Selectable [] oldSelection;
     private final ModifiedLevel    modifiedLevel;
     private final String           name;
     private final Boolean          viewable;
@@ -447,7 +445,7 @@ public class LevelController implements Controller {
 
     private LevelModificationUndoableEdit(Home home,
                                           UserPreferences preferences, 
-                                          List<Selectable> oldSelection,
+                                          Selectable [] oldSelection,
                                           ModifiedLevel modifiedLevel, 
                                           String name,
                                           Boolean viewable,
@@ -455,8 +453,8 @@ public class LevelController implements Controller {
                                           Float floorThickness,
                                           Float height,
                                           Integer elevationIndex) {
+      super(preferences, LevelController.class, "undoModifyLevelName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.modifiedLevel = modifiedLevel;
       this.name = name;
@@ -472,7 +470,7 @@ public class LevelController implements Controller {
       super.undo();
       undoModifyLevel(this.home, this.modifiedLevel);
       this.home.setSelectedLevel(this.modifiedLevel.getLevel()); 
-      this.home.setSelectedItems(this.oldSelection); 
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
@@ -481,11 +479,6 @@ public class LevelController implements Controller {
       this.home.setSelectedLevel(this.modifiedLevel.getLevel()); 
       doModifyLevel(this.home, this.modifiedLevel, this.name, this.viewable, 
           this.elevation, this.floorThickness, this.height, this.elevationIndex); 
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(LevelController.class, "undoModifyLevelName");
     }
   }
 

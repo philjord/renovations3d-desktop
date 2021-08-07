@@ -19,7 +19,6 @@
  */
 package com.eteks.sweethome3d.viewcontroller;
 
-import javaawt.BasicStroke;
 import javaawt.Shape;
 import javaawt.geom.AffineTransform;
 import javaawt.geom.Area;
@@ -117,6 +116,7 @@ public class PlanController extends FurnitureController implements Controller {
 
   private static final String SCALE_VISUAL_PROPERTY = "com.eteks.sweethome3d.SweetHome3D.PlanScale";
   
+  //PJPJPJ made public non final
   public static int PIXEL_MARGIN           = 4;
   public static int INDICATOR_PIXEL_MARGIN = 5;
   public static int WALL_ENDS_PIXEL_MARGIN = 2;
@@ -182,6 +182,7 @@ public class PlanController extends FurnitureController implements Controller {
   private boolean                         alignmentActivatedLastMousePress;
   private boolean                         duplicationActivatedLastMousePress;
   private boolean                         magnetismToggledLastMousePress;
+  private View.PointerType                pointerTypeLastMousePress;
   private float                           xLastMouseMove;
   private float                           yLastMouseMove;
   private Area                            wallsAreaCache;
@@ -280,9 +281,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Changes current state of controller.
    */
   protected void setState(ControllerState state) {
+    Mode oldMode = null;
     boolean oldModificationState = false;
     boolean oldBasePlanModificationState = false;
     if (this.state != null) {
+      oldMode = this.state.getMode();
       oldModificationState = this.state.isModificationState();
       oldBasePlanModificationState = this.state.isBasePlanModificationState();
       this.state.exit();
@@ -292,6 +295,10 @@ public class PlanController extends FurnitureController implements Controller {
     this.state = state;
     this.state.enter();
     
+    if (oldMode != state.getMode()) {
+      this.propertyChangeSupport.firePropertyChange(Property.MODE.name(),
+          oldMode, state.getMode());
+    }
     if (oldModificationState != state.isModificationState()) {
       this.propertyChangeSupport.firePropertyChange(Property.MODIFICATION_STATE.name(), 
           oldModificationState, !oldModificationState);
@@ -426,6 +433,16 @@ public class PlanController extends FurnitureController implements Controller {
    */
   public void pressMouse(float x, float y, int clickCount, boolean shiftDown, 
                          boolean alignmentActivated, boolean duplicationActivated, boolean magnetismToggled) {
+    pressMouse(x, y, clickCount, shiftDown, alignmentActivated, duplicationActivated, magnetismToggled, null);
+  }
+
+  /**
+   * Processes a mouse button pressed event.
+   * @since 6.4
+   */
+  public void pressMouse(float x, float y, int clickCount, boolean shiftDown,
+                         boolean alignmentActivated, boolean duplicationActivated, boolean magnetismToggled,
+                         View.PointerType pointerType) {
     // Store the last coordinates of a mouse press
     this.xLastMousePress = x;
     this.yLastMousePress = y;
@@ -434,6 +451,7 @@ public class PlanController extends FurnitureController implements Controller {
     this.shiftDownLastMousePress = shiftDown;
     this.alignmentActivatedLastMousePress = alignmentActivated;
     this.duplicationActivatedLastMousePress = duplicationActivated; 
+    this.pointerTypeLastMousePress = pointerType;
     this.magnetismToggledLastMousePress = magnetismToggled;
     this.state.pressMouse(x, y, clickCount, shiftDown, duplicationActivated);
   }
@@ -796,6 +814,14 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the pointer type used at the last mouse press.
+   * @since 6.4
+   */
+  protected View.PointerType getPointerTypeLastMousePress() {
+    return this.pointerTypeLastMousePress;
+  }
+
+  /**
    * Returns the abscissa of mouse position at last mouse move.
    */
   protected float getXLastMouseMove() {
@@ -826,7 +852,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (!this.home.isBasePlanLocked()) {
       final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       List<Selectable> selection = this.home.getSelectedItems();
-      final Selectable [] oldSelectedItems = 
+      final Selectable [] oldSelection =
           selection.toArray(new Selectable [selection.size()]);
       
       List<Selectable> newSelection = getItemsNotPartOfBasePlan(selection);
@@ -835,28 +861,44 @@ public class PlanController extends FurnitureController implements Controller {
       
       this.home.setBasePlanLocked(true);
       selectItems(newSelection, allLevelsSelection);
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new LockingUndoableEdit(this, this.home, this.preferences,
+          oldSelection, allLevelsSelection, newSelectedItems));
+    }
+  }
+
+  /**
+   * Undoable edit for plan locking.
+   */
+  private static class LockingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Home           home;
+    private final Selectable []  oldSelection;
+    private final boolean        allLevelsSelection;
+    private final Selectable []  newSelectedItems;
+
+    public LockingUndoableEdit(PlanController controller, Home home, UserPreferences preferences,
+                               Selectable [] oldSelection, boolean allLevelsSelection,
+                               Selectable [] newSelectedItems) {
+      super(preferences, PlanController.class, "undoLockBasePlan");
+      this.controller = controller;
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.allLevelsSelection = allLevelsSelection;
+      this.newSelectedItems = newSelectedItems;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          home.setBasePlanLocked(false);
-          selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
+      this.home.setBasePlanLocked(false);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.allLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          home.setBasePlanLocked(true);
-          selectAndShowItems(Arrays.asList(newSelectedItems), allLevelsSelection);
-        }      
-    
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoLockBasePlan");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.home.setBasePlanLocked(true);
+      this.controller.selectAndShowItems(Arrays.asList(this.newSelectedItems), this.allLevelsSelection);
     }
   }
 
@@ -897,28 +939,41 @@ public class PlanController extends FurnitureController implements Controller {
       
       this.home.setBasePlanLocked(false);
       this.home.setAllLevelsSelection(false);
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new UnlockingUndoableEdit(this, this.home, this.preferences,
+          selectedItems, allLevelsSelection));
+    }
+  }
+
+  /**
+   * Undoable edit for plan unlocking.
+   */
+  private static class UnlockingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Home           home;
+    private final Selectable []  selectedItems;
+    private final boolean        allLevelsSelection;
+
+    public UnlockingUndoableEdit(PlanController controller, Home home, UserPreferences preferences,
+                                 Selectable [] selectedItems, boolean allLevelsSelection) {
+      super(preferences, PlanController.class, "undoUnlockBasePlan");
+      this.controller = controller;
+      this.home = home;
+      this.selectedItems = selectedItems;
+      this.allLevelsSelection = allLevelsSelection;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          home.setBasePlanLocked(true);
-          selectAndShowItems(Arrays.asList(selectedItems), allLevelsSelection);
+      this.home.setBasePlanLocked(true);
+      this.controller.selectAndShowItems(Arrays.asList(this.selectedItems), this.allLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          home.setBasePlanLocked(false);
-          selectAndShowItems(Arrays.asList(selectedItems), false);
-        }      
-    
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoUnlockBasePlan");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.home.setBasePlanLocked(false);
+      this.controller.selectAndShowItems(Arrays.asList(this.selectedItems), false);
     }
   }
 
@@ -980,44 +1035,76 @@ public class PlanController extends FurnitureController implements Controller {
   private void flipSelectedItems(boolean horizontally) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (!selectedItems.isEmpty()) {
-      doFlipItems(selectedItems, horizontally);
+      Selectable [] flippedItems = selectedItems.toArray(new Selectable [selectedItems.size()]);
+      // Compute text base offsets to avoid using plan view during undo / redo
+      float [][] itemTextBaseOffsets = new float [flippedItems.length][];
+      for (int i = 0; i < itemTextBaseOffsets.length; i++) {
+        if (flippedItems [i] instanceof HomeFurnitureGroup) {
+          HomeFurnitureGroup group = (HomeFurnitureGroup)flippedItems [i];
+          List<HomePieceOfFurniture> furniture = group.getAllFurniture();
+          itemTextBaseOffsets [i] = new float [furniture.size() + 1];
+          itemTextBaseOffsets [i][0] = getTextBaseOffset(group.getName(), group.getNameStyle(), group.getClass());
+          for (int j = 0; j < furniture.size(); j++) {
+            HomePieceOfFurniture piece = furniture.get(j);
+            itemTextBaseOffsets [i][j + 1] = getTextBaseOffset(piece.getName(), piece.getNameStyle(), piece.getClass());
+          }
+        } else if (flippedItems [i] instanceof HomePieceOfFurniture) {
+          HomePieceOfFurniture piece = (HomePieceOfFurniture)flippedItems [i];
+          itemTextBaseOffsets [i] = new float [] {getTextBaseOffset(piece.getName(), piece.getNameStyle(), piece.getClass())};
+        } else if (flippedItems [i] instanceof Room) {
+          Room room = (Room)flippedItems [i];
+          itemTextBaseOffsets [i] = new float [] {
+              getTextBaseOffset(room.getName(), room.getNameStyle(), room.getClass()),
+              getTextBaseOffset(this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea()), room.getAreaStyle(), room.getClass())};
+        }
+      }
+      doFlipItems(flippedItems, itemTextBaseOffsets, horizontally);
       selectAndShowItems(selectedItems, this.home.isAllLevelsSelection());
-      postFlipItems(selectedItems.toArray(new Selectable [selectedItems.size()]), horizontally);
+      this.undoSupport.postEdit(new FlippingUndoableEdit(this, this.preferences, this.home.isAllLevelsSelection(),
+          selectedItems.toArray(new Selectable [selectedItems.size()]), itemTextBaseOffsets, horizontally));
         }
       }
 
   /**
-   * Posts an undoable flip operation applied on <code>items</code>.
+   * Undoable edit for flipped items.
    */
-  private void postFlipItems(final Selectable [] items, final boolean horizontalFlip) {
-    final boolean allLevelsSelection = home.isAllLevelsSelection();
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        doFlipItems(Arrays.asList(items), horizontalFlip);
-        selectAndShowItems(Arrays.asList(items), allLevelsSelection);
+  private static class FlippingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final boolean        allLevelsSelection;
+    private final Selectable []  items;
+    private final float [][]     itemTextBaseOffsets;
+    private final boolean        horizontalFlip;
+
+    public FlippingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                boolean allLevelsSelection, Selectable [] items,
+                                float [][] itemTextBaseOffsets, boolean horizontalFlip) {
+      super(preferences, PlanController.class, "undoFlipName");
+      this.controller = controller;
+      this.allLevelsSelection = allLevelsSelection;
+      this.items = items;
+      this.itemTextBaseOffsets = itemTextBaseOffsets;
+      this.horizontalFlip = horizontalFlip;
     }
 
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        doFlipItems(Arrays.asList(items), horizontalFlip);
-        selectAndShowItems(Arrays.asList(items), allLevelsSelection);
-      }
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.controller.doFlipItems(this.items, this.itemTextBaseOffsets, this.horizontalFlip);
+      this.controller.selectAndShowItems(Arrays.asList(this.items), this.allLevelsSelection);
+    }
 
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(PlanController.class, "undoFlipName");
-          }
-    };
-    this.undoSupport.postEdit(undoableEdit);
-      }
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.controller.doFlipItems(this.items, this.itemTextBaseOffsets, this.horizontalFlip);
+      this.controller.selectAndShowItems(Arrays.asList(this.items), this.allLevelsSelection);
+    }
+  }
 
   /**
    * Flips the <code>items</code>.
    */
-  private void doFlipItems(List<Selectable> items, boolean horizontalFlip) {
+  private void doFlipItems(Selectable [] items, float [][] itemTextBaseOffsets, boolean horizontalFlip) {
     float minX = Float.MAX_VALUE;
     float minY = Float.MAX_VALUE;
     float maxX = -Float.MAX_VALUE;
@@ -1034,49 +1121,35 @@ public class PlanController extends FurnitureController implements Controller {
               }
     float symmetryX = (minX + maxX) / 2;
     float symmetryY = (minY + maxY) / 2;
-    for (Selectable item : items) {
-      flipItem(item, horizontalFlip ? symmetryX : symmetryY, horizontalFlip, items);
+    List<Selectable> flippedItems = Arrays.asList(items);
+    for (int i = 0; i < items.length; i++) {
+      flipItem(items [i], itemTextBaseOffsets [i], 0,
+          horizontalFlip ? symmetryX : symmetryY, horizontalFlip, flippedItems);
     }
   }
 
   /**
    * Flips the given <code>item</code> with the given axis coordinate.
    * @param item the item to flip
+   * @param itemTextBaseOffsets base offset for the texts of the item
+   * @param offsetIndex  index to get the first text base offset of item
    * @param axisCoordinate the coordinate of the symmetry axis
    * @param horizontalFlip if <code>true</code> the item should be flipped horizontally otherwise vertically
    * @param flippedItems list of all the items that must be flipped
    * @since 6.0
    */
-  protected void flipItem(Selectable item, float axisCoordinate, boolean horizontalFlip,
-                          List<Selectable> flippedItems) {
-    if (item instanceof HomeFurnitureGroup) {
-      for (HomePieceOfFurniture piece : ((HomeFurnitureGroup)item).getFurniture()) {
-        flipItem(piece, axisCoordinate, horizontalFlip, flippedItems);
-      }
-    } else if (item instanceof HomePieceOfFurniture) {
+  protected void flipItem(Selectable item, float [] itemTextBaseOffsets, int offsetIndex,
+                          float axisCoordinate, boolean horizontalFlip, List<Selectable> flippedItems) {
+    if (item instanceof HomePieceOfFurniture) {
       HomePieceOfFurniture piece = (HomePieceOfFurniture)item;
-      TextStyle nameStyle = piece.getNameStyle();
       if (horizontalFlip) {
         piece.setX(axisCoordinate * 2 - piece.getX());
         piece.setAngle(-piece.getAngle());
-        piece.setNameXOffset(-piece.getNameXOffset());
-        if (nameStyle != null) {
-          if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
-            piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
-          } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
-            piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
-          }
-        }
+        flipPieceOfFurnitureName(piece, itemTextBaseOffsets [0], horizontalFlip);
       } else {
         piece.setY(axisCoordinate * 2 - piece.getY());
         piece.setAngle((float)Math.PI - piece.getAngle());
-        piece.setNameYOffset(-piece.getNameYOffset());
-        if (piece.getNameXOffset() != 0 || piece.getNameYOffset() != 0) {
-          // Take into account font size
-          float baseOffset = getTextBaseOffset(piece.getName(), nameStyle, piece.getClass());
-          piece.setNameXOffset(piece.getNameXOffset() - baseOffset * (float)Math.sin(piece.getNameAngle()));
-          piece.setNameYOffset(piece.getNameYOffset() - baseOffset * (float)Math.cos(piece.getNameAngle()));
-        }
+        flipPieceOfFurnitureName(piece, itemTextBaseOffsets [0], horizontalFlip);
       }
       if (piece.isHorizontallyRotatable()) {
         piece.setRoll(-piece.getRoll());
@@ -1084,7 +1157,13 @@ public class PlanController extends FurnitureController implements Controller {
       if (piece.isResizable()) {
         piece.setModelMirrored(!piece.isModelMirrored());
       }
-      piece.setNameAngle(-piece.getNameAngle());
+
+      if (item instanceof HomeFurnitureGroup) {
+        List<HomePieceOfFurniture> furniture = ((HomeFurnitureGroup)item).getAllFurniture();
+        for (int i = 0; i < furniture.size(); i++) {
+          flipPieceOfFurnitureName(furniture.get(i), itemTextBaseOffsets [i + 1], horizontalFlip);
+        }
+      }
     } else if (item instanceof Wall) {
       Wall wall = (Wall)item;
       if (horizontalFlip) {
@@ -1164,13 +1243,12 @@ public class PlanController extends FurnitureController implements Controller {
       } else {
         room.setNameYOffset(-room.getNameYOffset());
         // Take into account font size
-        float baseOffset = getTextBaseOffset(room.getName(), nameStyle, room.getClass());
+        float baseOffset = itemTextBaseOffsets [0];
         room.setNameXOffset(room.getNameXOffset() - baseOffset * (float)Math.sin(room.getNameAngle()));
         room.setNameYOffset(room.getNameYOffset() - baseOffset * (float)Math.cos(room.getNameAngle()));
 
         room.setAreaYOffset(-room.getAreaYOffset());
-        baseOffset = getTextBaseOffset(this.preferences.getLengthUnit().getAreaFormatWithUnit().format(room.getArea()),
-            areaStyle, room.getClass());
+        baseOffset = itemTextBaseOffsets [1];
         room.setAreaXOffset(room.getAreaXOffset() - baseOffset * (float)Math.sin(room.getAreaAngle()));
         room.setAreaYOffset(room.getAreaYOffset() - baseOffset * (float)Math.cos(room.getAreaAngle()));
       }
@@ -1232,6 +1310,31 @@ public class PlanController extends FurnitureController implements Controller {
         compass.setY(axisCoordinate * 2 - compass.getY());
         compass.setNorthDirection((float)Math.PI - compass.getNorthDirection());
       }
+    }
+  }
+
+  /**
+   * Flips the name of the given <code>piece</code>.
+   */
+  private static void flipPieceOfFurnitureName(HomePieceOfFurniture piece, float nameBaseOffset, boolean horizontalFlip) {
+    if (horizontalFlip) {
+      piece.setNameXOffset(-piece.getNameXOffset());
+      TextStyle nameStyle = piece.getNameStyle();
+      if (nameStyle != null) {
+        if (nameStyle.getAlignment() == TextStyle.Alignment.LEFT) {
+          piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.RIGHT));
+        } else if (nameStyle.getAlignment() == TextStyle.Alignment.RIGHT) {
+          piece.setNameStyle(nameStyle.deriveStyle(TextStyle.Alignment.LEFT));
+        }
+      }
+    } else {
+      piece.setNameYOffset(-piece.getNameYOffset());
+      if (piece.getNameXOffset() != 0 || piece.getNameYOffset() != 0) {
+        // Take into account font size
+        piece.setNameXOffset(piece.getNameXOffset() - nameBaseOffset * (float)Math.sin(piece.getNameAngle()));
+        piece.setNameYOffset(piece.getNameYOffset() - nameBaseOffset * (float)Math.cos(piece.getNameAngle()));
+      }
+      piece.setNameAngle(-piece.getNameAngle());
     }
   }
 
@@ -1338,25 +1441,38 @@ public class PlanController extends FurnitureController implements Controller {
       if (joinPoint != null) {
         JoinedWall [] joinedWalls = JoinedWall.getJoinedWalls(Arrays.asList(walls [0], walls [1]));
         doJoinWalls(joinedWalls, joinPoint);
-        postJoinSelectedWalls(joinedWalls, joinPoint, selectedItems);
+        this.undoSupport.postEdit(new WallsJoiningUndoableEdit(this, this.preferences,
+            selectedItems.toArray(new Selectable [selectedItems.size()]),
+            home.isAllLevelsSelection(), joinedWalls, joinPoint));
       }
     }
   }
 
   /**
-   * Posts an undoable join wall operation about <code>walls</code>.
+   * Undoable edit for joining walls.
    */
-  private void postJoinSelectedWalls(final JoinedWall [] joinedWalls, 
-                                     final float [] joinPoint,
-                                     List<Selectable> oldSelection) {
-    final boolean allLevelsSelection = home.isAllLevelsSelection();
-    final Selectable [] oldSelectedItems = 
-        oldSelection.toArray(new Selectable [oldSelection.size()]);
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+  private static class WallsJoiningUndoableEdit extends LocalizedUndoableEdit {
+    private PlanController      controller;
+    private final Selectable [] oldSelection;
+    private final boolean       allLevelsSelection;
+    private final JoinedWall [] joinedWalls;
+    private final float []      joinPoint;
+
+    public WallsJoiningUndoableEdit(PlanController controller, UserPreferences preferences,
+                                    Selectable [] oldSelection, boolean allLevelsSelection,
+                                    JoinedWall [] joinedWalls, float [] joinPoint) {
+      super(preferences, PlanController.class, "undoJoinWallsName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.allLevelsSelection = allLevelsSelection;
+      this.joinedWalls = joinedWalls;
+      this.joinPoint = joinPoint;
+    }
+
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        for (JoinedWall joinedWall : joinedWalls) {
+        for (JoinedWall joinedWall : this.joinedWalls) {
           Wall wall = joinedWall.getWall();
           wall.setWallAtStart(joinedWall.getWallAtStart());
           if (joinedWall.getWallAtStart() != null) {
@@ -1379,22 +1495,15 @@ public class PlanController extends FurnitureController implements Controller {
           wall.setXEnd(joinedWall.getXEnd());
           wall.setYEnd(joinedWall.getYEnd());
         }
-        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
+        this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.allLevelsSelection);
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        doJoinWalls(joinedWalls, joinPoint);
+      this.controller.doJoinWalls(this.joinedWalls, this.joinPoint);
       }      
-
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(PlanController.class, "undoJoinWallsName");
       }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
-  }
 
   /**
    * Joins two walls at the given point.
@@ -1452,40 +1561,42 @@ public class PlanController extends FurnitureController implements Controller {
       Wall [] reversedWalls = selectedWalls.toArray(new Wall [selectedWalls.size()]);
       doReverseWallsDirection(reversedWalls);
       selectAndShowItems(Arrays.asList(reversedWalls), false);
-      postReverseSelectedWallsDirection(reversedWalls, selectedItems);
+      this.undoSupport.postEdit(new WallsDirectionReversingUndoableEdit(this, this.preferences,
+          selectedItems.toArray(new Selectable [selectedItems.size()]), this.home.isAllLevelsSelection(), reversedWalls));
     }
   }
   
   /**
-   * Posts an undoable reverse wall operation, about <code>walls</code>.
+   * Undoable edit for reversing walls direction.
    */
-  private void postReverseSelectedWallsDirection(final Wall [] walls, 
-                                                 List<Selectable> oldSelection) {
-    final boolean allLevelsSelection = home.isAllLevelsSelection();
-    final Selectable [] oldSelectedItems = 
-        oldSelection.toArray(new Selectable [oldSelection.size()]);
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+  private static class WallsDirectionReversingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        allLevelsSelection;
+    private final Wall []        walls;
+
+    public WallsDirectionReversingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                Selectable [] oldSelection, boolean allLevelsSelection, Wall [] walls) {
+      super(preferences, PlanController.class, "undoReverseWallsDirectionName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.allLevelsSelection = allLevelsSelection;
+      this.walls = walls;
+    }
+
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        doReverseWallsDirection(walls);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
+      controller.doReverseWallsDirection(this.walls);
+      controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.allLevelsSelection);
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        doReverseWallsDirection(walls);
-        selectAndShowItems(Arrays.asList(walls), false);
+      controller.doReverseWallsDirection(this.walls);
+      controller.selectAndShowItems(Arrays.asList(this.walls), false);
       }      
-
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(
-            PlanController.class, "undoReverseWallsDirectionName");
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
   }
 
   /**
@@ -1549,7 +1660,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Exchanges the style of wall sides.
    */
-  private void reverseWallSidesStyle(Wall wall) {
+  private static void reverseWallSidesStyle(Wall wall) {
       Integer rightSideColor = wall.getRightSideColor();
       HomeTexture rightSideTexture = wall.getRightSideTexture();
       float leftSideShininess = wall.getLeftSideShininess();
@@ -1602,10 +1713,10 @@ public class PlanController extends FurnitureController implements Controller {
         && wallAtEnd.getWallAtStart() == splitWall;
 
       // Clone new walls to copy their characteristics 
-      Wall firstWall = splitWall.clone();
+      Wall firstWall = (Wall)splitWall.duplicate();
       this.home.addWall(firstWall);
       firstWall.setLevel(splitWall.getLevel());
-      Wall secondWall = splitWall.clone();
+      Wall secondWall = (Wall)splitWall.duplicate();
       this.home.addWall(secondWall);
       secondWall.setLevel(splitWall.getLevel());
       
@@ -1641,48 +1752,56 @@ public class PlanController extends FurnitureController implements Controller {
       this.home.deleteWall(splitWall);
       selectAndShowItems(Arrays.asList(new Wall [] {firstWall}), false);
       
-      postSplitSelectedWall(splitJoinedWall, 
-          new JoinedWall(firstWall), new JoinedWall(secondWall), selectedItems, basePlanLocked, allLevelsSelection);
+      this.undoSupport.postEdit(new WallSplittingUndoableEdit(this, this.preferences,
+          selectedItems.toArray(new Selectable [selectedItems.size()]), basePlanLocked, allLevelsSelection,
+          splitJoinedWall, new JoinedWall(firstWall), new JoinedWall(secondWall), this.home.isBasePlanLocked()));
     }
   }
   
   /**
-   * Posts an undoable split wall operation.
+   * Undoable edit for splitting wall.
    */
-  private void postSplitSelectedWall(final JoinedWall splitJoinedWall, 
-                                     final JoinedWall firstJoinedWall, 
-                                     final JoinedWall secondJoinedWall,
-                                     List<Selectable> oldSelection,
-                                     final boolean oldBasePlanLocked, 
-                                     final boolean oldAllLevelsSelection) {
-    final Selectable [] oldSelectedItems = 
-        oldSelection.toArray(new Selectable [oldSelection.size()]);
-    final boolean newBasePlanLocked = this.home.isBasePlanLocked();
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        doDeleteWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall}, oldBasePlanLocked);
-        doAddWalls(new JoinedWall [] {splitJoinedWall}, oldBasePlanLocked);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
-      }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        doDeleteWalls(new JoinedWall [] {splitJoinedWall}, newBasePlanLocked);
-        doAddWalls(new JoinedWall [] {firstJoinedWall, secondJoinedWall}, newBasePlanLocked);
-        selectAndShowItems(Arrays.asList(new Wall [] {firstJoinedWall.getWall()}), false);
-      }      
+  private static class WallSplittingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable [] oldSelection;
+    private final boolean       oldBasePlanLocked;
+    private final boolean       oldAllLevelsSelection;
+    private final JoinedWall    splitJoinedWall;
+    private final JoinedWall    firstJoinedWall;
+    private final JoinedWall    secondJoinedWall;
+    private final boolean       newBasePlanLocked;
 
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(
-            PlanController.class, "undoSplitWallName");
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
-  }
+    public WallSplittingUndoableEdit(PlanController controller, UserPreferences preferences, Selectable [] oldSelection, boolean oldBasePlanLocked,
+                                     boolean oldAllLevelsSelection, JoinedWall splitJoinedWall,
+                                     JoinedWall firstJoinedWall, JoinedWall secondJoinedWall,
+                                     boolean newBasePlanLocked) {
+      super(preferences, PlanController.class, "undoSplitWallName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.oldAllLevelsSelection = oldAllLevelsSelection;
+      this.splitJoinedWall = splitJoinedWall;
+      this.firstJoinedWall = firstJoinedWall;
+      this.secondJoinedWall = secondJoinedWall;
+      this.newBasePlanLocked = newBasePlanLocked;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.controller.doDeleteWalls(new JoinedWall [] {this.firstJoinedWall, this.secondJoinedWall}, this.oldBasePlanLocked);
+      this.controller.doAddWalls(new JoinedWall [] {this.splitJoinedWall}, this.oldBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.oldAllLevelsSelection);
+    }
+      
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.controller.doDeleteWalls(new JoinedWall [] {this.splitJoinedWall}, this.newBasePlanLocked);
+      this.controller.doAddWalls(new JoinedWall [] {this.firstJoinedWall, this.secondJoinedWall}, this.newBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(new Wall [] {this.firstJoinedWall.getWall()}), false);
+    }      
+  }      
 
   /**
    * Controls the modification of the selected rooms.
@@ -1971,38 +2090,57 @@ public class PlanController extends FurnitureController implements Controller {
                                final TextStyle [] oldStyles,
                                final TextStyle [] styles) {
     final boolean allLevelsSelection = home.isAllLevelsSelection();
-    List<Selectable> oldSelection = this.home.getSelectedItems();
-    final Selectable [] oldSelectedItems = 
-        oldSelection.toArray(new Selectable [oldSelection.size()]);
+    List<Selectable> oldSelectedItems = this.home.getSelectedItems();
+    final Selectable [] oldSelection =
+        oldSelectedItems.toArray(new Selectable [oldSelectedItems.size()]);
     
     doModifyTextStyle(items, styles);
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        doModifyTextStyle(items, oldStyles);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
-      }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        doModifyTextStyle(items, styles);
-        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
-      }      
+    this.undoSupport.postEdit(new TextStyleModificationUndoableEdit(this, this.preferences,
+        oldSelection, allLevelsSelection, oldStyles, items, styles));
+  }
 
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(PlanController.class, "undoModifyTextStyleName");
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
+  /**
+   * Undoable edit for text style modification.
+   */
+  private static class TextStyleModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        allLevelsSelection;
+    private final TextStyle []   oldStyles;
+    private final Selectable []  items;
+    private final TextStyle []   styles;
+
+    public TextStyleModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                             Selectable [] oldSelection, boolean allLevelsSelection, TextStyle [] oldStyles,
+                                             Selectable [] items, TextStyle [] styles) {
+      super(preferences, PlanController.class, "undoModifyTextStyleName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.allLevelsSelection = allLevelsSelection;
+      this.oldStyles = oldStyles;
+      this.items = items;
+      this.styles = styles;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      doModifyTextStyle(this.items, this.oldStyles);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.allLevelsSelection);
+    }
+      
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      doModifyTextStyle(this.items, this.styles);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.allLevelsSelection);
+    }      
   }
   
   /**
    * Changes the style of items.
    */
-  private void doModifyTextStyle(Selectable [] items, TextStyle [] styles) {
+  private static void doModifyTextStyle(Selectable [] items, TextStyle [] styles) {
     int styleIndex = 0;
     for (Selectable item : items) {
       if (item instanceof Label) {
@@ -2066,7 +2204,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Sets the selected level in home.
    */
-  public void setSelectedLevel(Level level) {
+  public final void setSelectedLevel(Level level) {
     this.home.setSelectedLevel(level);
   }
 
@@ -2265,7 +2403,10 @@ public class PlanController extends FurnitureController implements Controller {
         public void propertyChange(PropertyChangeEvent ev) {
           HomePieceOfFurniture piece = (HomePieceOfFurniture)ev.getSource();
           String propertyName = ev.getPropertyName();
-          if (HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
+          if (HomePieceOfFurniture.Property.MODEL.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.MODEL_ROTATION.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.WIDTH.name().equals(propertyName)
               || HomePieceOfFurniture.Property.DEPTH.name().equals(propertyName)
               || HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
               || HomePieceOfFurniture.Property.ROLL.name().equals(propertyName)
@@ -2333,6 +2474,13 @@ public class PlanController extends FurnitureController implements Controller {
       });
   }
 
+  /**
+   * Returns the selection listener add to the controlled home.
+   */
+  private SelectionListener getSelectionListener() {
+    return this.selectionListener;
+  }
+
   private void resetAreaCache() {
     wallsAreaCache = null;
     wallsIncludingBaseboardsAreaCache = null;
@@ -2360,6 +2508,9 @@ public class PlanController extends FurnitureController implements Controller {
         }
         piece.setElevation(this.preferences.getLengthUnit().getMagnetizedLength(piece.getElevation(), 0.1f));
       }
+    }
+    if (isModificationState()) {
+      escape();
     }
     setState(getDragAndDropState());
     moveMouse(x, y);
@@ -2493,7 +2644,7 @@ public class PlanController extends FurnitureController implements Controller {
           : Point2D.distance(wallPoints [2][0], wallPoints [2][1], x, y);
       boolean adjustOrientation = forceOrientation
           || piece.isDoorOrWindow() 
-          || referenceWall.containsPoint(x, y, includeBaseboards, PIXEL_MARGIN / getScale());
+          || referenceWall.containsPoint(x, y, includeBaseboards, margin);
       if (adjustOrientation) {
         double distanceToPieceLeftSide = Line2D.ptLineDist(
             piecePoints [0][0], piecePoints [0][1], piecePoints [3][0], piecePoints [3][1], x, y);
@@ -3175,7 +3326,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private DimensionLine getMeasuringDimensionLineAt(float x, float y, 
                                                     boolean magnetismEnabled) {
-    float margin = PIXEL_MARGIN / getScale();
+    float margin = getSelectionMargin();
     for (HomePieceOfFurniture piece : this.home.getFurniture()) {
       if (isPieceOfFurnitureVisibleAtSelectedLevel(piece)) {
         DimensionLine dimensionLine = getDimensionLineBetweenPointsAt(piece.getPoints(), x, y, margin, magnetismEnabled);
@@ -3294,9 +3445,9 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void addLevel(boolean sameElevation) {
     final boolean allLevelsSelection = this.home.isAllLevelsSelection();
-    List<Selectable> oldSelection = this.home.getSelectedItems();
-    final Selectable [] oldSelectedItems = 
-        oldSelection.toArray(new Selectable [oldSelection.size()]);
+    List<Selectable> oldSelectedItems = this.home.getSelectedItems();
+    final Selectable [] oldSelection =
+        oldSelectedItems.toArray(new Selectable [oldSelectedItems.size()]);
     final Level oldSelectedLevel = this.home.getSelectedLevel();
     final BackgroundImage homeBackgroundImage = this.home.getBackgroundImage();
     List<Level> levels = this.home.getLevels();
@@ -3319,7 +3470,7 @@ public class PlanController extends FurnitureController implements Controller {
     if (sameElevation) {
       Level referencedLevel = level0 != null
           ? level0
-          : home.getSelectedLevel();
+          : this.home.getSelectedLevel();
       newLevel = createLevel(newLevelName, referencedLevel.getElevation(), 
           referencedLevel.getFloorThickness(), referencedLevel.getHeight());
     } else {
@@ -3328,39 +3479,62 @@ public class PlanController extends FurnitureController implements Controller {
       newLevel = createLevel(newLevelName, newLevelElevation, newFloorThickness, newWallHeight);
     }
     setSelectedLevel(newLevel);
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        setSelectedLevel(oldSelectedLevel);
-        home.deleteLevel(newLevel);
-        if (level0 != null) {
-          home.setBackgroundImage(homeBackgroundImage);
-          moveHomeItemsToLevel(oldSelectedLevel);
-          home.deleteLevel(level0);
-        }
-        selectAndShowItems(Arrays.asList(oldSelectedItems), allLevelsSelection);
-      }
-      
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        if (level0 != null) {
-          home.addLevel(level0);
-          moveHomeItemsToLevel(level0);
-          level0.setBackgroundImage(homeBackgroundImage);
-          home.setBackgroundImage(null);
-        }
-        home.addLevel(newLevel);
-        setSelectedLevel(newLevel);
-      }      
+    this.undoSupport.postEdit(new LevelAdditionUndoableEdit(this, this.home, this.preferences,
+        oldSelection, allLevelsSelection, oldSelectedLevel, level0, homeBackgroundImage, newLevel));
+  }
 
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(PlanController.class, "undoAddLevel");
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
+  /**
+   * Undoable edit for level addition.
+   */
+  private static class LevelAdditionUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController  controller;
+    private final Home            home;
+    private final Selectable []   oldSelection;
+    private final boolean         allLevelsSelection;
+    private final Level           oldSelectedLevel;
+    private final Level           level0;
+    private final BackgroundImage homeBackgroundImage;
+    private final Level           newLevel;
+
+    public LevelAdditionUndoableEdit(PlanController controller, Home home, UserPreferences preferences,
+                                     Selectable [] oldSelection, boolean allLevelsSelection, Level oldSelectedLevel,
+                                     Level level0, BackgroundImage homeBackgroundImage, Level newLevel) {
+      super(preferences, PlanController.class, "undoAddLevel");
+      this.controller = controller;
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.allLevelsSelection = allLevelsSelection;
+      this.oldSelectedLevel = oldSelectedLevel;
+      this.level0 = level0;
+      this.homeBackgroundImage = homeBackgroundImage;
+      this.newLevel = newLevel;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      controller.setSelectedLevel(this.oldSelectedLevel);
+      this.home.deleteLevel(this.newLevel);
+      if (this.level0 != null) {
+        this.home.setBackgroundImage(this.homeBackgroundImage);
+        controller.moveHomeItemsToLevel(this.oldSelectedLevel);
+        this.home.deleteLevel(this.level0);
+        }
+      controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.allLevelsSelection);
+    }
+      
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      if (this.level0 != null) {
+        this.home.addLevel(this.level0);
+        controller.moveHomeItemsToLevel(this.level0);
+        this.level0.setBackgroundImage(this.homeBackgroundImage);
+        this.home.setBackgroundImage(null);
+      }
+      this.home.addLevel(this.newLevel);
+      controller.setSelectedLevel(this.newLevel);
+    }      
   }
 
   /**
@@ -3373,7 +3547,7 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Moves to the given level all existing furniture, walls, rooms, dimension lines 
+   * Moves to the given <code>level</code> all existing furniture, walls, rooms, dimension lines
    * and labels. 
    */
   private void moveHomeItemsToLevel(Level level) {
@@ -3404,26 +3578,36 @@ public class PlanController extends FurnitureController implements Controller {
   public void toggleSelectedLevelViewability() {
     final Level selectedLevel = this.home.getSelectedLevel();
     selectedLevel.setViewable(!selectedLevel.isViewable());
-    undoSupport.postEdit(new AbstractUndoableEdit() {
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          setSelectedLevel(selectedLevel);
-          selectedLevel.setViewable(!selectedLevel.isViewable());
-        }
+    this.undoSupport.postEdit(new LevelViewabilityModificationUndoableEdit(this, this.preferences, selectedLevel));
+  }
+
+  /**
+   * Undoable edit for level viewability modification.
+   */
+  private static class LevelViewabilityModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Level          selectedLevel;
+
+    public LevelViewabilityModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                    Level selectedLevel) {
+      super(preferences, PlanController.class, "undoModifyLevelViewabilityName");
+      this.controller = controller;
+      this.selectedLevel = selectedLevel;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.controller.setSelectedLevel(this.selectedLevel);
+      this.selectedLevel.setViewable(!this.selectedLevel.isViewable());
+    }
         
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          setSelectedLevel(selectedLevel);
-          selectedLevel.setViewable(!selectedLevel.isViewable());
-        }
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(PlanController.class, "undoModifyLevelViewabilityName");
-        }      
-      });
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.controller.setSelectedLevel(this.selectedLevel);
+      this.selectedLevel.setViewable(!this.selectedLevel.isViewable());
+    }
   }
   
   /**
@@ -3438,30 +3622,45 @@ public class PlanController extends FurnitureController implements Controller {
         || !selectedLevelViewable) {
       setLevelsViewability(viewableLevels, false);
       selectedLevel.setViewable(true);
-    undoSupport.postEdit(new AbstractUndoableEdit() {
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-            setSelectedLevel(selectedLevel);
-            setLevelsViewability(viewableLevels, true);
-            selectedLevel.setViewable(selectedLevelViewable);
-        }
-        
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-            setSelectedLevel(selectedLevel);
-            setLevelsViewability(viewableLevels, false);
-            selectedLevel.setViewable(true);
-        }
-
-        @Override
-        public String getPresentationName() {
-            return preferences.getLocalizedString(PlanController.class, "undoModifyLevelViewabilityName");
-        }      
-      });
+      this.undoSupport.postEdit(new LevelsViewabilityModificationUndoableEdit(this, this.preferences,
+          selectedLevel, selectedLevelViewable, viewableLevels));
+    }
   }
-      }
+
+  /**
+   * Undoable edit for the viewability modification of multiple levels.
+   */
+  private static class LevelsViewabilityModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Level          selectedLevel;
+    private final boolean        selectedLevelViewable;
+    private final Level []       viewableLevels;
+
+    public LevelsViewabilityModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                     Level selectedLevel, boolean selectedLevelViewable, Level [] viewableLevels) {
+      super(preferences, PlanController.class, "undoModifyLevelViewabilityName");
+      this.controller = controller;
+      this.selectedLevel = selectedLevel;
+      this.selectedLevelViewable = selectedLevelViewable;
+      this.viewableLevels = viewableLevels;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.controller.setSelectedLevel(this.selectedLevel);
+      setLevelsViewability(this.viewableLevels, true);
+      this.selectedLevel.setViewable(this.selectedLevelViewable);
+    }
+        
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.controller.setSelectedLevel(this.selectedLevel);
+      setLevelsViewability(this.viewableLevels, false);
+      this.selectedLevel.setViewable(true);
+    }      
+  }
   
   /**
    * Makes all levels viewable.
@@ -3472,26 +3671,38 @@ public class PlanController extends FurnitureController implements Controller {
     if (unviewableLevels.length > 0) {
       final Level selectedLevel = this.home.getSelectedLevel();
       setLevelsViewability(unviewableLevels, true);
-      undoSupport.postEdit(new AbstractUndoableEdit() {
-          @Override
-          public void undo() throws CannotUndoException {
-            super.undo();
-            setSelectedLevel(selectedLevel);
-            setLevelsViewability(unviewableLevels, false);
-          }
+      undoSupport.postEdit(new AllLevelsViewabilityModificationUndoableEdit(this, this.preferences, selectedLevel, unviewableLevels));
+    }
+  }
 
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            setSelectedLevel(selectedLevel);
-            setLevelsViewability(unviewableLevels, true);
-          }
+  /**
+   * Undoable edit for the viewability modification of all levels.
+   */
+  private static class AllLevelsViewabilityModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Level          selectedLevel;
+    private final Level []       unviewableLevels;
 
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(PlanController.class, "undoModifyLevelViewabilityName");
-          }
-        });
+    public AllLevelsViewabilityModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                        Level selectedLevel, Level [] unviewableLevels) {
+      super(preferences, PlanController.class, "undoModifyLevelViewabilityName");
+      this.controller = controller;
+      this.selectedLevel = selectedLevel;
+      this.unviewableLevels = unviewableLevels;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.controller.setSelectedLevel(this.selectedLevel);
+      setLevelsViewability(this.unviewableLevels, false);
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.controller.setSelectedLevel(this.selectedLevel);
+      setLevelsViewability(this.unviewableLevels, true);
     }
   }
 
@@ -3508,7 +3719,7 @@ public class PlanController extends FurnitureController implements Controller {
     return levels.toArray(new Level [levels.size()]);
   }
 
-  private void setLevelsViewability(Level [] levels, boolean viewable) {
+  private static void setLevelsViewability(Level [] levels, boolean viewable) {
     for (Level level : levels) {
       level.setViewable(viewable);
     }
@@ -3564,7 +3775,36 @@ public class PlanController extends FurnitureController implements Controller {
       remainingLevelElevation = null;
       remainingLevelViewable = false;
     }
-    undoSupport.postEdit(new AbstractUndoableEdit() {
+    undoSupport.postEdit(new LevelDeletionUndoableEdit(this, this.home, this.preferences, oldSelectedLevel,
+        remainingLevel, remainingLevelElevation, remainingLevelViewable));
+
+    // End compound edit
+    undoSupport.endUpdate();
+  }
+
+  /**
+   * Undoable edit for the level deletion.
+   */
+  private static class LevelDeletionUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Home           home;
+    private final Level          oldSelectedLevel;
+    private final Level          remainingLevel;
+    private final Float          remainingLevelElevation;
+    private final boolean        remainingLevelViewable;
+
+    public LevelDeletionUndoableEdit(PlanController controller, Home home, UserPreferences preferences,
+                                     Level oldSelectedLevel, Level remainingLevel,
+                                     Float remainingLevelElevation, boolean remainingLevelViewable) {
+      super(preferences, PlanController.class, "undoDeleteSelectedLevel");
+      this.controller = controller;
+      this.home = home;
+      this.oldSelectedLevel = oldSelectedLevel;
+      this.remainingLevel = remainingLevel;
+      this.remainingLevelElevation = remainingLevelElevation;
+      this.remainingLevelViewable = remainingLevelViewable;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
@@ -3572,29 +3812,20 @@ public class PlanController extends FurnitureController implements Controller {
             remainingLevel.setElevation(remainingLevelElevation);
             remainingLevel.setViewable(remainingLevelViewable);
           }
-          home.addLevel(oldSelectedLevel);
-          setSelectedLevel(oldSelectedLevel);
+      this.home.addLevel(this.oldSelectedLevel);
+      this.controller.setSelectedLevel(this.oldSelectedLevel);
         }
 
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          home.deleteLevel(oldSelectedLevel);
-          if (remainingLevel != null) {
-            remainingLevel.setElevation(0);
-            remainingLevel.setViewable(true);
+      this.home.deleteLevel(this.oldSelectedLevel);
+      if (this.remainingLevel != null) {
+        this.remainingLevel.setElevation(0);
+        this.remainingLevel.setViewable(true);
           }
         }
-
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(PlanController.class, "undoDeleteSelectedLevel");
         }
-      });
-
-    // End compound edit
-    undoSupport.endUpdate();
-  }
 
   private void addLevelItemsAtSelectedLevel(Collection<? extends Selectable> items,
                                             List<Selectable> levelItems) {
@@ -3659,6 +3890,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the wall at (<code>x</code>, <code>y</code>) point,  
    * which has a start point not joined to any wall. 
    */
+  //PJPJPJ
   public Wall getWallStartAt(float x, float y, Wall ignoredWall) {
     float margin = WALL_ENDS_PIXEL_MARGIN / getScale();
     for (Wall wall : this.home.getWalls()) {
@@ -3677,6 +3909,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the wall at (<code>x</code>, <code>y</code>) point,  
    * which has a end point not joined to any wall. 
    */
+  //PJPJPJ
   public Wall getWallEndAt(float x, float y, Wall ignoredWall) {
     float margin = WALL_ENDS_PIXEL_MARGIN / getScale();
     for (Wall wall : this.home.getWalls()) {
@@ -3692,16 +3925,28 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the tolerance margin to handle an indicator.
+   */
+  private float getIndicatorMargin() {
+    float indicatorPixelMagin = INDICATOR_PIXEL_MARGIN;
+    if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+      indicatorPixelMagin *= 3;
+    }
+    return indicatorPixelMagin / getScale();
+  }
+
+  /**
    * Returns the selected wall with a start point 
    * at (<code>x</code>, <code>y</code>).
    */
+  //PJPJPJ
   public Wall getResizedWallStartAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall
         && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (wall.isAtLevel(this.home.getSelectedLevel())
           && wall.containsWallStartAt(x, y, margin)) {
         return wall;
@@ -3713,13 +3958,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected wall with an end point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJPJ
   public Wall getResizedWallEndAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall
         && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (wall.isAtLevel(this.home.getSelectedLevel())
           && wall.containsWallEndAt(x, y, margin)) {
         return wall;
@@ -3731,13 +3977,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected wall with a middle point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJPJ
   public Wall getArcExtentWallAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Wall
         && isItemResizable(selectedItems.get(0))) {
       Wall wall = (Wall)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (wall.isAtLevel(this.home.getSelectedLevel())
           && wall.isMiddlePointAt(x, y, margin)) {
         return wall;
@@ -3752,6 +3999,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   protected Room createRoom(float [][] roomPoints) {
     Room newRoom = new Room(roomPoints);
+    newRoom.setFloorColor(this.preferences.getNewRoomFloorColor());
     this.home.addRoom(newRoom);
     return newRoom;
   }
@@ -3759,13 +4007,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected room with a point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJPJ
   public Room getResizedRoomAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
         && isItemResizable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.getPointIndexAt(x, y, margin) != -1) {
         return room;
@@ -3777,13 +4026,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected room with its name center point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJPJ
   public Room getRoomNameAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.getName() != null
           && room.getName().trim().length() > 0
@@ -3798,13 +4048,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected room with its 
    * name angle point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJPJ
   public Room getRoomRotatedNameAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.getName() != null
           && room.getName().trim().length() > 0
@@ -3820,6 +4071,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected room with its area center point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJPJ
   public Room getRoomAreaAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
@@ -3840,13 +4092,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected room with its 
    * area angle point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJPJ
   public Room getRoomRotatedAreaAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Room
         && isItemMovable(selectedItems.get(0))) {
       Room room = (Room)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (room.isAtLevel(this.home.getSelectedLevel())
           && room.isAreaVisible()) {
         float area = room.getArea();
@@ -3868,11 +4121,11 @@ public class PlanController extends FurnitureController implements Controller {
    * @since 5.0
    */
   public void addPointToSelectedRoom(final float x, final float y) {
-    final List<Selectable> oldSelectedItems = this.home.getSelectedItems();
-    if (oldSelectedItems.size() == 1
-        && oldSelectedItems.get(0) instanceof Room
-        && isItemResizable(oldSelectedItems.get(0))) {
-      final Room room = (Room)oldSelectedItems.get(0);
+    final List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Room
+        && isItemResizable(selectedItems.get(0))) {
+      final Room room = (Room)selectedItems.get(0);
       final float [][] points = room.getPoints();
       // Search the segment closest to (x, y)
       int closestSegmentIndex = -1;
@@ -3890,36 +4143,54 @@ public class PlanController extends FurnitureController implements Controller {
       room.addPoint(x, y, index);
       this.home.setSelectedItems(Arrays.asList(new Room [] {room}));
       // Upright an undoable edit
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-          @Override
-          public void undo() throws CannotUndoException {
-            super.undo();
-            room.removePoint(index);
-            selectAndShowItems(oldSelectedItems);
-          }
-          
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            room.addPoint(x, y, index);
-            selectAndShowItems(Arrays.asList(new Room [] {room}));
-          }      
-    
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(PlanController.class, "undoAddRoomPointName");
-          }      
-        };
-      this.undoSupport.postEdit(undoableEdit);
+      this.undoSupport.postEdit(new RoomPointAdditionUndoableEdit(this, this.preferences,
+          selectedItems.toArray(new Selectable [selectedItems.size()]), room, index, x, y));
     }
   }
+
+  /**
+   * Undoable edit for room point addition.
+   */
+  private static class RoomPointAdditionUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final Room           room;
+    private final int            index;
+    private final float          x;
+    private final float          y;
+
+    public RoomPointAdditionUndoableEdit(PlanController controller, UserPreferences preferences,
+                                         Selectable [] oldSelection, Room room, int index, float x, float y) {
+      super(preferences, PlanController.class, "undoAddRoomPointName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.room = room;
+      this.index = index;
+      this.x = x;
+      this.y = y;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.room.removePoint(this.index);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection));
+    }
+          
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.room.addPoint(this.x, this.y, this.index);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
+    }      
+  }      
   
   /**
    * Returns <code>true</code> if the given point can be removed from the <code>room</code>.
    */
   public boolean isRoomPointDeletableAt(Room room, float x, float y) {
     return isItemResizable(room) 
-        && room.getPointIndexAt(x, y, INDICATOR_PIXEL_MARGIN / getScale()) >= 0;
+        && room.getPointIndexAt(x, y, getIndicatorMargin()) >= 0;
   }
   
   /**
@@ -3927,12 +4198,12 @@ public class PlanController extends FurnitureController implements Controller {
    * @since 5.0
    */
   public void deletePointFromSelectedRoom(float x, float y) {
-    final List<Selectable> oldSelectedItems = this.home.getSelectedItems();
-    if (oldSelectedItems.size() == 1
-        && oldSelectedItems.get(0) instanceof Room
-        && isItemResizable(oldSelectedItems.get(0))) {
-      final Room room = (Room)oldSelectedItems.get(0);
-      final int index = room.getPointIndexAt(x, y, INDICATOR_PIXEL_MARGIN / getScale());
+    final List<Selectable> selectedItems = this.home.getSelectedItems();
+    if (selectedItems.size() == 1
+        && selectedItems.get(0) instanceof Room
+        && isItemResizable(selectedItems.get(0))) {
+      final Room room = (Room)selectedItems.get(0);
+      final int index = room.getPointIndexAt(x, y, getIndicatorMargin());
       if (index >= 0) {
         float [][] points = room.getPoints();
         float [] point = points [index];
@@ -3942,30 +4213,49 @@ public class PlanController extends FurnitureController implements Controller {
         room.removePoint(index);
         this.home.setSelectedItems(Arrays.asList(new Room [] {room}));
         // Upright an undoable edit
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+        this.undoSupport.postEdit(new RoomPointDeletionUndoableEdit(this, this.preferences,
+            selectedItems.toArray(new Selectable [selectedItems.size()]), room, index, xPoint, yPoint));
+      }
+    }
+  }
+
+  /**
+   * Undoable edit for room point deletion.
+   */
+  private static class RoomPointDeletionUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final Room           room;
+    private final int            index;
+    private final float          xPoint;
+    private final float          yPoint;
+
+    public RoomPointDeletionUndoableEdit(PlanController controller, UserPreferences preferences,
+                                         Selectable [] oldSelection, Room room, int index,
+                                         float xPoint, float yPoint) {
+      super(preferences, PlanController.class, "undoDeleteRoomPointName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.room = room;
+      this.index = index;
+      this.xPoint = xPoint;
+      this.yPoint = yPoint;
+    }
+
             @Override
             public void undo() throws CannotUndoException {
               super.undo();
-              room.addPoint(xPoint, yPoint, index);
-              selectAndShowItems(oldSelectedItems);
+      this.room.addPoint(this.xPoint, this.yPoint, this.index);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection));
             }
             
             @Override
             public void redo() throws CannotRedoException {
               super.redo();
-              room.removePoint(index);
-              selectAndShowItems(Arrays.asList(new Room [] {room}));
+      this.room.removePoint(this.index);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
             }      
-      
-            @Override
-            public String getPresentationName() {
-              return preferences.getLocalizedString(PlanController.class, "undoDeleteRoomPointName");
             }      
-          };
-        this.undoSupport.postEdit(undoableEdit);
-      }
-    }
-  }
 
   /**
    * Returns a new dimension instance joining (<code>xStart</code>,
@@ -3984,13 +4274,13 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected dimension line with an end extension line
    * at (<code>x</code>, <code>y</code>).
    */
-  public DimensionLine getResizedDimensionLineStartAt(float x, float y) {
+  private DimensionLine getResizedDimensionLineStartAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.containsStartExtensionLinetAt(x, y, margin)) {
         return dimensionLine;
@@ -4003,13 +4293,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected dimension line with an end extension line
    * at (<code>x</code>, <code>y</code>).
    */
+  //PJPJ
   public DimensionLine getResizedDimensionLineEndAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.containsEndExtensionLineAt(x, y, margin)) {
         return dimensionLine;
@@ -4022,13 +4313,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected dimension line with a point
    * at (<code>x</code>, <code>y</code>) at its middle.
    */
-  public DimensionLine getOffsetDimensionLineAt(float x, float y) {
+  //PJPJ
+  private DimensionLine getOffsetDimensionLineAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
         && isItemResizable(selectedItems.get(0))) {
       DimensionLine dimensionLine = (DimensionLine)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (dimensionLine.isAtLevel(this.home.getSelectedLevel())
           && dimensionLine.isMiddlePointAt(x, y, margin)) {
         return dimensionLine;
@@ -4054,13 +4346,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected polyline with a point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJ
   public Polyline getResizedPolylineAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Polyline
         && isItemResizable(selectedItems.get(0))) {
       Polyline polyline = (Polyline)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (polyline.isAtLevel(this.home.getSelectedLevel())
           && polyline.getPointIndexAt(x, y, margin) != -1) {
         return polyline;
@@ -4070,10 +4363,21 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
+   * Returns the tolerance margin to select an item.
+   */
+  private float getSelectionMargin() {
+    float indicatorPixelMagin = PIXEL_MARGIN;
+    if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+      indicatorPixelMagin *= 2;
+    }
+    return indicatorPixelMagin / getScale();
+  }
+
+  /**
    * Returns the selected item at (<code>x</code>, <code>y</code>) point.
    */
   private boolean isItemSelectedAt(float x, float y) {
-    float margin = PIXEL_MARGIN / getScale();
+    float margin = getSelectionMargin();
     for (Selectable item : this.home.getSelectedItems()) {
       if (item.containsPoint(x, y, margin)) {
         return true;
@@ -4115,8 +4419,8 @@ public class PlanController extends FurnitureController implements Controller {
                                                 boolean stopAtFirstItem,
                                                 boolean ignoreGroupsFurniture) {
     List<Selectable> items = new ArrayList<Selectable>();
-    float margin = PIXEL_MARGIN / getScale();
-    float textMargin = PIXEL_MARGIN / 2 / getScale();
+    float margin = getSelectionMargin();
+    float textMargin = margin / 2;
     ObserverCamera camera = this.home.getObserverCamera();
     if (camera != null
         && camera == this.home.getCamera()
@@ -4380,10 +4684,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece.
    */
+  //PJPJ
   public HomePieceOfFurniture getRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isTopLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
@@ -4397,10 +4702,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected piece of furniture with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to elevate the piece.
    */
-  public HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
+  //PJPJ
+  private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isTopRightPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
@@ -4415,10 +4721,11 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to resize the height 
    * of the piece.
    */
+  //PJPJ
   public HomePieceOfFurniture getHeightResizedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (!selectedPiece.isHorizontallyRotated()
           && selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
@@ -4434,11 +4741,12 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece 
    * around the pitch axis.
    */
+  //PJPJ
   public HomePieceOfFurniture getPitchRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null
         && this.getView().isFurnitureSizeInPlanSupported()) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.getPitch() != 0
           && selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
@@ -4454,11 +4762,12 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to rotate the piece 
    * around the roll axis.
    */
+  //PJPJ
   public HomePieceOfFurniture getRollRotatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null
         && this.getView().isFurnitureSizeInPlanSupported()) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.getRoll() != 0
           && selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
@@ -4474,10 +4783,11 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to resize 
    * the width and the depth of the piece.
    */
+  //PJPJ
   public HomePieceOfFurniture getWidthAndDepthResizedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedResizablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isBottomRightPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
@@ -4531,10 +4841,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected light with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to resize the power of the light.
    */
+  //PJPJ
   public HomeLight getModifiedLightPowerAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedPieceOfFurniture();
     if (selectedPiece instanceof HomeLight) {
-      float margin = INDICATOR_PIXEL_MARGIN * (1 / getScale());
+      float margin = getIndicatorMargin();
       if (selectedPiece.isBottomLeftPointAt(x, y, margin)
           // Ignore piece shape to ensure there's always enough space to drag it
           && !selectedPiece.containsPoint(x, y, 0)) {
@@ -4548,10 +4859,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected piece of furniture with its 
    * name center point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJ
   public HomePieceOfFurniture getPieceOfFurnitureNameAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isNameVisible()
           && selectedPiece.getName().trim().length() > 0
           && selectedPiece.isNameCenterPointAt(x, y, margin)) {
@@ -4565,10 +4877,11 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected piece of furniture with its 
    * name angle point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJ
   public HomePieceOfFurniture getPieceOfFurnitureRotatedNameAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (selectedPiece.isNameVisible()
           && selectedPiece.getName().trim().length() > 0
           && isTextAnglePointAt(selectedPiece, selectedPiece.getName(), selectedPiece.getNameStyle(),
@@ -4609,13 +4922,14 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected label with its angle point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJ
   public Label getRotatedLabelAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Label
         && isItemMovable(selectedItems.get(0))) {
       Label label = (Label)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       if (label.isAtLevel(this.home.getSelectedLevel())
           && isTextAnglePointAt(label, label.getText(), label.getStyle(),
                 label.getX(), label.getY(), label.getAngle(), x, y, margin)) {
@@ -4628,6 +4942,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Returns the selected label with its elevation point at (<code>x</code>, <code>y</code>).
    */
+  //PJPJ
   public Label getElevatedLabelAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
@@ -4635,7 +4950,7 @@ public class PlanController extends FurnitureController implements Controller {
       Label label = (Label)selectedItems.get(0);
       if (label.getPitch() != null
           && isItemMovable(label)) {
-        float margin = INDICATOR_PIXEL_MARGIN / getScale();
+        float margin = getIndicatorMargin();
         if (label.isAtLevel(this.home.getSelectedLevel())) {
           TextStyle style = label.getStyle();
           if (style == null) {
@@ -4669,13 +4984,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to change the camera yaw angle.
    */
+  //PJPJ
   public Camera getYawRotatedCameraAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the first and the last points 
       // of the rectangle surrounding camera
@@ -4695,13 +5011,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to change the camera pitch angle.
    */
+  //PJPJ
   public Camera getPitchRotatedCameraAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the second and the third points
       // of the rectangle surrounding camera
@@ -4721,13 +5038,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected camera with a point at (<code>x</code>, <code>y</code>) 
    * that can be used to change the camera elevation.
    */
+  //PJPJ
   public Camera getElevatedCameraAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Camera
         && isItemResizable(selectedItems.get(0))) {
       ObserverCamera camera = (ObserverCamera)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] cameraPoints = camera.getPoints();
       // Check if (x,y) matches the point between the first and the second points 
       // of the rectangle surrounding camera
@@ -4747,13 +5065,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected compass with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to rotate it.
    */
+  //PJPJ
   public Compass getRotatedCompassAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Compass
         && isItemMovable(selectedItems.get(0))) {
       Compass compass = (Compass)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] compassPoints = compass.getPoints();
       // Check if (x,y) matches the point between the third and the fourth points (South point) 
       // of the rectangle surrounding compass
@@ -4773,13 +5092,14 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected compass with a point 
    * at (<code>x</code>, <code>y</code>) that can be used to resize it.
    */
+  //PJPJ
   public Compass getResizedCompassAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof Compass
         && isItemMovable(selectedItems.get(0))) {
       Compass compass = (Compass)selectedItems.get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       float [][] compassPoints = compass.getPoints();
       // Check if (x,y) matches the point between the second and the third points (East point) 
       // of the rectangle surrounding compass
@@ -4816,20 +5136,9 @@ public class PlanController extends FurnitureController implements Controller {
       final boolean allLevelsSelection = home.isAllLevelsSelection();
       final List<Selectable> selectedItems = new ArrayList<Selectable>(items);      
       // Add a undoable edit that will select the undeleted items at undo
-      this.undoSupport.postEdit(new AbstractUndoableEdit() {      
-          @Override
-          public void undo() throws CannotRedoException {
-            super.undo();
-            selectAndShowItems(selectedItems, allLevelsSelection);
-          }
+      this.undoSupport.postEdit(new ItemsDeletionStartUndoableEdit(this, this.home,
+          allLevelsSelection, selectedItems.toArray(new Selectable [selectedItems.size()])));
           
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            home.removeSelectionListener(selectionListener);
-          }
-        });
-
       // Delete furniture with inherited method
       deleteFurniture(Home.getFurnitureSubList(deletedItems));      
 
@@ -4846,16 +5155,60 @@ public class PlanController extends FurnitureController implements Controller {
       doDeleteItems(deletedOtherItems);
       this.home.addSelectionListener(this.selectionListener);
 
-      this.undoSupport.postEdit(new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new ItemsDeletionEndUndoableEdit(this, this.home));
+
+      // End compound edit
+      this.undoSupport.endUpdate();
+    }
+  }
+
+  /**
+   * Undoable edit for items deletion start.
+   */
+  private static class ItemsDeletionStartUndoableEdit extends AbstractUndoableEdit {
+    private final PlanController controller;
+    private final Home           home;
+    private final boolean        allLevelsSelection;
+    private final Selectable []  selectedItems;
+
+    public ItemsDeletionStartUndoableEdit(PlanController controller, Home home,
+                                          boolean allLevelsSelection, Selectable [] selectedItems) {
+      this.controller = controller;
+      this.home = home;
+      this.allLevelsSelection = allLevelsSelection;
+      this.selectedItems = selectedItems;
+    }
+
+    @Override
+    public void undo() throws CannotRedoException {
+      super.undo();
+      this.controller.selectAndShowItems(Arrays.asList(this.selectedItems), this.allLevelsSelection);
+    }
+
           @Override
           public void redo() throws CannotRedoException {
             super.redo();
-            home.addSelectionListener(selectionListener);
+      this.home.removeSelectionListener(this.controller.getSelectionListener());
+    }
+  }
+
+  /**
+   * Undoable edit for items deletion end.
+   */
+  private static class ItemsDeletionEndUndoableEdit extends AbstractUndoableEdit {
+    private PlanController controller;
+    private Home           home;
+
+    public ItemsDeletionEndUndoableEdit(PlanController controller, Home home) {
+      this.controller = controller;
+      this.home = home;
+
           }
-        });
       
-      // End compound edit
-      this.undoSupport.endUpdate();
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.addSelectionListener(this.controller.getSelectionListener());
     }          
   }
 
@@ -4927,36 +5280,81 @@ public class PlanController extends FurnitureController implements Controller {
       labelsLevels [i] = labels [i].getLevel();
     }
     
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+    this.undoSupport.postEdit(new ItemsDeletionUndoableEdit(this, this.preferences, basePlanLocked, allLevelsSelection,
+        deletedItems.toArray(new Selectable [deletedItems.size()]), joinedDeletedWalls,
+        rooms, roomsIndices, roomsLevels,
+        dimensionLines, dimensionLinesLevels,
+        polylines, polylinesIndices, polylinesLevels,
+        labels, labelsLevels));
+  }
+
+  /**
+   * Undoable edit for items deletion.
+   */
+  private static class ItemsDeletionUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController   controller;
+    private final boolean          basePlanLocked;
+    private final boolean          allLevelsSelection;
+    private final Selectable []    deletedItems;
+    private final JoinedWall []    joinedDeletedWalls;
+    private final Room []          rooms;
+    private final int []           roomsIndices;
+    private final Level []         roomsLevels;
+    private final DimensionLine [] dimensionLines;
+    private final Level []         dimensionLinesLevels;
+    private final Polyline []      polylines;
+    private final int []           polylinesIndices;
+    private final Level []         polylinesLevels;
+    private final Label []         labels;
+    private final Level []         labelsLevels;
+
+    public ItemsDeletionUndoableEdit(PlanController controller, UserPreferences preferences,
+                                     boolean basePlanLocked, boolean allLevelsSelection,
+                                     Selectable []  deletedItems,
+                                     JoinedWall [] joinedDeletedWalls,
+                                     Room [] rooms, int [] roomsIndices, Level [] roomsLevels,
+                                     DimensionLine [] dimensionLines, Level [] dimensionLinesLevels,
+                                     Polyline [] polylines, int [] polylinesIndices, Level [] polylinesLevels,
+                                     Label [] labels, Level [] labelsLevels) {
+      super(preferences, PlanController.class, "undoDeleteSelectionName");
+      this.controller = controller;
+      this.basePlanLocked = basePlanLocked;
+      this.allLevelsSelection = allLevelsSelection;
+      this.deletedItems = deletedItems;
+      this.joinedDeletedWalls = joinedDeletedWalls;
+      this.rooms = rooms;
+      this.roomsIndices = roomsIndices;
+      this.roomsLevels = roomsLevels;
+      this.dimensionLines = dimensionLines;
+      this.dimensionLinesLevels = dimensionLinesLevels;
+      this.polylines = polylines;
+      this.polylinesIndices = polylinesIndices;
+      this.polylinesLevels = polylinesLevels;
+      this.labels = labels;
+      this.labelsLevels = labelsLevels;
+    }
+
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        doAddWalls(joinedDeletedWalls, basePlanLocked);       
-        doAddRooms(rooms, roomsIndices, roomsLevels, null, basePlanLocked);
-        doAddDimensionLines(dimensionLines, dimensionLinesLevels, null, basePlanLocked);
-        doAddPolylines(polylines, polylinesIndices, polylinesLevels, null, basePlanLocked);
-        doAddLabels(labels, labelsLevels, null, basePlanLocked);
-        selectAndShowItems(deletedItems, allLevelsSelection);
+      this.controller.doAddWalls(this.joinedDeletedWalls, this.basePlanLocked);
+      this.controller.doAddRooms(this.rooms, this.roomsIndices, this.roomsLevels, null, this.basePlanLocked);
+      this.controller.doAddDimensionLines(this.dimensionLines, this.dimensionLinesLevels, null, this.basePlanLocked);
+      this.controller.doAddPolylines(this.polylines, this.polylinesIndices, this.polylinesLevels, null, this.basePlanLocked);
+      this.controller.doAddLabels(this.labels, this.labelsLevels, null, this.basePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.deletedItems), this.allLevelsSelection);
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        selectItems(deletedItems);
-        doDeleteWalls(joinedDeletedWalls, basePlanLocked);       
-        doDeleteRooms(rooms, basePlanLocked);
-        doDeleteDimensionLines(dimensionLines, basePlanLocked);
-        doDeletePolylines(polylines, basePlanLocked);
-        doDeleteLabels(labels, basePlanLocked);
+      this.controller.selectItems(Arrays.asList(this.deletedItems));
+      this.controller.doDeleteWalls(this.joinedDeletedWalls, this.basePlanLocked);
+      this.controller.doDeleteRooms(this.rooms, this.basePlanLocked);
+      this.controller.doDeleteDimensionLines(this.dimensionLines, this.basePlanLocked);
+      this.controller.doDeletePolylines(this.polylines, this.basePlanLocked);
+      this.controller.doDeleteLabels(this.labels, this.basePlanLocked);
       }      
-      
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(
-            PlanController.class, "undoDeleteSelectionName");
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
   }
 
   /**
@@ -5045,7 +5443,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Moves <code>wall</code> start point to (<code>xStart</code>, <code>yStart</code>)
    * and the wall point joined to its start point if <code>moveWallAtStart</code> is true.
    */
-  private void moveWallStartPoint(Wall wall, float xStart, float yStart,
+  private static void moveWallStartPoint(Wall wall, float xStart, float yStart,
                                   boolean moveWallAtStart) {    
     float oldXStart = wall.getXStart();
     float oldYStart = wall.getYStart();
@@ -5076,7 +5474,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Moves <code>wall</code> end point to (<code>xEnd</code>, <code>yEnd</code>)
    * and the wall point joined to its end if <code>moveWallAtEnd</code> is true.
    */
-  private void moveWallEndPoint(Wall wall, float xEnd, float yEnd,
+  private static void moveWallEndPoint(Wall wall, float xEnd, float yEnd,
                                 boolean moveWallAtEnd) {
     float oldXEnd = wall.getXEnd();
     float oldYEnd = wall.getYEnd();
@@ -5108,7 +5506,7 @@ public class PlanController extends FurnitureController implements Controller {
    * if <code>editingStartPoint</code> is true or <code>wall</code> end point 
    * to (<code>x</code>, <code>y</code>) if <code>editingStartPoint</code> is false.
    */
-  private void moveWallPoint(Wall wall, float x, float y, boolean startPoint) {
+  private static void moveWallPoint(Wall wall, float x, float y, boolean startPoint) {
     if (startPoint) {
       moveWallStartPoint(wall, x, y, true);
     } else {
@@ -5119,7 +5517,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Moves <code>room</code> point at the given index to (<code>x</code>, <code>y</code>).
    */
-  private void moveRoomPoint(Room room, float x, float y, int pointIndex) {
+  private static void moveRoomPoint(Room room, float x, float y, int pointIndex) {
     room.setPoint(x, y, pointIndex);
   }
   
@@ -5128,7 +5526,7 @@ public class PlanController extends FurnitureController implements Controller {
    * if <code>editingStartPoint</code> is true or <code>dimensionLine</code> end point 
    * to (<code>x</code>, <code>y</code>) if <code>editingStartPoint</code> is false.
    */
-  private void moveDimensionLinePoint(DimensionLine dimensionLine, float x, float y, boolean startPoint) {
+  private static void moveDimensionLinePoint(DimensionLine dimensionLine, float x, float y, boolean startPoint) {
     if (startPoint) {
       dimensionLine.setXStart(x);
       dimensionLine.setYStart(y);
@@ -5141,7 +5539,7 @@ public class PlanController extends FurnitureController implements Controller {
   /**
    * Swaps start and end points of the given dimension line.
    */
-  private void reverseDimensionLine(DimensionLine dimensionLine) {
+  private static void reverseDimensionLine(DimensionLine dimensionLine) {
     float swappedX = dimensionLine.getXStart();
     float swappedY = dimensionLine.getYStart();
     dimensionLine.setXStart(dimensionLine.getXEnd());
@@ -5230,21 +5628,31 @@ public class PlanController extends FurnitureController implements Controller {
     this.home.setSelectedItems(items);
     
     // Add a undoable edit that will select all the items at redo
-    undoSupport.postEdit(new AbstractUndoableEdit() {      
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          home.setSelectedItems(items);
-        }
-
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(PlanController.class, "undoAddItemsName");
-        }      
-      });
+    undoSupport.postEdit(new ItemsAdditionEndUndoableEdit(this.home, this.preferences,
+       items.toArray(new Selectable [items.size()])));
     // End compound edit
     undoSupport.endUpdate();
   }
+
+  /**
+   * Undoable edit for items addition end.
+   */
+  private static class ItemsAdditionEndUndoableEdit extends LocalizedUndoableEdit {
+    private final Home         home;
+    private final Selectable[] items;
+
+    private ItemsAdditionEndUndoableEdit(Home home, UserPreferences preferences, Selectable[] items) {
+      super(preferences, PlanController.class, "undoAddItemsName");
+      this.home = home;
+      this.items = items;
+    }
+
+        @Override
+        public void redo() throws CannotRedoException {
+          super.redo();
+      this.home.setSelectedItems(Arrays.asList(this.items));
+        }
+        }      
   
   /**
    * Adds furniture to home and updates door and window flags if they intersect with walls and magnetism is enabled. 
@@ -5283,7 +5691,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Posts an undoable new wall operation, about <code>newWalls</code>.
    */
   private void postCreateWalls(List<Wall> newWalls, 
-                               List<Selectable> oldSelection, 
+                               List<Selectable> oldSelectedItems,
                                final boolean oldBasePlanLocked,
                                final boolean oldAllLevelsSelection) {
     if (newWalls.size() > 0) {
@@ -5299,30 +5707,50 @@ public class PlanController extends FurnitureController implements Controller {
       
       // Retrieve data about joined walls to newWalls
       final JoinedWall [] joinedNewWalls = JoinedWall.getJoinedWalls(newWalls);
-      final Selectable [] oldSelectedItems = 
-        oldSelection.toArray(new Selectable [oldSelection.size()]);
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      final Selectable [] oldSelection =
+          oldSelectedItems.toArray(new Selectable [oldSelectedItems.size()]);
+      this.undoSupport.postEdit(new WallsCreationUndoableEdit(this, this.preferences,
+          oldSelection, oldBasePlanLocked, oldAllLevelsSelection,
+          joinedNewWalls, newBasePlanLocked));
+    }
+  }
+
+  /**
+   * Undoable edit for walls creation.
+   */
+  private static class WallsCreationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        oldBasePlanLocked;
+    private final boolean        oldAllLevelsSelection;
+    private final JoinedWall []  joinedNewWalls;
+    private final boolean        newBasePlanLocked;
+
+    public WallsCreationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                     Selectable [] oldSelection, boolean oldBasePlanLocked,
+                                     boolean oldAllLevelsSelection, JoinedWall [] joinedNewWalls,
+                                     boolean newBasePlanLocked) {
+      super(preferences, PlanController.class, "undoCreateWallsName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.oldAllLevelsSelection = oldAllLevelsSelection;
+      this.joinedNewWalls = joinedNewWalls;
+      this.newBasePlanLocked = newBasePlanLocked;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteWalls(joinedNewWalls, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
+      this.controller.doDeleteWalls(this.joinedNewWalls, this.oldBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddWalls(joinedNewWalls, newBasePlanLocked);       
-          selectAndShowItems(JoinedWall.getWalls(joinedNewWalls), false);
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoCreateWallsName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.controller.doAddWalls(this.joinedNewWalls, this.newBasePlanLocked);
+      this.controller.selectAndShowItems(JoinedWall.getWalls(this.joinedNewWalls), false);
     }
   }
 
@@ -5395,7 +5823,7 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private void postCreateRooms(final Room [] newRooms,
                                final int [] roomsIndex, 
-                               List<Selectable> oldSelection, 
+                               List<Selectable> oldSelectedItems,
                                final boolean oldBasePlanLocked,
                                final boolean oldAllLevelsSelection) {
     if (newRooms.length > 0) {
@@ -5409,31 +5837,55 @@ public class PlanController extends FurnitureController implements Controller {
       }
       final boolean newBasePlanLocked = basePlanLocked;
 
-      final Selectable [] oldSelectedItems = 
-          oldSelection.toArray(new Selectable [oldSelection.size()]);
+      final Selectable [] oldSelection =
+          oldSelectedItems.toArray(new Selectable [oldSelectedItems.size()]);
       final Level roomsLevel = this.home.getSelectedLevel();
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new RoomsCreationUndoableEdit(this, this.preferences,
+          oldSelection, oldBasePlanLocked, oldAllLevelsSelection,
+          newRooms, roomsIndex, roomsLevel, newBasePlanLocked));
+    }
+  }
+
+  /**
+   * Undoable edit for rooms creation.
+   */
+  private static class RoomsCreationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        oldBasePlanLocked;
+    private final boolean        oldAllLevelsSelection;
+    private final Room []        newRooms;
+    private final int []         roomsIndex;
+    private final Level          roomsLevel;
+    private final boolean        newBasePlanLocked;
+
+    public RoomsCreationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                     Selectable [] oldSelection, boolean oldBasePlanLocked, boolean oldAllLevelsSelection,
+                                     Room [] newRooms, int [] roomsIndex, Level roomsLevel,
+                                     boolean newBasePlanLocked) {
+      super(preferences, PlanController.class, "undoCreateRoomsName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.oldAllLevelsSelection = oldAllLevelsSelection;
+      this.newRooms = newRooms;
+      this.roomsIndex = roomsIndex;
+      this.roomsLevel = roomsLevel;
+      this.newBasePlanLocked = newBasePlanLocked;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteRooms(newRooms, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
+      this.controller.doDeleteRooms(this.newRooms, this.oldBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddRooms(newRooms, roomsIndex, null, roomsLevel, newBasePlanLocked);       
-          selectAndShowItems(Arrays.asList(newRooms), false);
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoCreateRoomsName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.controller.doAddRooms(this.newRooms, this.roomsIndex, null, this.roomsLevel, this.newBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.newRooms), false);
     }
   }
 
@@ -5497,7 +5949,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Posts an undoable new dimension line operation, about <code>newDimensionLines</code>.
    */
   private void postCreateDimensionLines(List<DimensionLine> newDimensionLines, 
-                                        List<Selectable> oldSelection,
+                                        List<Selectable> oldSelectedItems,
                                         final boolean oldBasePlanLocked,
                                         final boolean oldAllLevelsSelection) {
     if (newDimensionLines.size() > 0) {
@@ -5513,31 +5965,52 @@ public class PlanController extends FurnitureController implements Controller {
       
       final DimensionLine [] dimensionLines = newDimensionLines.toArray(
           new DimensionLine [newDimensionLines.size()]);
-      final Selectable [] oldSelectedItems = 
-          oldSelection.toArray(new Selectable [oldSelection.size()]);
+      final Selectable [] oldSelection =
+          oldSelectedItems.toArray(new Selectable [oldSelectedItems.size()]);
       final Level dimensionLinesLevel = this.home.getSelectedLevel();
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new DimensionLinesCreationUndoableEdit(this, this.preferences,
+          oldSelection, oldBasePlanLocked, oldAllLevelsSelection, dimensionLines,
+          dimensionLinesLevel, newBasePlanLocked));
+    }
+  }
+
+  /**
+   * Undoable edit for dimension lines creation.
+   */
+  private static class DimensionLinesCreationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController   controller;
+    private final Selectable []    oldSelection;
+    private final boolean          oldBasePlanLocked;
+    private final boolean          oldAllLevelsSelection;
+    private final DimensionLine [] dimensionLines;
+    private final Level            dimensionLinesLevel;
+    private final boolean          newBasePlanLocked;
+
+    public DimensionLinesCreationUndoableEdit(PlanController controller, UserPreferences preferences, Selectable [] oldSelection, boolean oldBasePlanLocked,
+                                              boolean oldAllLevelsSelection, DimensionLine [] dimensionLines,
+                                              Level dimensionLinesLevel, boolean newBasePlanLocked) {
+      super(preferences, PlanController.class, "undoCreateDimensionLinesName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.oldAllLevelsSelection = oldAllLevelsSelection;
+      this.dimensionLines = dimensionLines;
+      this.dimensionLinesLevel = dimensionLinesLevel;
+      this.newBasePlanLocked = newBasePlanLocked;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteDimensionLines(dimensionLines, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
+      this.controller.doDeleteDimensionLines(this.dimensionLines, this.oldBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddDimensionLines(dimensionLines, null, dimensionLinesLevel, newBasePlanLocked);       
-          selectAndShowItems(Arrays.asList(dimensionLines), false);
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoCreateDimensionLinesName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.controller.doAddDimensionLines(this.dimensionLines, null, this.dimensionLinesLevel, this.newBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.dimensionLines), false);
     }
   }
 
@@ -5585,11 +6058,11 @@ public class PlanController extends FurnitureController implements Controller {
   }
 
   /**
-   * Posts an undoable new polyline operation, about <code>newPolylines</code>.
+   * Posts an undoable new polyline operation about <code>newPolylines</code>.
    */
   private void postCreatePolylines(final Polyline [] newPolylines,
                                    final int [] polylinesIndex,
-                                   List<Selectable> oldSelection,
+                                   List<Selectable> oldSelectedItems,
                                    final boolean oldBasePlanLocked,
                                    final boolean oldAllLevelsSelection) {
     if (newPolylines.length > 0) {
@@ -5603,36 +6076,60 @@ public class PlanController extends FurnitureController implements Controller {
       }
       final boolean newBasePlanLocked = basePlanLocked;
 
-      final Selectable [] oldSelectedItems = 
-          oldSelection.toArray(new Selectable [oldSelection.size()]);
+      final Selectable [] oldSelection =
+          oldSelectedItems.toArray(new Selectable [oldSelectedItems.size()]);
       final Level polylinesLevel = this.home.getSelectedLevel();
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new PolylinesCreationUndoableEdit(this, this.preferences,
+          oldSelection, oldBasePlanLocked, oldAllLevelsSelection,
+          newPolylines, polylinesIndex, polylinesLevel, newBasePlanLocked));
+    }
+  }
+
+  /**
+   * Undoable edit for polylines creation.
+   */
+  private static class PolylinesCreationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        oldBasePlanLocked;
+    private final boolean        oldAllLevelsSelection;
+    private final Polyline []    newPolylines;
+    private final int []         polylinesIndex;
+    private final Level          polylinesLevel;
+    private final boolean        newBasePlanLocked;
+
+    public PolylinesCreationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                         Selectable [] oldSelection, boolean oldBasePlanLocked, boolean oldAllLevelsSelection,
+                                         Polyline [] newPolylines, int [] polylinesIndex,
+                                         Level polylinesLevel, boolean newBasePlanLocked) {
+      super(preferences, PlanController.class, "undoCreatePolylinesName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.oldAllLevelsSelection = oldAllLevelsSelection;
+      this.newPolylines = newPolylines;
+      this.polylinesIndex = polylinesIndex;
+      this.polylinesLevel = polylinesLevel;
+      this.newBasePlanLocked = newBasePlanLocked;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeletePolylines(newPolylines, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
+      this.controller.doDeletePolylines(this.newPolylines, this.oldBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddPolylines(newPolylines, polylinesIndex, null, polylinesLevel, newBasePlanLocked);       
-          selectAndShowItems(Arrays.asList(newPolylines));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoCreatePolylinesName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.controller.doAddPolylines(this.newPolylines, this.polylinesIndex, null, this.polylinesLevel, this.newBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.newPolylines));
     }
   }
 
   /**
-   * Posts an undoable new polyline operation, about <code>newPolylines</code>.
+   * Posts an undoable new polyline operation about <code>newPolylines</code>.
    */
   private void postCreatePolylines(List<Polyline> polylines, 
                                List<Selectable> oldSelection,
@@ -5691,7 +6188,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Posts an undoable new label operation, about <code>newLabels</code>.
    */
   private void postCreateLabels(List<Label> newLabels, 
-                                List<Selectable> oldSelection, 
+                                List<Selectable> oldSelectedItems,
                                 final boolean oldBasePlanLocked, 
                                 final boolean oldAllLevelsSelection) {
     if (newLabels.size() > 0) {
@@ -5706,31 +6203,52 @@ public class PlanController extends FurnitureController implements Controller {
       final boolean newBasePlanLocked = basePlanLocked;
       
       final Label [] labels = newLabels.toArray(new Label [newLabels.size()]);
-      final Selectable [] oldSelectedItems = 
-          oldSelection.toArray(new Selectable [oldSelection.size()]);
+      final Selectable [] oldSelection =
+          oldSelectedItems.toArray(new Selectable [oldSelectedItems.size()]);
       final Level labelsLevel = this.home.getSelectedLevel();
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new LabelsCreationUndoableEdit(this, this.preferences,
+          oldSelection, oldBasePlanLocked, oldAllLevelsSelection,
+          labels, labelsLevel, newBasePlanLocked));
+    }
+  }
+
+  /**
+   * Undoable edit for label creation.
+   */
+  private static class LabelsCreationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        oldBasePlanLocked;
+    private final boolean        oldAllLevelsSelection;
+    private final Label []       labels;
+    private final Level          labelsLevel;
+    private final boolean        newBasePlanLocked;
+
+    public LabelsCreationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                      Selectable [] oldSelection, boolean oldBasePlanLocked, boolean oldAllLevelsSelection,
+                                      Label [] labels, Level labelsLevel, boolean newBasePlanLocked) {
+      super(preferences, PlanController.class, "undoCreateLabelsName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.oldAllLevelsSelection = oldAllLevelsSelection;
+      this.labels = labels;
+      this.labelsLevel = labelsLevel;
+      this.newBasePlanLocked = newBasePlanLocked;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doDeleteLabels(labels, oldBasePlanLocked);
-          selectAndShowItems(Arrays.asList(oldSelectedItems), oldAllLevelsSelection);
+      this.controller.doDeleteLabels(this.labels, this.oldBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.oldAllLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doAddLabels(labels, null, labelsLevel, newBasePlanLocked);       
-          selectAndShowItems(Arrays.asList(labels), false);
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoCreateLabelsName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.controller.doAddLabels(this.labels, null, this.labelsLevel, this.newBasePlanLocked);
+      this.controller.selectAndShowItems(Arrays.asList(this.labels), false);
     }
   }
 
@@ -5764,28 +6282,41 @@ public class PlanController extends FurnitureController implements Controller {
   private void postLabelRotation(final Label label, final float oldAngle) {
     final float newAngle = label.getAngle();
     if (newAngle != oldAngle) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new LabelRotationUndoableEdit(this, this.preferences,
+          oldAngle, label, newAngle));
+    }
+  }
+
+  /**
+   * Undoable edit for label rotation.
+   */
+  private static class LabelRotationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldAngle;
+    private final Label          label;
+    private final float          newAngle;
+
+    public LabelRotationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                     float oldAngle, Label label, float newAngle) {
+      super(preferences, PlanController.class, "undoLabelRotationName");
+      this.controller = controller;
+      this.oldAngle = oldAngle;
+      this.label = label;
+      this.newAngle = newAngle;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          label.setAngle(oldAngle);
-          selectAndShowItems(Arrays.asList(new Label [] {label}));
+      this.label.setAngle(this.oldAngle);
+      this.controller.selectAndShowItems(Arrays.asList(new Label [] {this.label}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          label.setAngle(newAngle);
-          selectAndShowItems(Arrays.asList(new Label [] {label}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoLabelRotationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.label.setAngle(this.newAngle);
+      this.controller.selectAndShowItems(Arrays.asList(new Label [] {this.label}));
     }
   }
 
@@ -5795,67 +6326,99 @@ public class PlanController extends FurnitureController implements Controller {
   private void postLabelElevation(final Label label, final float oldElevation) {
     final float newElevation = label.getElevation();
     if (newElevation != oldElevation) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new LabelElevationModificationUndoableEdit(this, this.preferences,
+          oldElevation, label, newElevation));
+    }
+  }
+
+  /**
+   * Undoable edit for label elevation modification.
+   */
+  private static class LabelElevationModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldElevation;
+    private final Label          label;
+    private final float          newElevation;
+
+    public LabelElevationModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                  float oldElevation, Label label, float newElevation) {
+      super(preferences, PlanController.class,
+          oldElevation < newElevation
+              ? "undoLabelRaiseName"
+              : "undoLabelLowerName");
+      this.controller = controller;
+      this.oldElevation = oldElevation;
+      this.label = label;
+      this.newElevation = newElevation;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          label.setElevation(oldElevation);
-          selectAndShowItems(Arrays.asList(new Label [] {label}));
+      this.label.setElevation(this.oldElevation);
+      this.controller.selectAndShowItems(Arrays.asList(new Label [] {this.label}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          label.setElevation(newElevation);
-          selectAndShowItems(Arrays.asList(new Label [] {label}));
+      this.label.setElevation(this.newElevation);
+      this.controller.selectAndShowItems(Arrays.asList(new Label [] {this.label}));
         }      
-  
-        @Override
-        public String getPresentationName() {          
-          return preferences.getLocalizedString(PlanController.class, 
-              oldElevation < newElevation 
-                  ? "undoLabelRaiseName"
-                  : "undoLabelLowerName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
     }
-  }
 
   /**
    * Posts an undoable operation of a (<code>dx</code>, <code>dy</code>) move 
    * of <code>movedItems</code>.
    */
   private void postItemsMove(List<? extends Selectable> movedItems, 
-                             List<? extends Selectable> oldSelection, 
+                             List<? extends Selectable> oldSelectedItems,
                              final float dx, final float dy) {
     if (dx != 0 || dy != 0) {
       // Store the moved items in an array
       final Selectable [] itemsArray = 
           movedItems.toArray(new Selectable [movedItems.size()]);
       final boolean allLevelsSelection = home.isAllLevelsSelection();
-      final Selectable [] oldSelectedItems = 
-          oldSelection.toArray(new Selectable [oldSelection.size()]);
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      final Selectable [] oldSelection =
+          oldSelectedItems.toArray(new Selectable [oldSelectedItems.size()]);
+      this.undoSupport.postEdit(new ItemsMovingUndoableEdit(this, this.preferences,
+          oldSelection, allLevelsSelection, itemsArray, dx, dy));
+    }
+  }
+
+  /**
+   * Undoable edit for moving items.
+   */
+  private static class ItemsMovingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        allLevelsSelection;
+    private final Selectable []  itemsArray;
+    private final float          dx;
+    private final float          dy;
+
+    public ItemsMovingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                   Selectable [] oldSelection, boolean allLevelsSelection,
+                                   Selectable [] items, float dx, float dy) {
+      super(preferences, PlanController.class, "undoMoveSelectionName");
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.allLevelsSelection = allLevelsSelection;
+      this.itemsArray = items;
+      this.dx = dx;
+      this.dy = dy;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doMoveAndShowItems(itemsArray, oldSelectedItems, -dx, -dy, allLevelsSelection);       
+      this.controller.doMoveAndShowItems(this.itemsArray, this.oldSelection, -this.dx, -this.dy, this.allLevelsSelection);
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          doMoveAndShowItems(itemsArray, itemsArray, dx, dy, allLevelsSelection);   
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoMoveSelectionName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.controller.doMoveAndShowItems(this.itemsArray, this.itemsArray, this.dx, this.dy, this.allLevelsSelection);
     }
   }
 
@@ -5889,47 +6452,77 @@ public class PlanController extends FurnitureController implements Controller {
         || newAngle != oldAngle 
         || newDepth != oldDepth
         || newElevation != oldElevation) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new PieceOfFurnitureMovingUndoableEdit(this, this.preferences,
+          oldAngle, oldDepth, oldElevation, oldDoorOrWindowBoundToWall,
+          piece, dx, dy, newAngle, newDepth, newElevation));
+    }
+  }
+
+  /**
+   * Undoable edit for moving a piece of furniture.
+   */
+  private static class PieceOfFurnitureMovingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController       controller;
+    private final float                oldAngle;
+    private final float                oldDepth;
+    private final float                oldElevation;
+    private final boolean              oldDoorOrWindowBoundToWall;
+    private final HomePieceOfFurniture piece;
+    private final float                dx;
+    private final float                dy;
+    private final float                newAngle;
+    private final float                newDepth;
+    private final float                newElevation;
+
+    public PieceOfFurnitureMovingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                              float oldAngle, float oldDepth, float oldElevation, boolean oldDoorOrWindowBoundToWall,
+                                              HomePieceOfFurniture piece, float dx, float dy,
+                                              float newAngle, float newDepth, float newElevation) {
+      super(preferences, PlanController.class, "undoMoveSelectionName");
+      this.controller = controller;
+      this.oldAngle = oldAngle;
+      this.oldDepth = oldDepth;
+      this.oldElevation = oldElevation;
+      this.oldDoorOrWindowBoundToWall = oldDoorOrWindowBoundToWall;
+      this.piece = piece;
+      this.dx = dx;
+      this.dy = dy;
+      this.newAngle = newAngle;
+      this.newDepth = newDepth;
+      this.newElevation = newElevation;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          piece.move(-dx, -dy);
-          piece.setAngle(oldAngle);
-          if (piece instanceof HomeDoorOrWindow
-              && piece.isResizable()
-              && isItemResizable(piece)) {
+      this.piece.move(-this.dx, -this.dy);
+      this.piece.setAngle(this.oldAngle);
+      if (this.piece instanceof HomeDoorOrWindow
+          && this.piece.isResizable()
+          && this.controller.isItemResizable(this.piece)) {
             // Update of depth may happen only for doors and windows which can't be rotated around horizontal axes
-            piece.setDepth(oldDepth);
+        this.piece.setDepth(this.oldDepth);
           }
-          piece.setElevation(oldElevation);
-          if (piece instanceof HomeDoorOrWindow) {
-            ((HomeDoorOrWindow)piece).setBoundToWall(oldDoorOrWindowBoundToWall);
+      this.piece.setElevation(this.oldElevation);
+      if (this.piece instanceof HomeDoorOrWindow) {
+        ((HomeDoorOrWindow)this.piece).setBoundToWall(this.oldDoorOrWindowBoundToWall);
           }
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          piece.move(dx, dy);
-          piece.setAngle(newAngle);
-          if (piece instanceof HomeDoorOrWindow
-              && piece.isResizable()
-              && isItemResizable(piece)) {
+      this.piece.move(this.dx, this.dy);
+      this.piece.setAngle(this.newAngle);
+      if (this.piece instanceof HomeDoorOrWindow
+          && this.piece.isResizable()
+          && this.controller.isItemResizable(this.piece)) {
             // Update of depth may happen only for doors and windows which can't be rotated around horizontal axes
-            piece.setDepth(newDepth);
+        this.piece.setDepth(this.newDepth);
           }
-          piece.setElevation(newElevation);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoMoveSelectionName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.piece.setElevation(this.newElevation);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
     }
   }
 
@@ -5937,7 +6530,7 @@ public class PlanController extends FurnitureController implements Controller {
    * Posts an undoable operation about duplication <code>items</code>.
    */
   private void postItemsDuplication(final List<Selectable> items,
-                                    final List<Selectable> oldSelectedItems) {    
+                                    final List<Selectable> oldSelection) {
     boolean basePlanLocked = this.home.isBasePlanLocked();
     final boolean allLevelsSelection = this.home.isAllLevelsSelection();
     // Delete furniture and add it again in a compound edit
@@ -5949,13 +6542,8 @@ public class PlanController extends FurnitureController implements Controller {
     // Post duplicated items in a compound edit  
     this.undoSupport.beginUpdate();
     // Add a undoable edit that will select previous items at undo
-    this.undoSupport.postEdit(new AbstractUndoableEdit() {      
-        @Override
-        public void undo() throws CannotRedoException {
-          super.undo();
-          selectAndShowItems(oldSelectedItems, allLevelsSelection);
-        }
-      });
+    this.undoSupport.postEdit(new DuplicationStartUndoableEdit(this,
+        oldSelection.toArray(new Selectable [oldSelection.size()]), allLevelsSelection));
 
     addFurniture(furniture);
     List<Selectable> emptyList = Collections.emptyList();
@@ -5966,24 +6554,53 @@ public class PlanController extends FurnitureController implements Controller {
     postCreateLabels(Home.getLabelsSubList(items), emptyList, basePlanLocked, allLevelsSelection);
 
     // Add a undoable edit that will select all the items at redo
-    this.undoSupport.postEdit(new AbstractUndoableEdit() {      
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          selectAndShowItems(items);
+    this.undoSupport.postEdit(new DuplicationEndUndoableEdit(this, this.preferences, items.toArray(new Selectable [items.size()])));
+
+    // End compound edit
+    this.undoSupport.endUpdate();
+
+    selectItems(items);
+  }
+
+  /**
+   * Undoable edit for duplication start.
+   */
+  private static class DuplicationStartUndoableEdit extends AbstractUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  oldSelection;
+    private final boolean        allLevelsSelection;
+
+    public DuplicationStartUndoableEdit(PlanController controller, Selectable [] oldSelection, boolean allLevelsSelection) {
+      this.controller = controller;
+      this.oldSelection = oldSelection;
+      this.allLevelsSelection = allLevelsSelection;
         }
 
         @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoDuplicateSelectionName");
+    public void undo() throws CannotRedoException {
+      super.undo();
+      this.controller.selectAndShowItems(Arrays.asList(this.oldSelection), this.allLevelsSelection);
+    }
         }      
-      });
    
-    // End compound edit
-    this.undoSupport.endUpdate();
+  /**
+   * Undoable edit for duplication end.
+   */
+  private static class DuplicationEndUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Selectable []  items;
+
+    public DuplicationEndUndoableEdit(PlanController controller, UserPreferences preferences, Selectable [] items) {
+      super(preferences, PlanController.class, "undoDuplicateSelectionName");
+      this.controller = controller;
+      this.items = items;
+    }
     
-    selectItems(items);
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.controller.selectAndShowItems(Arrays.asList(this.items));
+    }
   }
 
   /**
@@ -6001,30 +6618,49 @@ public class PlanController extends FurnitureController implements Controller {
       newY = wall.getYEnd();
     }
     if (newX != oldX || newY != oldY) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new WallResizingUndoableEdit(this, this.preferences,
+          oldX, oldY, wall, startPoint, newX, newY));
+    }
+  }
+
+  /**
+   * Undoable edit for wall resizing.
+   */
+  private static class WallResizingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldX;
+    private final float          oldY;
+    private final Wall           wall;
+    private final boolean        startPoint;
+    private final float          newX;
+    private final float          newY;
+
+    public WallResizingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                    float oldX, float oldY, Wall wall, boolean startPoint, float newX, float newY) {
+      super(preferences, PlanController.class, "undoWallResizeName");
+      this.controller = controller;
+      this.oldX = oldX;
+      this.oldY = oldY;
+      this.wall = wall;
+      this.startPoint = startPoint;
+      this.newX = newX;
+      this.newY = newY;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          moveWallPoint(wall, oldX, oldY, startPoint);
-          selectAndShowItems(Arrays.asList(new Wall [] {wall}));
+      moveWallPoint(this.wall, this.oldX, this.oldY, this.startPoint);
+      this.controller.selectAndShowItems(Arrays.asList(new Wall [] {this.wall}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          moveWallPoint(wall, newX, newY, startPoint);
-          selectAndShowItems(Arrays.asList(new Wall [] {wall}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoWallResizeName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
-    }
-  }
+      moveWallPoint(this.wall, this.newX, this.newY, this.startPoint);
+      this.controller.selectAndShowItems(Arrays.asList(new Wall [] {this.wall}));
+    }      
+  }      
   
   /**
    * Posts an undoable operation about <code>wall</code> arc extent change.
@@ -6033,28 +6669,41 @@ public class PlanController extends FurnitureController implements Controller {
     final Float newArcExtent = wall.getArcExtent();
     if (newArcExtent != oldArcExtent
         && (newArcExtent == null || !newArcExtent.equals(oldArcExtent))) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new WallArcExtentModificationUndoableEdit(
+          this, this.preferences, oldArcExtent, wall, newArcExtent));
+    }
+  }
+
+  /**
+   * Undoable edit for wall arc extent modification.
+   */
+  private static class WallArcExtentModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final Float          oldArcExtent;
+    private final Wall           wall;
+    private final Float          newArcExtent;
+
+    public WallArcExtentModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                 Float oldArcExtent, Wall wall, Float newArcExtent) {
+      super(preferences, PlanController.class, "undoWallArcExtentName");
+      this.controller = controller;
+      this.oldArcExtent = oldArcExtent;
+      this.wall = wall;
+      this.newArcExtent = newArcExtent;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          wall.setArcExtent(oldArcExtent);
-          selectAndShowItems(Arrays.asList(new Wall [] {wall}));
+      this.wall.setArcExtent(this.oldArcExtent);
+      this.controller.selectAndShowItems(Arrays.asList(new Wall [] {this.wall}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          wall.setArcExtent(newArcExtent);
-          selectAndShowItems(Arrays.asList(new Wall [] {wall}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoWallArcExtentName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.wall.setArcExtent(this.newArcExtent);
+      this.controller.selectAndShowItems(Arrays.asList(new Wall [] {this.wall}));
     }
   }
   
@@ -6067,28 +6716,48 @@ public class PlanController extends FurnitureController implements Controller {
     final float newX = roomPoint [0];
     final float newY = roomPoint [1];
     if (newX != oldX || newY != oldY) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      UndoableEdit undoableEdit = new RoomResizingUndoableEdit(this, this.preferences,
+          oldX, oldY, room, pointIndex, newX, newY);
+      this.undoSupport.postEdit(undoableEdit);
+    }
+  }
+
+  /**
+   * Undoable edit for room resizing.
+   */
+  private static class RoomResizingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldX;
+    private final float          oldY;
+    private final Room           room;
+    private final int            pointIndex;
+    private final float          newX;
+    private final float          newY;
+
+    public RoomResizingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                    float oldX, float oldY, Room room, int pointIndex, float newX, float newY) {
+      super(preferences, PlanController.class, "undoRoomResizeName");
+      this.controller = controller;
+      this.oldX = oldX;
+      this.oldY = oldY;
+      this.room = room;
+      this.pointIndex = pointIndex;
+      this.newX = newX;
+      this.newY = newY;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          moveRoomPoint(room, oldX, oldY, pointIndex);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
+      moveRoomPoint(this.room, this.oldX, this.oldY, this.pointIndex);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          moveRoomPoint(room, newX, newY, pointIndex);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoRoomResizeName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      moveRoomPoint(this.room, this.newX, this.newY, this.pointIndex);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
     }
   }
 
@@ -6101,30 +6770,48 @@ public class PlanController extends FurnitureController implements Controller {
     final float newNameYOffset = room.getNameYOffset();
     if (newNameXOffset != oldNameXOffset
         || newNameYOffset != oldNameYOffset) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new RoomNameOffsetModificationUndoableEdit(this, this.preferences,
+          oldNameXOffset, oldNameYOffset, room, newNameXOffset, newNameYOffset));
+    }
+  }
+
+  /**
+   * Undoable edit for room name offset modification.
+   */
+  private static class RoomNameOffsetModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float oldNameXOffset;
+    private final float oldNameYOffset;
+    private final Room  room;
+    private final float newNameXOffset;
+    private final float newNameYOffset;
+
+    public RoomNameOffsetModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                  float oldNameXOffset, float oldNameYOffset,
+                                                  Room room, float newNameXOffset, float newNameYOffset) {
+      super(preferences, PlanController.class, "undoRoomNameOffsetName");
+      this.controller = controller;
+      this.oldNameXOffset = oldNameXOffset;
+      this.oldNameYOffset = oldNameYOffset;
+      this.room = room;
+      this.newNameXOffset = newNameXOffset;
+      this.newNameYOffset = newNameYOffset;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          room.setNameXOffset(oldNameXOffset);
-          room.setNameYOffset(oldNameYOffset);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
+      this.room.setNameXOffset(this.oldNameXOffset);
+      this.room.setNameYOffset(this.oldNameYOffset);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          room.setNameXOffset(newNameXOffset);
-          room.setNameYOffset(newNameYOffset);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoRoomNameOffsetName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.room.setNameXOffset(this.newNameXOffset);
+      this.room.setNameYOffset(this.newNameYOffset);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
     }
   }
 
@@ -6134,28 +6821,41 @@ public class PlanController extends FurnitureController implements Controller {
   private void postRoomNameRotation(final Room room, final float oldNameAngle) {
     final float newNameAngle = room.getNameAngle();
     if (newNameAngle != oldNameAngle) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+      this.undoSupport.postEdit(new RoomNameRotationUndoableEdit(this, this.preferences,
+          oldNameAngle, room, newNameAngle));
+    }
+  }
+
+  /**
+   * Undoable edit for room name rotation.
+   */
+  private static class RoomNameRotationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldNameAngle;
+    private final Room           room;
+    private final float          newNameAngle;
+
+    public RoomNameRotationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                        float oldNameAngle, Room room, float newNameAngle) {
+      super(preferences, PlanController.class, "undoRoomNameRotationName");
+      this.controller = controller;
+      this.oldNameAngle = oldNameAngle;
+      this.room = room;
+      this.newNameAngle = newNameAngle;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          room.setNameAngle(oldNameAngle);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
+      this.room.setNameAngle(this.oldNameAngle);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
         }
 
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          room.setNameAngle(newNameAngle);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
-        }
-
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoRoomNameRotationName");
-        }
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.room.setNameAngle(this.newNameAngle);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
     }
   }
 
@@ -6168,30 +6868,48 @@ public class PlanController extends FurnitureController implements Controller {
     final float newAreaYOffset = room.getAreaYOffset();
     if (newAreaXOffset != oldAreaXOffset
         || newAreaYOffset != oldAreaYOffset) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new RoomAreaOffsetModificationUndoableEdit(this, this.preferences,
+          oldAreaXOffset, oldAreaYOffset, room, newAreaXOffset, newAreaYOffset));
+    }
+  }
+
+  /**
+   * Undoable edit for room area offset modification.
+   */
+  private static class RoomAreaOffsetModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldAreaXOffset;
+    private final float          oldAreaYOffset;
+    private final Room           room;
+    private final float          newAreaXOffset;
+    private final float          newAreaYOffset;
+
+    public RoomAreaOffsetModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                  float oldAreaXOffset, float oldAreaYOffset,
+                                                  Room room, float newAreaXOffset, float newAreaYOffset) {
+      super(preferences, PlanController.class, "undoRoomAreaOffsetName");
+      this.controller = controller;
+      this.oldAreaXOffset = oldAreaXOffset;
+      this.oldAreaYOffset = oldAreaYOffset;
+      this.room = room;
+      this.newAreaXOffset = newAreaXOffset;
+      this.newAreaYOffset = newAreaYOffset;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          room.setAreaXOffset(oldAreaXOffset);
-          room.setAreaYOffset(oldAreaYOffset);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
+      this.room.setAreaXOffset(this.oldAreaXOffset);
+      this.room.setAreaYOffset(this.oldAreaYOffset);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          room.setAreaXOffset(newAreaXOffset);
-          room.setAreaYOffset(newAreaYOffset);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoRoomAreaOffsetName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.room.setAreaXOffset(this.newAreaXOffset);
+      this.room.setAreaYOffset(this.newAreaYOffset);
+      this.controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
     }
   }
 
@@ -6201,28 +6919,41 @@ public class PlanController extends FurnitureController implements Controller {
   private void postRoomAreaRotation(final Room room, final float oldAreaAngle) {
     final float newAreaAngle = room.getAreaAngle();
     if (newAreaAngle != oldAreaAngle) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new RoomAreaRotationUndoableEdit(this, this.preferences,
+          oldAreaAngle, room, newAreaAngle));
+    }
+  }
+
+  /**
+   * Undoable edit for room area rotation.
+   */
+  private static class RoomAreaRotationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float oldAreaAngle;
+    private final Room  room;
+    private final float newAreaAngle;
+
+    public RoomAreaRotationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                        float oldAreaAngle, Room room, float newAreaAngle) {
+      super(preferences, PlanController.class, "undoRoomAreaRotationName");
+      this.controller = controller;
+      this.oldAreaAngle = oldAreaAngle;
+      this.room = room;
+      this.newAreaAngle = newAreaAngle;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          room.setAreaAngle(oldAreaAngle);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
+      this.room.setAreaAngle(this.oldAreaAngle);
+      controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          room.setAreaAngle(newAreaAngle);
-          selectAndShowItems(Arrays.asList(new Room [] {room}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoRoomAreaRotationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.room.setAreaAngle(this.newAreaAngle);
+      controller.selectAndShowItems(Arrays.asList(new Room [] {this.room}));
     }
   }
 
@@ -6234,128 +6965,238 @@ public class PlanController extends FurnitureController implements Controller {
                                             final boolean oldDoorOrWindowBoundToWall) {
     final float newAngle = piece.getAngle();
     if (newAngle != oldAngle) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new PieceOfFurnitureRotationUndoableEdit(this, this.preferences,
+          oldAngle, oldDoorOrWindowBoundToWall, piece, newAngle));
+    }
+  }
+
+  /**
+   * Undoable edit for the rotation of a piece of furniture.
+   */
+  private static class PieceOfFurnitureRotationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController       controller;
+    private final float                oldAngle;
+    private final boolean              oldDoorOrWindowBoundToWall;
+    private final HomePieceOfFurniture piece;
+    private final float                newAngle;
+
+    public PieceOfFurnitureRotationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                float oldAngle, boolean oldDoorOrWindowBoundToWall,
+                                                HomePieceOfFurniture piece, float newAngle) {
+      super(preferences, PlanController.class, "undoPieceOfFurnitureRotationName");
+      this.controller = controller;
+      this.oldAngle = oldAngle;
+      this.oldDoorOrWindowBoundToWall = oldDoorOrWindowBoundToWall;
+      this.piece = piece;
+      this.newAngle = newAngle;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          piece.setAngle(oldAngle);
-          if (piece instanceof HomeDoorOrWindow) {
-            ((HomeDoorOrWindow)piece).setBoundToWall(oldDoorOrWindowBoundToWall);
+      this.piece.setAngle(this.oldAngle);
+      if (this.piece instanceof HomeDoorOrWindow) {
+        ((HomeDoorOrWindow)this.piece).setBoundToWall(this.oldDoorOrWindowBoundToWall);
           }
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          piece.setAngle(newAngle);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoPieceOfFurnitureRotationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.piece.setAngle(this.newAngle);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
     }
   }
 
   /**
    * Post to undo support a pitch change on <code>piece</code>. 
    */
-  private void postPieceOfFurniturePitchRotation(final HomePieceOfFurniture piece, 
-                                                 final float oldPitch) {
+  private void postPieceOfFurniturePitchRotation(final HomePieceOfFurniture piece, float oldPitch,
+                                                 float oldWidthInPlan, float oldDepthInPlan, float oldHeightInPlan) {
     final float newPitch = piece.getPitch();
     if (newPitch != oldPitch) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new PieceOfFurniturePitchRotationUndoableEdit(this, this.preferences,
+          oldPitch, oldWidthInPlan, oldDepthInPlan, oldHeightInPlan, piece,
+          newPitch, piece.getWidthInPlan(), piece.getDepthInPlan(), piece.getHeightInPlan()));
+    }
+  }
+
+  /**
+   * Undoable edit for the pitch rotation of a piece of furniture.
+   */
+  private static class PieceOfFurniturePitchRotationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController       controller;
+    private final float                oldPitch;
+    private final float                oldWidthInPlan;
+    private final float                oldDepthInPlan;
+    private final float                oldHeightInPlan;
+    private final HomePieceOfFurniture piece;
+    private final float                newPitch;
+    private final float                newWidthInPlan;
+    private final float                newDepthInPlan;
+    private final float                newHeightInPlan;
+
+    public PieceOfFurniturePitchRotationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                     float oldPitch, float oldWidthInPlan, float oldDepthInPlan, float oldHeightInPlan,
+                                                     HomePieceOfFurniture piece, float newPitch, float newWidthInPlan, float newDepthInPlan, float newHeightInPlan) {
+      super(preferences, PlanController.class, "undoPieceOfFurnitureRotationName");
+      this.controller = controller;
+      this.oldPitch = oldPitch;
+      this.oldWidthInPlan = oldWidthInPlan;
+      this.oldDepthInPlan = oldDepthInPlan;
+      this.oldHeightInPlan = oldHeightInPlan;
+      this.piece = piece;
+      this.newPitch = newPitch;
+      this.newWidthInPlan = newWidthInPlan;
+      this.newDepthInPlan = newDepthInPlan;
+      this.newHeightInPlan = newHeightInPlan;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          piece.setPitch(oldPitch);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.controller.setPieceOfFurniturePitch(this.piece, this.oldPitch, this.oldWidthInPlan, this.oldDepthInPlan, this.oldHeightInPlan);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          piece.setPitch(newPitch);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.controller.setPieceOfFurniturePitch(this.piece, this.newPitch, this.newWidthInPlan, this.newDepthInPlan, this.newHeightInPlan);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
+    }
         }      
   
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoPieceOfFurnitureRotationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
-    }
+  /**
+   * Sets the pitch angle on the given piece without computing new size in plan.
+   */
+  private void setPieceOfFurniturePitch(HomePieceOfFurniture piece, float pitch,
+                                        float widthInPlan, float depthInPlan, float heightInPlan) {
+    piece.removePropertyChangeListener(this.furnitureSizeChangeListener);
+    piece.setPitch(pitch);
+    piece.setWidthInPlan(widthInPlan);
+    piece.setDepthInPlan(depthInPlan);
+    piece.setHeightInPlan(heightInPlan);
+    piece.addPropertyChangeListener(this.furnitureSizeChangeListener);
   }
 
   /**
    * Post to undo support a roll change on <code>piece</code>. 
    */
-  private void postPieceOfFurnitureRollRotation(final HomePieceOfFurniture piece, 
-                                                final float oldRoll) {
+  private void postPieceOfFurnitureRollRotation(final HomePieceOfFurniture piece, float oldRoll,
+                                                float oldWidthInPlan, float oldDepthInPlan, float oldHeightInPlan) {
     final float newRoll = piece.getRoll();
     if (newRoll != oldRoll) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          piece.setRoll(oldRoll);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-        }
-        
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          piece.setRoll(newRoll);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoPieceOfFurnitureRotationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.undoSupport.postEdit(new PieceOfFurnitureRollRotationUndoableEdit(this, this.preferences,
+          oldRoll, oldWidthInPlan, oldDepthInPlan, oldHeightInPlan, piece,
+          newRoll, piece.getWidthInPlan(), piece.getDepthInPlan(), piece.getHeightInPlan()));
     }
   }
 
   /**
-   * Post to undo support an elevation change on <code>piece</code>. 
+   * Undoable edit for the roll rotation of a piece of furniture.
    */
-  private void postPieceOfFurnitureElevation(final HomePieceOfFurniture piece, final float oldElevation) {
-    final float newElevation = piece.getElevation();
-    if (newElevation != oldElevation) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+  private static class PieceOfFurnitureRollRotationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController       controller;
+    private final float                oldRoll;
+    private final float                oldWidthInPlan;
+    private final float                oldDepthInPlan;
+    private final float                oldHeightInPlan;
+    private final HomePieceOfFurniture piece;
+    private final float                newRoll;
+    private final float                newWidthInPlan;
+    private final float                newDepthInPlan;
+    private final float                newHeightInPlan;
+
+    public PieceOfFurnitureRollRotationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                    float oldRoll, float oldWidthInPlan, float oldDepthInPlan, float oldHeightInPlan,
+                                                    HomePieceOfFurniture piece, float newRoll, float newWidthInPlan, float newDepthInPlan, float newHeightInPlan) {
+      super(preferences, PlanController.class, "undoPieceOfFurnitureRotationName");
+      this.controller = controller;
+      this.oldRoll = oldRoll;
+      this.oldWidthInPlan = oldWidthInPlan;
+      this.oldDepthInPlan = oldDepthInPlan;
+      this.oldHeightInPlan = oldHeightInPlan;
+      this.piece = piece;
+      this.newRoll = newRoll;
+      this.newWidthInPlan = newWidthInPlan;
+      this.newDepthInPlan = newDepthInPlan;
+      this.newHeightInPlan = newHeightInPlan;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          piece.setElevation(oldElevation);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.controller.setPieceOfFurnitureRoll(this.piece, this.oldRoll, this.oldWidthInPlan, this.oldDepthInPlan, this.oldHeightInPlan);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          piece.setElevation(newElevation);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.controller.setPieceOfFurnitureRoll(this.piece, this.newRoll, this.newWidthInPlan, this.newDepthInPlan, this.newHeightInPlan);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
+    }
+  }
+
+  /**
+   * Sets the roll angle on the given piece without computing new size in plan.
+   */
+  private void setPieceOfFurnitureRoll(HomePieceOfFurniture piece, float roll,
+                                       float widthInPlan, float depthInPlan, float heightInPlan) {
+    piece.removePropertyChangeListener(this.furnitureSizeChangeListener);
+    piece.setRoll(roll);
+    piece.setWidthInPlan(widthInPlan);
+    piece.setDepthInPlan(depthInPlan);
+    piece.setHeightInPlan(heightInPlan);
+    piece.addPropertyChangeListener(this.furnitureSizeChangeListener);
+  }
+
+  /**
+   * Post to undo support an elevation change on <code>piece</code>.
+   */
+  private void postPieceOfFurnitureElevation(final HomePieceOfFurniture piece, final float oldElevation) {
+    final float newElevation = piece.getElevation();
+    if (newElevation != oldElevation) {
+      this.undoSupport.postEdit(new PieceOfFurnitureElevationModificationUndoableEdit(this, this.preferences,
+          oldElevation, piece, newElevation));
+    }
         }      
   
-        @Override
-        public String getPresentationName() {          
-          return preferences.getLocalizedString(PlanController.class, 
+  /**
+   * Undoable edit for the elevation modification of a piece of furniture.
+   */
+  private static class PieceOfFurnitureElevationModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController       controller;
+    private final float                oldElevation;
+    private final HomePieceOfFurniture piece;
+    private final float                newElevation;
+
+    public PieceOfFurnitureElevationModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                             float oldElevation, HomePieceOfFurniture piece, float newElevation) {
+      super(preferences, PlanController.class,
               oldElevation < newElevation 
                   ? "undoPieceOfFurnitureRaiseName"
                   : "undoPieceOfFurnitureLowerName");
+      this.controller = controller;
+      this.oldElevation = oldElevation;
+      this.piece = piece;
+      this.newElevation = newElevation;
         }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.piece.setElevation(this.oldElevation);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.piece.setElevation(this.newElevation);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
     }
   }
 
@@ -6385,41 +7226,59 @@ public class PlanController extends FurnitureController implements Controller {
   private void postPieceOfFurnitureResize(final ResizedPieceOfFurniture resizedPiece,
                                           final String presentationNameKey) {
     HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
-    final float newX = piece.getX();
-    final float newY = piece.getY();
-    final float newWidth = piece.getWidth();
-    final float newDepth = piece.getDepth();
-    final float newHeight = piece.getHeight();
     final boolean doorOrWindowBoundToWall = piece instanceof HomeDoorOrWindow 
         && ((HomeDoorOrWindow)piece).isBoundToWall();
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+    this.undoSupport.postEdit(new PieceOfFurnitureResizingUndoableEdit(this, this.preferences,
+        presentationNameKey, doorOrWindowBoundToWall, resizedPiece,
+        piece.getX(), piece.getY(), piece.getWidth(), piece.getDepth(), piece.getHeight()));
+  }
+
+  /**
+   * Undoable edit for the resizing of a piece of furniture.
+   */
+  private static class PieceOfFurnitureResizingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController          controller;
+    private final boolean                 doorOrWindowBoundToWall;
+    private final ResizedPieceOfFurniture resizedPiece;
+    private final float                   newX;
+    private final float                   newY;
+    private final float                   newWidth;
+    private final float                   newDepth;
+    private final float                   newHeight;
+
+    public PieceOfFurnitureResizingUndoableEdit(PlanController controller, UserPreferences preferences, String presentationNameKey,
+                                                boolean doorOrWindowBoundToWall, ResizedPieceOfFurniture resizedPiece,
+                                                float newX, float newY, float newWidth, float newDepth, float newHeight) {
+      super(preferences, PlanController.class, presentationNameKey);
+      this.controller = controller;
+      this.doorOrWindowBoundToWall = doorOrWindowBoundToWall;
+      this.resizedPiece = resizedPiece;
+      this.newX = newX;
+      this.newY = newY;
+      this.newWidth = newWidth;
+      this.newDepth = newDepth;
+      this.newHeight = newHeight;
+    }
+
       @Override
       public void undo() throws CannotUndoException {
         super.undo();
-        resetPieceOfFurnitureSize(resizedPiece);
-        selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {resizedPiece.getPieceOfFurniture()}));
+      this.controller.resetPieceOfFurnitureSize(this.resizedPiece);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.resizedPiece.getPieceOfFurniture()}));
       }
       
       @Override
       public void redo() throws CannotRedoException {
         super.redo();
-        HomePieceOfFurniture piece = resizedPiece.getPieceOfFurniture();
-        piece.setX(newX);
-        piece.setY(newY);
-        setPieceOfFurnitureSize(resizedPiece, newWidth, newDepth, newHeight);
+      HomePieceOfFurniture piece = this.resizedPiece.getPieceOfFurniture();
+      piece.setX(this.newX);
+      piece.setY(this.newY);
+      this.controller.setPieceOfFurnitureSize(this.resizedPiece, this.newWidth, this.newDepth, this.newHeight);
         if (piece instanceof HomeDoorOrWindow) {
-          ((HomeDoorOrWindow)piece).setBoundToWall(doorOrWindowBoundToWall);
+        ((HomeDoorOrWindow)piece).setBoundToWall(this.doorOrWindowBoundToWall);
         }
-        selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
       }      
- 
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(
-            PlanController.class, presentationNameKey);
-      }      
-    };
-    this.undoSupport.postEdit(undoableEdit);
   }
 
   /**
@@ -6469,28 +7328,41 @@ public class PlanController extends FurnitureController implements Controller {
   private void postLightPowerModification(final HomeLight light, final float oldPower) {
     final float newPower = light.getPower();
     if (newPower != oldPower) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new LightPowerModificationUndoableEdit(this, this.preferences,
+          oldPower, light, newPower));
+    }
+  }
+
+  /**
+   * Undoable edit for the light power modification.
+   */
+  private static class LightPowerModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldPower;
+    private final HomeLight      light;
+    private final float          newPower;
+
+    public LightPowerModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                              float oldPower, HomeLight light, float newPower) {
+      super(preferences, PlanController.class, "undoLightPowerModificationName");
+      this.controller = controller;
+      this.oldPower = oldPower;
+      this.light = light;
+      this.newPower = newPower;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          light.setPower(oldPower);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {light}));
+      this.light.setPower(this.oldPower);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.light}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          light.setPower(newPower);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {light}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoLightPowerModificationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.light.setPower(this.newPower);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.light}));
     }
   }
 
@@ -6504,32 +7376,50 @@ public class PlanController extends FurnitureController implements Controller {
     final float newNameYOffset = piece.getNameYOffset();
     if (newNameXOffset != oldNameXOffset
         || newNameYOffset != oldNameYOffset) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new PieceOfFurnitureNameOffsetModificationUndoableEdit(this, this.preferences,
+          oldNameXOffset, oldNameYOffset, piece, newNameXOffset, newNameYOffset));
+    }
+  }
+
+  /**
+   * Undoable edit for the name offset modification of a piece of furniture.
+   */
+  private static class PieceOfFurnitureNameOffsetModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController       controller;
+    private final float                oldNameXOffset;
+    private final float                oldNameYOffset;
+    private final HomePieceOfFurniture piece;
+    private final float                newNameXOffset;
+    private final float                newNameYOffset;
+
+    public PieceOfFurnitureNameOffsetModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                              float oldNameXOffset, float oldNameYOffset, HomePieceOfFurniture piece,
+                                                              float newNameXOffset, float newNameYOffset) {
+      super(preferences, PlanController.class, "undoPieceOfFurnitureNameOffsetName");
+      this.controller = controller;
+      this.oldNameXOffset = oldNameXOffset;
+      this.oldNameYOffset = oldNameYOffset;
+      this.piece = piece;
+      this.newNameXOffset = newNameXOffset;
+      this.newNameYOffset = newNameYOffset;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          piece.setNameXOffset(oldNameXOffset);
-          piece.setNameYOffset(oldNameYOffset);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.piece.setNameXOffset(this.oldNameXOffset);
+      this.piece.setNameYOffset(this.oldNameYOffset);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          piece.setNameXOffset(newNameXOffset);
-          piece.setNameYOffset(newNameYOffset);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.piece.setNameXOffset(this.newNameXOffset);
+      this.piece.setNameYOffset(this.newNameYOffset);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
         }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoPieceOfFurnitureNameOffsetName");
         }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
-    }
-  }
 
   /**
    * Posts an undoable operation about <code>piece</code> name angle change.
@@ -6538,28 +7428,41 @@ public class PlanController extends FurnitureController implements Controller {
                                                 final float oldNameAngle) {
     final float newNameAngle = piece.getNameAngle();
     if (newNameAngle != oldNameAngle) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new PieceOfFurnitureNameRotationUndoableEdit(this, this.preferences,
+          oldNameAngle, piece, newNameAngle));
+    }
+  }
+
+  /**
+   * Undoable edit for the name rotation of a piece of furniture.
+   */
+  private static class PieceOfFurnitureNameRotationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController       controller;
+    private final float                oldNameAngle;
+    private final HomePieceOfFurniture piece;
+    private final float                newNameAngle;
+
+    public PieceOfFurnitureNameRotationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                    float oldNameAngle, HomePieceOfFurniture piece, float newNameAngle) {
+      super(preferences, PlanController.class, "undoPieceOfFurnitureNameRotationName");
+      this.controller = controller;
+      this.oldNameAngle = oldNameAngle;
+      this.piece = piece;
+      this.newNameAngle = newNameAngle;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          piece.setNameAngle(oldNameAngle);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
+      this.piece.setNameAngle(this.oldNameAngle);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          piece.setNameAngle(newNameAngle);
-          selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {piece}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoPieceOfFurnitureNameRotationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.piece.setNameAngle(this.newNameAngle);
+      this.controller.selectAndShowItems(Arrays.asList(new HomePieceOfFurniture [] {this.piece}));
     }
   }
 
@@ -6578,38 +7481,62 @@ public class PlanController extends FurnitureController implements Controller {
       newY = dimensionLine.getYEnd();
     }
     if (newX != oldX || newY != oldY || reversed) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new DimensionLineResizingUndoableEdit(this, this.preferences,
+          oldX, oldY, dimensionLine, newX, newY, startPoint, reversed));
+    }
+  }
+
+  /**
+   * Undoable edit for dimension line resizing.
+   */
+  private static class DimensionLineResizingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldX;
+    private final float          oldY;
+    private final DimensionLine  dimensionLine;
+    private final float          newX;
+    private final float          newY;
+    private final boolean        startPoint;
+    private final boolean        reversed;
+
+    public DimensionLineResizingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                             float oldX, float oldY, DimensionLine dimensionLine,
+                                             float newX, float newY, boolean startPoint, boolean reversed) {
+      super(preferences, PlanController.class, "undoDimensionLineResizeName");
+      this.controller = controller;
+      this.oldX = oldX;
+      this.oldY = oldY;
+      this.dimensionLine = dimensionLine;
+      this.newX = newX;
+      this.newY = newY;
+      this.startPoint = startPoint;
+      this.reversed = reversed;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          if (reversed) {
-            reverseDimensionLine(dimensionLine);
-            moveDimensionLinePoint(dimensionLine, oldX, oldY, !startPoint);
+      if (this.reversed) {
+        reverseDimensionLine(this.dimensionLine);
+        moveDimensionLinePoint(this.dimensionLine, this.oldX, this.oldY, !this.startPoint);
           } else {
-            moveDimensionLinePoint(dimensionLine, oldX, oldY, startPoint);
+        moveDimensionLinePoint(this.dimensionLine, this.oldX, this.oldY, this.startPoint);
           }
-          selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
+      this.controller.selectAndShowItems(Arrays.asList(new DimensionLine [] {this.dimensionLine}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          moveDimensionLinePoint(dimensionLine, newX, newY, startPoint);
-          if (reversed) {
-            reverseDimensionLine(dimensionLine);
+      if (this.reversed) {
+        moveDimensionLinePoint(this.dimensionLine, this.newX, this.newY, !this.startPoint);
+        reverseDimensionLine(this.dimensionLine);
+      } else {
+        moveDimensionLinePoint(this.dimensionLine, this.newX, this.newY, this.startPoint);
           }
-          selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
+      this.controller.selectAndShowItems(Arrays.asList(new DimensionLine [] {this.dimensionLine}));
         }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoDimensionLineResizeName");
         }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
-    }
-  }
   
   /**
    * Posts an undoable operation about <code>dimensionLine</code> offset change.
@@ -6617,28 +7544,41 @@ public class PlanController extends FurnitureController implements Controller {
   private void postDimensionLineOffset(final DimensionLine dimensionLine, final float oldOffset) {
     final float newOffset = dimensionLine.getOffset();
     if (newOffset != oldOffset) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new DimensionLineOffsetModificationUndoableEdit(this, this.preferences,
+          oldOffset, dimensionLine, newOffset));
+    }
+  }
+
+  /**
+   * Undoable edit for dimension line offset modification.
+   */
+  private static class DimensionLineOffsetModificationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldOffset;
+    private final DimensionLine  dimensionLine;
+    private final float          newOffset;
+
+    public DimensionLineOffsetModificationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                                       float oldOffset, DimensionLine dimensionLine, float newOffset) {
+      super(preferences, PlanController.class, "undoDimensionLineOffsetName");
+      this.controller = controller;
+      this.oldOffset = oldOffset;
+      this.dimensionLine = dimensionLine;
+      this.newOffset = newOffset;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          dimensionLine.setOffset(oldOffset);
-          selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
+      this.dimensionLine.setOffset(this.oldOffset);
+      this.controller.selectAndShowItems(Arrays.asList(new DimensionLine [] {this.dimensionLine}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          dimensionLine.setOffset(newOffset);
-          selectAndShowItems(Arrays.asList(new DimensionLine [] {dimensionLine}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoDimensionLineOffsetName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.dimensionLine.setOffset(this.newOffset);
+      this.controller.selectAndShowItems(Arrays.asList(new DimensionLine [] {this.dimensionLine}));
     }
   }
 
@@ -6651,30 +7591,49 @@ public class PlanController extends FurnitureController implements Controller {
     final float newX = polylinePoint [0];
     final float newY = polylinePoint [1];
     if (newX != oldX || newY != oldY) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new PolylineResizingUndoableEdit(this, this.preferences,
+          oldX, oldY, polyline, pointIndex, newX, newY));
+    }
+  }
+
+  /**
+   * Undoable edit for polyline resizing.
+   */
+  private static class PolylineResizingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldX;
+    private final float          oldY;
+    private final Polyline       polyline;
+    private final int            pointIndex;
+    private final float          newX;
+    private final float          newY;
+
+    public PolylineResizingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                        float oldX, float oldY, Polyline polyline, int pointIndex, float newX, float newY) {
+      super(preferences, PlanController.class, "undoPolylineResizeName");
+      this.controller = controller;
+      this.oldX = oldX;
+      this.oldY = oldY;
+      this.polyline = polyline;
+      this.pointIndex = pointIndex;
+      this.newX = newX;
+      this.newY = newY;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          polyline.setPoint(oldX, oldY, pointIndex);
-          selectAndShowItems(Arrays.asList(new Polyline [] {polyline}));
+      this.polyline.setPoint(this.oldX, this.oldY, this.pointIndex);
+      this.controller.selectAndShowItems(Arrays.asList(new Polyline [] {this.polyline}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          polyline.setPoint(newX, newY, pointIndex);
-          selectAndShowItems(Arrays.asList(new Polyline [] {polyline}));
+      this.polyline.setPoint(this.newX, this.newY, this.pointIndex);
+      this.controller.selectAndShowItems(Arrays.asList(new Polyline [] {this.polyline}));
         }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoPolylineResizeName");
         }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
-    }
-  }
 
   /**
    * Post to undo support a north direction change on <code>compass</code>. 
@@ -6683,28 +7642,41 @@ public class PlanController extends FurnitureController implements Controller {
                                    final float oldNorthDirection) {
     final float newNorthDirection = compass.getNorthDirection();
     if (newNorthDirection != oldNorthDirection) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new CompassRotationUndoableEdit(this, this.preferences,
+          oldNorthDirection, compass, newNorthDirection));
+    }
+  }
+
+  /**
+   * Undoable edit for compass rotation.
+   */
+  private static class CompassRotationUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldNorthDirection;
+    private final Compass        compass;
+    private final float          newNorthDirection;
+
+    public CompassRotationUndoableEdit(PlanController controller, UserPreferences preferences,
+                                       float oldNorthDirection, Compass compass, float newNorthDirection) {
+      super(preferences, PlanController.class, "undoCompassRotationName");
+      this.controller = controller;
+      this.compass = compass;
+      this.newNorthDirection = newNorthDirection;
+      this.oldNorthDirection = oldNorthDirection;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          compass.setNorthDirection(oldNorthDirection);
-          selectAndShowItems(Arrays.asList(new Compass [] {compass}));
+      this.compass.setNorthDirection(this.oldNorthDirection);
+      this.controller.selectAndShowItems(Arrays.asList(new Compass [] {this.compass}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          compass.setNorthDirection(newNorthDirection);
-          selectAndShowItems(Arrays.asList(new Compass [] {compass}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoCompassRotationName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.compass.setNorthDirection(this.newNorthDirection);
+      this.controller.selectAndShowItems(Arrays.asList(new Compass [] {this.compass}));
     }
   }
 
@@ -6715,28 +7687,41 @@ public class PlanController extends FurnitureController implements Controller {
                                  final float oldDiameter) {
     final float newDiameter = compass.getDiameter();
     if (newDiameter != oldDiameter) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {      
+      this.undoSupport.postEdit(new CompassResizingUndoableEdit(this, this.preferences,
+          oldDiameter, compass, newDiameter));
+    }
+  }
+
+  /**
+   * Undoable edit for compass resizing.
+   */
+  private static class CompassResizingUndoableEdit extends LocalizedUndoableEdit {
+    private final PlanController controller;
+    private final float          oldDiameter;
+    private final Compass        compass;
+    private final float          newDiameter;
+
+    public CompassResizingUndoableEdit(PlanController controller, UserPreferences preferences,
+                                       float oldDiameter, Compass compass, float newDiameter) {
+      super(preferences, PlanController.class, "undoCompassResizeName");
+      this.controller = controller;
+      this.oldDiameter = oldDiameter;
+      this.compass = compass;
+      this.newDiameter = newDiameter;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          compass.setDiameter(oldDiameter);
-          selectAndShowItems(Arrays.asList(new Compass [] {compass}));
+      this.compass.setDiameter(this.oldDiameter);
+      this.controller.selectAndShowItems(Arrays.asList(new Compass [] {this.compass}));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          compass.setDiameter(newDiameter);
-          selectAndShowItems(Arrays.asList(new Compass [] {compass}));
-        }      
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(
-              PlanController.class, "undoCompassResizeName");
-        }      
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.compass.setDiameter(this.newDiameter);
+      this.controller.selectAndShowItems(Arrays.asList(new Compass [] {this.compass}));
     }
   }
 
@@ -6805,20 +7790,27 @@ public class PlanController extends FurnitureController implements Controller {
    */
   private List<GeneralPath> getAreaPaths(Area area) {
     List<GeneralPath> roomPaths = new ArrayList<GeneralPath>();
-    GeneralPath roomPath = new GeneralPath();
+    GeneralPath roomPath = null;
+    float [] previousRoomPoint = null;
     for (PathIterator it = area.getPathIterator(null, 0.5f); !it.isDone(); it.next()) {
       float [] roomPoint = new float[2];
       switch (it.currentSegment(roomPoint)) {
         case PathIterator.SEG_MOVETO : 
+          roomPath = new GeneralPath();
           roomPath.moveTo(roomPoint [0], roomPoint [1]);
+          previousRoomPoint = roomPoint;
           break;
         case PathIterator.SEG_LINETO : 
+          if ((roomPoint [0] != previousRoomPoint [0]
+                || roomPoint [1] != previousRoomPoint [1])
+              && Point2D.distanceSq(roomPoint [0], roomPoint [1], previousRoomPoint [0], previousRoomPoint [1]) > 1E-10) {
           roomPath.lineTo(roomPoint [0], roomPoint [1]);
+            previousRoomPoint = roomPoint;
+          }
           break;
         case PathIterator.SEG_CLOSE :
           roomPath.closePath();
           roomPaths.add(roomPath);
-          roomPath = new GeneralPath();
           break;
       }
     }
@@ -7278,10 +8270,6 @@ public class PlanController extends FurnitureController implements Controller {
    * A point with coordinates computed with angle and wall points magnetism. 
    */
   private class WallPointWithAngleMagnetism extends PointWithAngleMagnetism {
-    public WallPointWithAngleMagnetism(float x, float y) {
-      this(null, x, y, x, y);
-    }
-
     public WallPointWithAngleMagnetism(Wall editedWall, float xWall, float yWall, float x, float y) {
       super(xWall, yWall, x, y, preferences.getLengthUnit(), getView().getPixelLength());
       float margin = PIXEL_MARGIN / getScale();
@@ -7372,10 +8360,6 @@ public class PlanController extends FurnitureController implements Controller {
    * A point with coordinates computed with angle and room points magnetism. 
    */
   private class RoomPointWithAngleMagnetism extends PointWithAngleMagnetism {
-    public RoomPointWithAngleMagnetism(float x, float y) {
-      this(null, -1, x, y, x, y);
-    }
-
     public RoomPointWithAngleMagnetism(Room editedRoom, int editedPointIndex, float xRoom, float yRoom, float x, float y) {
       super(xRoom, yRoom, x, y, preferences.getLengthUnit(), getView().getPixelLength());
       float planScale = getScale();
@@ -7472,7 +8456,7 @@ public class PlanController extends FurnitureController implements Controller {
     }
 
     public PointMagnetizedToClosestWallOrRoomPoint(Room editedRoom, int editedPointIndex, float x, float y) {
-      float margin = PIXEL_MARGIN / getScale();
+      float margin = getSelectionMargin();
       // Find the closest wall point to (x,y)
       double smallestDistance = Double.MAX_VALUE;
       for (GeneralPath roomPath : getRoomPathsFromWalls()) {
@@ -7588,6 +8572,110 @@ public class PlanController extends FurnitureController implements Controller {
     }
   }
 
+  /**
+   * A decorator on controller state, useful to change the behavior of an existing state.
+   * @since 6.4
+   */
+  protected static abstract class ControllerStateDecorator extends ControllerState {
+    private final ControllerState state;
+
+    public ControllerStateDecorator(ControllerState state) {
+      this.state = state;
+    }
+
+    @Override
+    public void enter() {
+      this.state.enter();
+    }
+
+    @Override
+    public void exit() {
+      this.state.exit();
+    }
+
+    @Override
+    public Mode getMode() {
+      return this.state.getMode();
+    }
+
+    @Override
+    public void setMode(Mode mode) {
+      this.state.setMode(mode);
+    }
+
+    @Override
+    public boolean isModificationState() {
+      return this.state.isModificationState();
+    }
+
+    @Override
+    public boolean isBasePlanModificationState() {
+      return this.state.isBasePlanModificationState();
+    }
+
+    @Override
+    public void deleteSelection() {
+      this.state.deleteSelection();
+    }
+
+    @Override
+    public void escape() {
+      this.state.escape();
+    }
+
+    @Override
+    public void moveSelection(float dx, float dy) {
+      this.state.moveSelection(dx, dy);
+    }
+
+    @Override
+    public void toggleMagnetism(boolean magnetismToggled) {
+      this.state.toggleMagnetism(magnetismToggled);
+    }
+
+    @Override
+    public void setAlignmentActivated(boolean alignmentActivated) {
+      this.state.setAlignmentActivated(alignmentActivated);
+    }
+
+    @Override
+    public void setDuplicationActivated(boolean duplicationActivated) {
+      this.state.setDuplicationActivated(duplicationActivated);
+    }
+
+    @Override
+    public void setEditionActivated(boolean editionActivated) {
+      this.state.setEditionActivated(editionActivated);
+    }
+
+    @Override
+    public void updateEditableProperty(EditableProperty editableField,
+                                       Object value) {
+      this.state.updateEditableProperty(editableField, value);
+    }
+
+    @Override
+    public void pressMouse(float x, float y, int clickCount,
+                           boolean shiftDown, boolean duplicationActivated) {
+      this.state.pressMouse(x, y, clickCount, shiftDown, duplicationActivated);
+    }
+
+    @Override
+    public void releaseMouse(float x, float y) {
+      this.state.releaseMouse(x, y);
+    }
+
+    @Override
+    public void moveMouse(float x, float y) {
+      this.state.moveMouse(x, y);
+    }
+
+    @Override
+    public void zoom(float factor) {
+      this.state.zoom(factor);
+    }
+  }
+
   // ControllerState subclasses
 
   /**
@@ -7655,7 +8743,9 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void enter() {
       if (getView() != null) {
+        if (getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
         moveMouse(getXLastMouseMove(), getYLastMouseMove());
+        }
         home.addSelectionListener(this.selectionListener);
         this.selectionListener.selectionChanged(null);
       }
@@ -7719,6 +8809,9 @@ public class PlanController extends FurnitureController implements Controller {
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 1) {
+        if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+          moveMouse(x, y); // Update cursor
+        }
         if (getRotatedLabelAt(x, y) != null) {
           setState(getLabelRotationState());
         } else if (getYawRotatedCameraAt(x, y) != null) {
@@ -7774,9 +8867,10 @@ public class PlanController extends FurnitureController implements Controller {
         } else if (getResizedCompassAt(x, y) != null) {
           setState(getCompassResizeState());
         } else {
-          Selectable item = getSelectableItemAt(x, y);
           // If shift isn't pressed, and an item is under cursor position
-          if (!shiftDown && item != null) {
+          if (!shiftDown
+              && (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+                  || getSelectableItemAt(x, y) != null)) {
             // Change state to SelectionMoveState
             setState(getSelectionMoveState());
           } else {
@@ -7828,6 +8922,7 @@ public class PlanController extends FurnitureController implements Controller {
     private float                yLastMouseMove;
     private boolean              mouseMoved;
     private List<Selectable>     oldSelection;
+    private boolean              selectionUpdateNeeded;
     private List<Selectable>     movedItems;
     private List<Selectable>     duplicatedItems;
     private HomePieceOfFurniture movedPieceOfFurniture;
@@ -7864,10 +8959,11 @@ public class PlanController extends FurnitureController implements Controller {
       this.mouseMoved = false;
       List<Selectable> selectableItemsUnderCursor = getSelectableItemsAt(getXLastMousePress(), getYLastMousePress());
       List<Selectable> selectableItemsAndGroupsFurnitureUnderCursor = new ArrayList<Selectable>(selectableItemsUnderCursor);
+      float selectionMargin = getSelectionMargin();
       for (Selectable item : selectableItemsUnderCursor) {
         if (item instanceof HomeFurnitureGroup) {
           for (HomePieceOfFurniture piece : ((HomeFurnitureGroup)item).getAllFurniture()) {
-            if (piece.containsPoint(getXLastMousePress(), getYLastMousePress(), PIXEL_MARGIN / getScale())) {
+            if (piece.containsPoint(getXLastMousePress(), getYLastMousePress(), selectionMargin)) {
               selectableItemsAndGroupsFurnitureUnderCursor.add(piece);
             }
           }
@@ -7875,10 +8971,13 @@ public class PlanController extends FurnitureController implements Controller {
       }
       this.oldSelection = home.getSelectedItems();
       toggleMagnetism(wasMagnetismToggledLastMousePress());
-      // If no selectable item under the cursor belongs to selection
-      if (Collections.disjoint(selectableItemsAndGroupsFurnitureUnderCursor, this.oldSelection)) {
+      this.selectionUpdateNeeded = Collections.disjoint(selectableItemsAndGroupsFurnitureUnderCursor, this.oldSelection);
+      if (this.selectionUpdateNeeded
+          && getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
         // Select only the item with highest priority under cursor position
         selectItem(getSelectableItemAt(getXLastMousePress(), getYLastMousePress(), false));
+        // In touch environment, wait either for mouse move to switch to panning state
+        // or mouse release to update the selection
       }       
       List<Selectable> selectedItems = home.getSelectedItems();
       this.movedItems = new ArrayList<Selectable>(selectedItems.size());
@@ -7906,11 +9005,38 @@ public class PlanController extends FurnitureController implements Controller {
       this.duplicatedItems = null;
       this.duplicationActivated = wasDuplicationActivatedLastMousePress() && !home.isAllLevelsSelection();
       this.alignmentActivated = wasAlignmentActivatedLastMousePress();
+      if (!(getPointerTypeLastMousePress() == View.PointerType.TOUCH
+            && this.selectionUpdateNeeded)) {
       getView().setCursor(PlanView.CursorType.MOVE);
+    }
     }
     
     @Override
     public void moveMouse(float x, float y) {      
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+          && this.selectionUpdateNeeded) {
+        // When the user touched an unselected item
+        // go to panning state for one shot, returning to selection state once panning is done
+        setState(new ControllerStateDecorator(getPanningState()) {
+            @Override
+            public void enter() {
+              super.enter();
+              pressMouse(getXLastMousePress(), getYLastMousePress(), 1, wasShiftDownLastMousePress(), wasDuplicationActivatedLastMousePress());
+              moveMouse(getXLastMouseMove(), getYLastMouseMove());
+            }
+
+            @Override
+            public void releaseMouse(float x, float y) {
+              escape();
+            }
+
+            @Override
+            public void escape() {
+              super.escape();
+              setState(getSelectionState());
+            }
+          });
+      } else {
       if (!this.mouseMoved) {
         toggleDuplication(this.duplicationActivated);
       }
@@ -7956,6 +9082,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.yLastMouseMove = y;
       this.mouseMoved = true;
     }
+    }
   
     @Override
     public void releaseMouse(float x, float y) {
@@ -7981,12 +9108,15 @@ public class PlanController extends FurnitureController implements Controller {
         }
       } else {
         // If mouse didn't move, select only the item at (x,y)
-        boolean selectionChanged = Collections.disjoint(home.getSelectedItems(), this.oldSelection);
-        if (!selectionChanged) {
+        if (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+            || !Collections.disjoint(home.getSelectedItems(), this.oldSelection)) {
           Selectable itemUnderCursor = getSelectableItemAt(x, y, false);
           if (itemUnderCursor != null) {
             // Select only the item under cursor position
             selectItem(itemUnderCursor);
+          } else {
+            // May happen only in touch environment
+            deselectAll();
           }
         }
       }
@@ -8053,6 +9183,14 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void setAlignmentActivated(boolean alignmentActivated) {
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+          && this.selectionUpdateNeeded
+          && !this.duplicationActivated) {
+        // When the user touched an unselected item and simulated a shift press
+        // go back to selection state, simulating a click with shift key pressed
+        setState(getSelectionState());
+        PlanController.this.pressMouse(getXLastMousePress(), getYLastMousePress(), 1, true, false, false, false, getPointerTypeLastMousePress());
+      } else {
       this.alignmentActivated = alignmentActivated;
       if (this.mouseMoved) {
         moveMouse(getXLastMouseMove(), getYLastMouseMove());
@@ -8060,6 +9198,7 @@ public class PlanController extends FurnitureController implements Controller {
       if (this.alignmentActivated) {
         getView().deleteFeedback();
       }
+    }
     }
 
     private void toggleDuplication(boolean duplicationActivated) {
@@ -8071,8 +9210,8 @@ public class PlanController extends FurnitureController implements Controller {
             && this.duplicatedItems == null) {
           // Duplicate original items and add them to home
           this.duplicatedItems = this.movedItems;          
-          this.movedItems = Home.duplicate(this.movedItems);          
-          for (Selectable item : this.movedItems) {
+          this.movedItems = new ArrayList<Selectable>();
+          for (Selectable item : Home.duplicate(this.duplicatedItems)) {
             if (item instanceof Wall) {
               home.addWall((Wall)item);
             } else if (item instanceof Room) {
@@ -8085,7 +9224,10 @@ public class PlanController extends FurnitureController implements Controller {
               home.addPieceOfFurniture((HomePieceOfFurniture)item);
             } else if (item instanceof Label) {
               home.addLabel((Label)item);
+            } else {
+              continue;
             }
+            this.movedItems.add(item);
           }
           
           // Put original items back to their initial location
@@ -8471,7 +9613,7 @@ public class PlanController extends FurnitureController implements Controller {
     @Override
     public void moveMouse(float x, float y) {
       if (this.magnetismEnabled) {
-        WallPointWithAngleMagnetism point = new WallPointWithAngleMagnetism(x, y);
+        WallPointWithAngleMagnetism point = new WallPointWithAngleMagnetism(null, x, y, x, y);
         x = point.getX();
         y = point.getY();
       }
@@ -8498,7 +9640,9 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute active magnetism
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
+      if (getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
       moveMouse(getXLastMouseMove(), getYLastMouseMove());
+    }
     }
     
     @Override
@@ -8520,12 +9664,20 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.wallLengthToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "wallLengthToolTipFeedback");
+      try {
       this.wallAngleToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "wallAngleToolTipFeedback");
+      } catch (IllegalArgumentException ex) {
+        // This tool tip part is optional
+      }
       this.wallArcExtentToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "wallArcExtentToolTipFeedback");
+      try {
       this.wallThicknessToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "wallThicknessToolTipFeedback");
+      } catch (IllegalArgumentException ex) {
+        // This tool tip part is optional
+      }
     }
     
     protected String getToolTipFeedbackText(Wall wall, boolean ignoreArcExtent) {
@@ -8534,11 +9686,16 @@ public class PlanController extends FurnitureController implements Controller {
         return "<html>" + String.format(this.wallArcExtentToolTipFeedback, Math.round(Math.toDegrees(arcExtent)));
       } else {
         float startPointToEndPointDistance = wall.getStartPointToEndPointDistance();
-        return "<html>" + String.format(this.wallLengthToolTipFeedback, 
-            preferences.getLengthUnit().getFormatWithUnit().format(startPointToEndPointDistance))
-            + "<br>" + String.format(this.wallAngleToolTipFeedback, getWallAngleInDegrees(wall, startPointToEndPointDistance))
-            + "<br>" + String.format(this.wallThicknessToolTipFeedback, 
-                preferences.getLengthUnit().getFormatWithUnit().format(wall.getThickness()));
+        String toolTipFeedbackText = "<html>" + String.format(this.wallLengthToolTipFeedback, preferences.getLengthUnit().getFormatWithUnit().format(startPointToEndPointDistance));
+        if (this.wallAngleToolTipFeedback != null
+            && this.wallAngleToolTipFeedback.length() > 0) {
+          toolTipFeedbackText += "<br>" + String.format(this.wallAngleToolTipFeedback, getWallAngleInDegrees(wall, startPointToEndPointDistance));
+        }
+        if (this.wallThicknessToolTipFeedback != null
+            && this.wallThicknessToolTipFeedback.length() > 0) {
+          toolTipFeedbackText += "<br>" + String.format(this.wallThicknessToolTipFeedback, preferences.getLengthUnit().getFormatWithUnit().format(wall.getThickness()));
+        }
+        return toolTipFeedbackText;
       }
     }
     
@@ -8637,7 +9794,8 @@ public class PlanController extends FurnitureController implements Controller {
           getView().setAngleFeedback(wall.getXArcCircleCenter(), wall.getYArcCircleCenter(),
               wall.getXEnd(), wall.getYEnd(), wall.getXStart(), wall.getYStart());
         }
-      } else {
+      } else if (this.wallAngleToolTipFeedback != null
+                 && this.wallAngleToolTipFeedback.length() > 0) {
         Wall wallAtStart = wall.getWallAtStart();
         if (wallAtStart != null) {
           if (wallAtStart.getWallAtStart() == wall) {
@@ -8746,7 +9904,7 @@ public class PlanController extends FurnitureController implements Controller {
           this.xStart = this.wallStartAtStart.getXStart();
           this.yStart = this.wallStartAtStart.getYStart();        
         } else if (this.magnetismEnabled) {          
-          WallPointWithAngleMagnetism point = new WallPointWithAngleMagnetism(this.xStart, this.yStart);
+          WallPointWithAngleMagnetism point = new WallPointWithAngleMagnetism(null, this.xStart, this.yStart, this.xStart, this.yStart);
           this.xStart = point.getX();
           this.yStart = point.getY();        
         }
@@ -9016,8 +10174,12 @@ public class PlanController extends FurnitureController implements Controller {
         postCreateWalls(this.newWalls, this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
         selectItems(this.newWalls);
       }
-      // Change state to WallCreationState 
-      setState(getWallCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to WallCreationState 
+        setState(getWallCreationState());
+      }
     }
 
     private void endWallCreation() {
@@ -9657,6 +10819,9 @@ public class PlanController extends FurnitureController implements Controller {
   private class PieceOfFurniturePitchRotationState extends ControllerState {
     private HomePieceOfFurniture selectedPiece;
     private float                oldPitch;
+    private float                oldWidthInPlan;
+    private float                oldDepthInPlan;
+    private float                oldHeightInPlan;
     private String               pitchRotationToolTipFeedback;
 
     @Override
@@ -9681,6 +10846,9 @@ public class PlanController extends FurnitureController implements Controller {
           PlanController.class, "pitchRotationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.oldPitch = this.selectedPiece.getPitch();
+      this.oldWidthInPlan = this.selectedPiece.getWidthInPlan();
+      this.oldDepthInPlan = this.selectedPiece.getDepthInPlan();
+      this.oldHeightInPlan = this.selectedPiece.getHeightInPlan();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldPitch), 
@@ -9703,7 +10871,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurniturePitchRotation(this.selectedPiece, this.oldPitch);
+      postPieceOfFurniturePitchRotation(this.selectedPiece, this.oldPitch, this.oldWidthInPlan, this.oldDepthInPlan, this.oldHeightInPlan);
       setState(getSelectionState());
     }
 
@@ -9733,6 +10901,9 @@ public class PlanController extends FurnitureController implements Controller {
   private class PieceOfFurnitureRollRotationState extends ControllerState {
     private HomePieceOfFurniture selectedPiece;
     private float                oldRoll;
+    private float                oldWidthInPlan;
+    private float                oldDepthInPlan;
+    private float                oldHeightInPlan;
     private String               rollRotationToolTipFeedback;
 
     @Override
@@ -9757,6 +10928,9 @@ public class PlanController extends FurnitureController implements Controller {
           PlanController.class, "rollRotationToolTipFeedback");
       this.selectedPiece = (HomePieceOfFurniture)home.getSelectedItems().get(0);
       this.oldRoll = this.selectedPiece.getRoll();
+      this.oldWidthInPlan = this.selectedPiece.getWidthInPlan();
+      this.oldDepthInPlan = this.selectedPiece.getDepthInPlan();
+      this.oldHeightInPlan = this.selectedPiece.getHeightInPlan();
       PlanView planView = getView();
       planView.setResizeIndicatorVisible(true);
       planView.setToolTipFeedback(getToolTipFeedbackText(this.oldRoll), 
@@ -9779,7 +10953,7 @@ public class PlanController extends FurnitureController implements Controller {
 
     @Override
     public void releaseMouse(float x, float y) {
-      postPieceOfFurnitureRollRotation(this.selectedPiece, this.oldRoll);
+      postPieceOfFurnitureRollRotation(this.selectedPiece, this.oldRoll, this.oldWidthInPlan, this.oldDepthInPlan, this.oldHeightInPlan);
       setState(getSelectionState());
     }
 
@@ -10756,7 +11930,9 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute active magnetism
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
-      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      if (getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
     }
 
     @Override
@@ -10930,6 +12106,9 @@ public class PlanController extends FurnitureController implements Controller {
               dimensionLine.getXStart(), dimensionLine.getYStart(), 
               dimensionLine.getXEnd(), dimensionLine.getYEnd(), 
               dimensionLine.getOffset());
+          if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+            validateDrawnDimensionLine();
+          }
         } else {
           setState(getDimensionLineCreationState());
           return;
@@ -10950,14 +12129,26 @@ public class PlanController extends FurnitureController implements Controller {
       }
     }
 
+    @Override
+    public void releaseMouse(float x, float y) {
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH
+          && this.newDimensionLine != null) {
+        validateDrawnDimensionLine();
+      }
+    }
+
     private void validateDrawnDimensionLine() {
       selectItem(this.newDimensionLine);
       // Post dimension line creation to undo support
       postCreateDimensionLines(Arrays.asList(new DimensionLine [] {this.newDimensionLine}), 
           this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
       this.newDimensionLine = null;
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
       // Change state to DimensionLineCreationState 
       setState(getDimensionLineCreationState());
+    }
     }
 
     @Override
@@ -11092,8 +12283,12 @@ public class PlanController extends FurnitureController implements Controller {
         // Delete current created dimension line
         home.deleteDimensionLine(this.newDimensionLine);
       }
-      // Change state to DimensionLineCreationState 
-      setState(getDimensionLineCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to DimensionLineCreationState 
+        setState(getDimensionLineCreationState());
+      }
     }
 
     @Override
@@ -11460,8 +12655,8 @@ public class PlanController extends FurnitureController implements Controller {
           getView().setAlignmentFeedback(Room.class, null, point.getX(), 
               point.getY(), point.isMagnetized());
         } else { 
-          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(
-              getXLastMouseMove(), getYLastMouseMove());
+          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(null, -1,
+              getXLastMouseMove(), getYLastMouseMove(), getXLastMouseMove(), getYLastMouseMove());
           getView().setAlignmentFeedback(Room.class, null, pointWithAngleMagnetism.getX(), 
               pointWithAngleMagnetism.getY(), point.isMagnetized());
         }
@@ -11490,8 +12685,10 @@ public class PlanController extends FurnitureController implements Controller {
       // Compute active magnetism
       this.magnetismEnabled = preferences.isMagnetismEnabled()
                               ^ magnetismToggled;
-      // Compute again feedback point as if mouse moved
-      moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      if (getPointerTypeLastMousePress() != View.PointerType.TOUCH) {
+        // Compute again feedback point as if mouse moved
+        moveMouse(getXLastMouseMove(), getYLastMouseMove());
+      }
     }
 
     @Override
@@ -11511,16 +12708,23 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.roomSideLengthToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "roomSideLengthToolTipFeedback");
-      this.roomSideAngleToolTipFeedback = preferences.getLocalizedString(
+      try {
+        this.roomSideAngleToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "roomSideAngleToolTipFeedback");
+      } catch (IllegalArgumentException ex) {
+        // This tool tip part is optional
+      }
     }
     
     protected String getToolTipFeedbackText(Room room, int pointIndex) {
       float length = getRoomSideLength(room, pointIndex);
       int angle = getRoomSideAngle(room, pointIndex);
-      return "<html>" + String.format(this.roomSideLengthToolTipFeedback, 
-          preferences.getLengthUnit().getFormatWithUnit().format(length))
-          + "<br>" + String.format(this.roomSideAngleToolTipFeedback, angle);
+      String toolTipFeedbackText = "<html>" + String.format(this.roomSideLengthToolTipFeedback, preferences.getLengthUnit().getFormatWithUnit().format(length));
+      if (this.roomSideAngleToolTipFeedback != null
+          && this.roomSideAngleToolTipFeedback.length() > 0) {
+        toolTipFeedbackText += "<br>" + String.format(this.roomSideAngleToolTipFeedback, angle);
+      }
+      return toolTipFeedbackText;
     }
     
     protected float getRoomSideLength(Room room, int pointIndex) {
@@ -11606,7 +12810,9 @@ public class PlanController extends FurnitureController implements Controller {
 
     protected void showRoomAngleFeedback(Room room, int pointIndex) {
       float [][] points = room.getPoints();
-      if (points.length > 2) {
+      if (this.roomSideAngleToolTipFeedback != null
+          && this.roomSideAngleToolTipFeedback.length() > 0
+          && points.length > 2) {
         float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
         float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
         if (getRoomSideAngle(room, pointIndex) > 0) {
@@ -11688,8 +12894,8 @@ public class PlanController extends FurnitureController implements Controller {
           this.xPreviousPoint = point.getX();
           this.yPreviousPoint = point.getY();
         } else {
-          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(
-              getXLastMouseMove(), getYLastMouseMove());
+          RoomPointWithAngleMagnetism pointWithAngleMagnetism = new RoomPointWithAngleMagnetism(null, -1,
+              getXLastMouseMove(), getYLastMouseMove(), getXLastMouseMove(), getYLastMouseMove());
           this.xPreviousPoint = pointWithAngleMagnetism.getX();
           this.yPreviousPoint = pointWithAngleMagnetism.getY();
         }
@@ -11807,8 +13013,12 @@ public class PlanController extends FurnitureController implements Controller {
               this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
         }
       }
-      // Change state to RoomCreationState 
-      setState(getRoomCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to RoomCreationState 
+        setState(getRoomCreationState());
+      }
     }
 
     private void endRoomSide() {
@@ -12213,7 +13423,7 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       super.enter();
       this.selectedRoom = (Room)home.getSelectedItems().get(0);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       this.roomPointIndex = this.selectedRoom.getPointIndexAt( 
           getXLastMousePress(), getYLastMousePress(), margin);
       float [][] roomPoints = this.selectedRoom.getPoints();
@@ -12685,16 +13895,23 @@ public class PlanController extends FurnitureController implements Controller {
     public void enter() {
       this.polylineSegmentLengthToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "polylineSegmentLengthToolTipFeedback");
-      this.polylineSegmentAngleToolTipFeedback = preferences.getLocalizedString(
+      try {
+        this.polylineSegmentAngleToolTipFeedback = preferences.getLocalizedString(
           PlanController.class, "polylineSegmentAngleToolTipFeedback");
+      } catch (IllegalArgumentException ex) {
+        // This tool tip part is optional
+      }
     }
     
     protected String getToolTipFeedbackText(Polyline polyline, int pointIndex) {
       float length = getPolylineSegmentLength(polyline, pointIndex);
       int angle = getPolylineSegmentAngle(polyline, pointIndex);
-      return "<html>" + String.format(this.polylineSegmentLengthToolTipFeedback, 
-          preferences.getLengthUnit().getFormatWithUnit().format(length))
-          + "<br>" + String.format(this.polylineSegmentAngleToolTipFeedback, angle);
+      String toolTipFeedbackText = "<html>" + String.format(this.polylineSegmentLengthToolTipFeedback, preferences.getLengthUnit().getFormatWithUnit().format(length));
+      if (this.polylineSegmentAngleToolTipFeedback != null
+          && this.polylineSegmentAngleToolTipFeedback.length() > 0) {
+        toolTipFeedbackText += "<br>" + String.format(this.polylineSegmentAngleToolTipFeedback, angle);
+      }
+      return toolTipFeedbackText;
     }
     
     protected float getPolylineSegmentLength(Polyline polyline, int pointIndex) {
@@ -12753,8 +13970,10 @@ public class PlanController extends FurnitureController implements Controller {
 
     protected void showPolylineAngleFeedback(Polyline polyline, int pointIndex) {
       float [][] points = polyline.getPoints();
-      if (pointIndex >= 2
-          || points.length > 2 && polyline.isClosedPath()) {
+      if (this.polylineSegmentAngleToolTipFeedback != null
+          && this.polylineSegmentAngleToolTipFeedback.length() > 0
+          && (pointIndex >= 2
+             || points.length > 2 && polyline.isClosedPath())) {
         float [] previousPoint = points [(pointIndex + points.length - 1) % points.length];
         float [] previousPreviousPoint = points [(pointIndex + points.length - 2) % points.length];
         getView().setAngleFeedback(previousPoint [0], previousPoint [1], 
@@ -12891,14 +14110,18 @@ public class PlanController extends FurnitureController implements Controller {
                            boolean shiftDown, boolean duplicationActivated) {
       if (clickCount == 2) {
         if (this.newPolyline != null) {
-          int pointIndex = this.newPolyline.getPointIndexAt(x, y, PIXEL_MARGIN / getScale());
+          int pointIndex = this.newPolyline.getPointIndexAt(x, y, getSelectionMargin());
           if (pointIndex == 0) {
             this.newPolyline.removePoint(this.newPolyline.getPointCount() - 1);
             this.newPolyline.setClosedPath(true);
           }
           validateDrawnPolyline();
         } else {
-          setState(getPolylineCreationState());
+          if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+            setState(getSelectionState());
+          } else {
+            setState(getPolylineCreationState());
+          }
         }
       } else {
         endPolylineSegment();
@@ -12917,8 +14140,12 @@ public class PlanController extends FurnitureController implements Controller {
               this.oldSelection, this.oldBasePlanLocked, this.oldAllLevelsSelection);
         }
       }
-      // Change state to PolylineCreationState 
-      setState(getPolylineCreationState());
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      } else {
+        // Change state to PolylineCreationState 
+        setState(getPolylineCreationState());
+      }
     }
 
     private void endPolylineSegment() {
@@ -13146,7 +14373,7 @@ public class PlanController extends FurnitureController implements Controller {
       this.selectedPolyline = (Polyline)home.getSelectedItems().get(0);
       this.polylines = new ArrayList<Polyline>(home.getPolylines());
       this.polylines.remove(this.selectedPolyline);
-      float margin = INDICATOR_PIXEL_MARGIN / getScale();
+      float margin = getIndicatorMargin();
       this.polylinePointIndex = this.selectedPolyline.getPointIndexAt( 
           getXLastMousePress(), getYLastMousePress(), margin);
       float [][] polylinePoints = this.selectedPolyline.getPoints();
@@ -13251,6 +14478,9 @@ public class PlanController extends FurnitureController implements Controller {
     public void pressMouse(float x, float y, int clickCount,
                            boolean shiftDown, boolean duplicationActivated) {
       createLabel(x, y);
+      if (getPointerTypeLastMousePress() == View.PointerType.TOUCH) {
+        setState(getSelectionState());
+      }
     }
   }
 

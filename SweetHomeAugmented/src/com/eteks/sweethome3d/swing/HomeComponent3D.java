@@ -158,6 +158,7 @@ import com.eteks.sweethome3d.model.CollectionEvent;
 import com.eteks.sweethome3d.model.CollectionListener;
 import com.eteks.sweethome3d.model.Elevatable;
 import com.eteks.sweethome3d.model.Home;
+import com.eteks.sweethome3d.model.HomeDoorOrWindow;
 import com.eteks.sweethome3d.model.HomeEnvironment;
 import com.eteks.sweethome3d.model.HomeFurnitureGroup;
 import com.eteks.sweethome3d.model.HomeLight;
@@ -432,7 +433,7 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void createComponent3D(GraphicsConfiguration configuration, 
                                  UserPreferences  preferences, 
                                  HomeController3D controller) {
-    if (Boolean.valueOf(System.getProperty("com.eteks.sweethome3d.j3d.useOffScreen3DView", "false"))) {
+    if (Boolean.getBoolean("com.eteks.sweethome3d.j3d.useOffScreen3DView")) {
 			GraphicsConfigTemplate3D gc = new GraphicsConfigTemplate3D();
 			gc.setSceneAntialiasing(GraphicsConfigTemplate3D.PREFERRED);
       try {
@@ -1469,18 +1470,6 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 			}
 
 			@Override
-			public void mouseReleased(com.jogamp.newt.event.MouseEvent ev) {
-				if (!retargetMouseEventToNavigationPanelChildren(ev)) {
-					if (false) {//ev.isPopupTrigger()) {
-						JPopupMenu componentPopupMenu = getComponentPopupMenu();
-						if (componentPopupMenu != null) {
-							componentPopupMenu.show(HomeComponent3D.this, ev.getX(), ev.getY());
-						}
-					}
-				}
-			}
-
-			@Override
 			public void mouseClicked(com.jogamp.newt.event.MouseEvent ev) {
 				retargetMouseEventToNavigationPanelChildren(ev);
 			}
@@ -1519,6 +1508,18 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
 
 						this.xLastMouseMove = ev.getX();
 						this.yLastMouseMove = ev.getY();
+					}
+				}
+			}
+			
+			@Override
+			public void mouseReleased(com.jogamp.newt.event.MouseEvent ev) {
+				if (!retargetMouseEventToNavigationPanelChildren(ev)) {
+					if (false) {//ev.isPopupTrigger()) {
+						JPopupMenu componentPopupMenu = getComponentPopupMenu();
+						if (componentPopupMenu != null) {
+							componentPopupMenu.show(HomeComponent3D.this, ev.getX(), ev.getY());
+						}
 					}
 				}
 			}
@@ -1773,19 +1774,42 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   }
 
 	/**
-   * Returns the closest {@link Selectable} object at screen coordinates (x, y),
+   * Returns the closest {@link Selectable} object at component coordinates (x, y),
    * or <code>null</code> if not found.
    */
   public Selectable getClosestItemAt(int x, int y) {
    /* if (this.component3D != null) {
       Canvas3D canvas;
-      if (this.component3D instanceof JCanvas3D) {
-        canvas = ((JCanvas3D)this.component3D).getOffscreenCanvas3D();
-      } else {
+      if (this.component3D instanceof Canvas3D) {
         canvas = (Canvas3D)this.component3D;
+      } else {
+        try {
+          // Call JCanvas3D#getOffscreenCanvas3D by reflection to be able to run under Java 3D 1.3
+          canvas = (Canvas3D)Class.forName("com.sun.j3d.exp.swing.JCanvas3D").getMethod("getOffscreenCanvas3D").invoke(this.component3D);
+        } catch (Exception ex) {
+          UnsupportedOperationException ex2 = new UnsupportedOperationException();
+          ex2.initCause(ex);
+          throw ex2;
+        }
       }
       PickCanvas pickCanvas = new PickCanvas(canvas, this.onscreenUniverse.getLocale());
       pickCanvas.setMode(PickCanvas.GEOMETRY);
+
+      if (OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+        try {
+          // Dirty hack that scales mouse coordinates with xcale and yscale private fields of Canvas3D
+          Field xscaleField = Canvas3D.class.getDeclaredField("xscale");
+          xscaleField.setAccessible(true);
+          double xscale = (Double)(xscaleField.get(this.component3D));
+          Field yscaleField = Canvas3D.class.getDeclaredField("yscale");
+          yscaleField.setAccessible(true);
+          double yscale = (Double)(yscaleField.get(this.component3D));
+          x = (int)(x * xscale);
+          y = (int)(y * yscale);
+        } catch (Exception ex) {
+        }
+      }
+
       Point canvasPoint = SwingUtilities.convertPoint(this, x, y, this.component3D);
       pickCanvas.setShapeLocation(canvasPoint.x, canvasPoint.y);
       PickResult result = pickCanvas.pickClosest();
@@ -2536,11 +2560,24 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
             updateObjectsLightScope(Arrays.asList(new HomePieceOfFurniture [] {updatedPiece}));
           } else if (HomePieceOfFurniture.Property.HEIGHT.name().equals(propertyName)
               || HomePieceOfFurniture.Property.ELEVATION.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.MODEL.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.MODEL_ROTATION.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MIRRORED.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.BACK_FACE_SHOWN.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_TRANSFORMATIONS.name().equals(propertyName)
+              || HomePieceOfFurniture.Property.STAIRCASE_CUT_OUT_SHAPE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.VISIBLE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.LEVEL.name().equals(propertyName)) {
             updatePieceOfFurnitureGeometry(updatedPiece, null, null);
+          } else if (HomeDoorOrWindow.Property.CUT_OUT_SHAPE.name().equals(propertyName)
+              || HomeDoorOrWindow.Property.WALL_CUT_OUT_ON_BOTH_SIDES.name().equals(propertyName)
+              || HomeDoorOrWindow.Property.WALL_WIDTH.name().equals(propertyName)
+              || HomeDoorOrWindow.Property.WALL_LEFT.name().equals(propertyName)
+              || HomeDoorOrWindow.Property.WALL_HEIGHT.name().equals(propertyName)
+              || HomeDoorOrWindow.Property.WALL_TOP.name().equals(propertyName)) {
+            if (containsDoorsAndWindows(updatedPiece)) {
+              updateIntersectingWalls(updatedPiece);
+            }
           } else if (HomePieceOfFurniture.Property.COLOR.name().equals(propertyName)
               || HomePieceOfFurniture.Property.TEXTURE.name().equals(propertyName)
               || HomePieceOfFurniture.Property.MODEL_MATERIALS.name().equals(propertyName)
@@ -2916,6 +2953,10 @@ public class HomeComponent3D extends JComponent implements com.eteks.sweethome3d
   private void deleteObject(Selectable homeObject) {
     this.homeObjects.get(homeObject).detach();
     this.homeObjects.remove(homeObject);
+    if (this.homeObjectsToUpdate != null
+        && this.homeObjectsToUpdate.contains(homeObject)) {
+      this.homeObjectsToUpdate.remove(homeObject);
+    }
     clearPrintedImageCache();
   }
 

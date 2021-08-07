@@ -887,14 +887,14 @@ public class PhotoPanel extends JPanel implements DialogView {
     String pngFile = this.controller.getContentManager().showSaveDialog(this,
         this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoDialog.title"), 
         ContentManager.ContentType.PNG, this.home.getName());
-    try {
-      if (pngFile != null) {
-        ImageIO.write(this.photoComponent.getImage(), "PNG", new File(pngFile));
-      }
-    } catch (IOException ex) {
-      String messageFormat = this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoError.message");
-      JOptionPane.showMessageDialog(SwingUtilities.getRootPane(this), String.format(messageFormat, ex.getMessage()), 
-          this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoError.title"), JOptionPane.ERROR_MESSAGE);
+    if (pngFile != null) {
+	    try {	
+	        ImageIO.write(this.photoComponent.getImage(), "PNG", new File(pngFile));
+	    } catch (IOException ex) {
+	      String messageFormat = this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoError.message");
+        SwingTools.showMessageDialog(this, String.format(messageFormat, ex.getMessage()),
+	          this.preferences.getLocalizedString(PhotoPanel.class, "savePhotoError.title"), JOptionPane.ERROR_MESSAGE);
+	    }      
     }
   }
 

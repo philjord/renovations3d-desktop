@@ -24,19 +24,17 @@ import javaawt.geom.GeneralPath;
 import javaawt.geom.Line2D;
 import javaawt.geom.PathIterator;
 import javaawt.geom.Point2D;
-
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javaxswing.undo.AbstractUndoableEdit;
 import javaxswing.undo.CannotRedoException;
 import javaxswing.undo.CannotUndoException;
-import javaxswing.undo.UndoableEdit;
 import javaxswing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.Baseboard;
@@ -457,7 +455,7 @@ public class RoomController implements Controller {
       getWallSidesTextureController().setTexture(wallSidesTexture);
       
       boolean defaultColorsAndTextures = true;
-      for (int i = 1; i < wallSides.size(); i++) {
+      for (int i = 0; i < wallSides.size(); i++) {
         WallSide wallSide = wallSides.get(i);
         if ((wallSide.getSide() == WallSide.LEFT_SIDE
                 ? wallSide.getWall().getLeftSideColor()
@@ -1115,8 +1113,9 @@ public class RoomController implements Controller {
           wallSidesBaseboardVisible, wallSidesBaseboardThickness, wallSidesBaseboardHeight, 
           wallSidesBaseboardPaint, wallSidesBaseboardColor, wallSidesBaseboardTexture, null, null);
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new RoomsAndWallSidesModificationUndoableEdit(
-            this.home, this.preferences, oldSelection, newSelection, modifiedRooms, name, areaVisible, 
+        this.undoSupport.postEdit(new RoomsAndWallSidesModificationUndoableEdit(this.home, this.preferences,
+            oldSelection.toArray(new Selectable [oldSelection.size()]), newSelection.toArray(new Selectable [newSelection.size()]),
+            modifiedRooms, name, areaVisible,
             floorVisible, floorPaint, floorColor, floorTexture, floorShininess,
             ceilingVisible, ceilingPaint, ceilingColor, ceilingTexture, ceilingShininess,
             modifiedWallSides, this.preferences.getNewWallBaseboardThickness(), this.preferences.getNewWallBaseboardHeight(),
@@ -1124,8 +1123,7 @@ public class RoomController implements Controller {
             wallSidesBaseboardVisible, wallSidesBaseboardThickness, wallSidesBaseboardHeight, 
             wallSidesBaseboardPaint, wallSidesBaseboardColor, wallSidesBaseboardTexture,
             deletedWalls.toArray(new ModifiedWall [deletedWalls.size()]), 
-            addedWalls.toArray(new ModifiedWall [addedWalls.size()]));
-        this.undoSupport.postEdit(undoableEdit);
+            addedWalls.toArray(new ModifiedWall [addedWalls.size()])));
       }
       if (name != null) {
         this.preferences.addAutoCompletionString("RoomName", name);
@@ -1165,9 +1163,9 @@ public class RoomController implements Controller {
                     wall.getXStart(), wall.getYStart(), wall.getXEnd(), wall.getYEnd(), 
                     intersectedWall.getXStart(), intersectedWall.getYStart(), intersectedWall.getXEnd(), intersectedWall.getYEnd());
                 if (intersection != null) {
-                  // Clone new walls to copy their characteristics 
-                  firstWall = wall.clone();
-                  secondWall = wall.clone();
+                  // Duplicate new walls to copy their characteristics
+                  firstWall = (Wall)wall.duplicate();
+                  secondWall = (Wall)wall.duplicate();
                   // Store wall level to add new walls at the same level as the split wall
                   firstWall.setLevel(wall.getLevel());
                   secondWall.setLevel(wall.getLevel());
@@ -1315,11 +1313,10 @@ public class RoomController implements Controller {
    * Undoable edit for rooms modification. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class RoomsAndWallSidesModificationUndoableEdit extends AbstractUndoableEdit {
+  private static class RoomsAndWallSidesModificationUndoableEdit extends LocalizedUndoableEdit {
     private final Home                home;
-    private final UserPreferences     preferences;
-    private final List<Selectable>    oldSelection;
-    private final List<Selectable>    newSelection;
+    private final Selectable []       oldSelection;
+    private final Selectable []       newSelection;
     private final ModifiedRoom []     modifiedRooms;
     private final String              name;
     private final Boolean             areaVisible;
@@ -1351,8 +1348,8 @@ public class RoomController implements Controller {
 
     private RoomsAndWallSidesModificationUndoableEdit(Home home,
                                           UserPreferences preferences,
-                                          List<Selectable> oldSelection,
-                                          List<Selectable> newSelection, 
+                                          Selectable [] oldSelection,
+                                          Selectable [] newSelection,
                                           ModifiedRoom [] modifiedRooms,
                                           String name,
                                           Boolean areaVisible,
@@ -1381,8 +1378,8 @@ public class RoomController implements Controller {
                                           HomeTexture wallSidesBaseboardTexture,
                                           ModifiedWall [] deletedWalls, 
                                           ModifiedWall [] addedWalls) {
+      super(preferences, RoomController.class, "undoModifyRoomsName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.newSelection = newSelection;
       this.modifiedRooms = modifiedRooms;
@@ -1419,7 +1416,7 @@ public class RoomController implements Controller {
     public void undo() throws CannotUndoException {
       super.undo();
       undoModifyRoomsAndWallSides(this.home, this.modifiedRooms, this.modifiedWallSides, this.deletedWalls, this.addedWalls); 
-      this.home.setSelectedItems(this.oldSelection); 
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
     }
 
     @Override
@@ -1434,12 +1431,7 @@ public class RoomController implements Controller {
           this.wallSidesBaseboardVisible, this.wallSidesBaseboardThickness, this.wallSidesBaseboardHeight, 
           this.wallSidesBaseboardPaint, this.wallSidesBaseboardColor, this.wallSidesBaseboardTexture,
           this.deletedWalls, this.addedWalls); 
-      this.home.setSelectedItems(this.newSelection); 
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(RoomController.class, "undoModifyRoomsName");
+      this.home.setSelectedItems(Arrays.asList(this.newSelection));
     }
   }
 
@@ -1702,7 +1694,7 @@ public class RoomController implements Controller {
   /**
    * A wall side.  
    */
-  private class WallSide {
+  private static class WallSide {
     public static final int LEFT_SIDE = 0;
     public static final int RIGHT_SIDE = 1;
     
@@ -1754,7 +1746,7 @@ public class RoomController implements Controller {
   /**
    * A modified wall.  
    */
-  private class ModifiedWall {
+  private static class ModifiedWall {
     private Wall          wall;
     private final Level   level;
     private final Wall    wallAtStart;

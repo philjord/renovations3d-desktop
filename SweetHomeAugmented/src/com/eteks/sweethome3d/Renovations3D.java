@@ -102,6 +102,16 @@ import javaawt.imageio.VMImageIO;
  * and the files he imported in furniture and textures catalogs. This folder may be the same as the
  * folder cited in <code>com.eteks.sweethome3d.applicationFolders</code> property.</li>
  * 
+ * <li><code>com.eteks.sweethome3d.singleInstance</code> can be set to <code>false</code> to prevent Sweet Home 3D
+ * from running as a single instance under operating systems different from Mac OS X. By default, it will try to
+ * run as a single instance when possible.
+ *
+ * <li><code>com.eteks.sweethome3d.resolutionScale</code> can be set to a decimal value different from 1 to enlarge
+ * or reduce user interface elements with a given factor. For example, <code>1.2</code> will make them look 20% larger.
+ *
+ * <li><code>com.eteks.sweethome3d.CSVEncoding</code> can be set to change the default UTF-8 encoding used to export
+ * furniture list to CVS text files.</li>
+ *
  * <li><code>com.eteks.sweethome3d.no3D</code> should be set to <code>true</code> 
  * if 3D capabilities (including 3D view and importing furniture 3D models) shouldn't be used in Sweet Home 3D. 
  * 
@@ -110,6 +120,9 @@ import javaawt.imageio.VMImageIO;
  * This means offscreen 3D images isn't supported by your video driver and Sweet Home 3D doesn't even succeed
  * to test this support. Setting this System property to <code>false</code> disables this test.</li>
  * 
+ * <li><code>com.eteks.sweethome3d.j3d.useOffScreen3DView</code> can be set to <code>true</code> to force Sweet Home 3D
+ * to use offscreen view for its 3D view and other 3D panels displayed at screen.</li>
+ *
  * <li><code>com.eteks.sweethome3d.j3d.additionalLoaderClasses</code> defines additional Java 3D 
  * {@linkplain com.sun.j3d.loaders.Loader loader} classes that Sweet Home 3D will use to read 3D models content
  * at formats not supported by default in Sweet Home 3D.<br>

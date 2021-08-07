@@ -122,10 +122,10 @@ public class Ground3D extends Object3DBranch {
     backgroundImageAppearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
         TexCoordGeneration.TEXTURE_COORDINATE_2, new Vector4f(1, 0, 0, .5f), new Vector4f(0, 1, -1, .5f)));
     backgroundImageAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-    backgroundImageAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
     RenderingAttributes renderingAttributes = new RenderingAttributes();
     renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);    
     backgroundImageAppearance.setRenderingAttributes(renderingAttributes);
+    backgroundImageAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
     backgroundImageAppearance.setUpdatableCapabilities();
     
     TransformGroup transformGroup = new TransformGroup();

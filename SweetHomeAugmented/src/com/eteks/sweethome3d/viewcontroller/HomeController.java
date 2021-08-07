@@ -48,14 +48,12 @@ import java.util.concurrent.Callable;
 
 import javaxswing.event.UndoableEditEvent;
 import javaxswing.event.UndoableEditListener;
-import javaxswing.undo.AbstractUndoableEdit;
 import javaxswing.undo.CannotRedoException;
 import javaxswing.undo.CannotUndoException;
 import javaxswing.undo.CompoundEdit;
 import javaxswing.undo.UndoManager;
 import javaxswing.undo.UndoableEdit;
 import javaxswing.undo.UndoableEditSupport;
-
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -144,8 +142,8 @@ public class HomeController implements Controller {
                         HomeApplication application,
                         ViewFactory    viewFactory, 
                         ContentManager contentManager) {
-    this(home, application.getUserPreferences(), viewFactory, 
-        contentManager, application);
+    this(home, application, application.getUserPreferences(),
+        viewFactory, contentManager);
   }
 
   /**
@@ -157,7 +155,7 @@ public class HomeController implements Controller {
   public HomeController(Home home, 
                         HomeApplication application,
                         ViewFactory viewFactory) {
-    this(home, application.getUserPreferences(), viewFactory, null, application);
+    this(home, application, application.getUserPreferences(), viewFactory, null);
   }
 
   /**
@@ -169,7 +167,7 @@ public class HomeController implements Controller {
   public HomeController(Home home, 
                         UserPreferences preferences,
                         ViewFactory viewFactory) {
-    this(home, preferences, viewFactory, null, null);
+    this(home, null, preferences, viewFactory, null);
   }
 
   /**
@@ -183,14 +181,14 @@ public class HomeController implements Controller {
                         UserPreferences preferences,
                         ViewFactory    viewFactory,
                         ContentManager contentManager) {
-    this(home, preferences, viewFactory, contentManager, null);
+    this(home, null, preferences, viewFactory, contentManager);
   }
 
   private HomeController(final Home home, 
+                         HomeApplication application,
                          final UserPreferences preferences,
                          ViewFactory    viewFactory,
-                         ContentManager contentManager,
-                         HomeApplication application) {
+                         ContentManager contentManager) {
     this.home = home;
     this.preferences = preferences;
     this.viewFactory = viewFactory;
@@ -216,20 +214,8 @@ public class HomeController implements Controller {
       recentHomes.remove(home.getName());
       recentHomes.add(0, home.getName());
       updateUserPreferencesRecentHomes(recentHomes);
-      
-      // If home version is more recent than current version
-      if (home.getVersion() > Home.CURRENT_VERSION) {
-        // Warn the user that view will display a home created with a more recent version 
-        getView().invokeLater(new Runnable() { 
-            public void run() {
-              String message = preferences.getLocalizedString(HomeController.class, 
-                  "moreRecentVersionHome", home.getName());
-              getView().showMessage(message);
-            }
-          });
       }
     }
-  }
 
   /**
    * Enables actions at controller instantiation. 
@@ -305,22 +291,14 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.PAN, true);
     homeView.setEnabled(HomeView.ActionType.LOCK_BASE_PLAN, true);
     homeView.setEnabled(HomeView.ActionType.UNLOCK_BASE_PLAN, true);
+    homeView.setEnabled(HomeView.ActionType.ENABLE_MAGNETISM, true);
+    homeView.setEnabled(HomeView.ActionType.DISABLE_MAGNETISM, true);
     homeView.setEnabled(HomeView.ActionType.MODIFY_COMPASS, true);
     Level selectedLevel = this.home.getSelectedLevel();
     enableBackgroungImageActions(homeView, selectedLevel != null
         ? selectedLevel.getBackgroundImage()
         : this.home.getBackgroundImage());
-    homeView.setEnabled(HomeView.ActionType.ADD_LEVEL, true);
-    homeView.setEnabled(HomeView.ActionType.ADD_LEVEL_AT_SAME_ELEVATION, true);
-    List<Level> levels = this.home.getLevels();
-    boolean homeContainsOneSelectedLevel = levels.size() > 1 && selectedLevel != null;
-    homeView.setEnabled(HomeView.ActionType.SELECT_ALL_AT_ALL_LEVELS, levels.size() > 1);
-    homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_VIEWABLE, homeContainsOneSelectedLevel);
-    homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_UNVIEWABLE, homeContainsOneSelectedLevel);
-    homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_ONLY_VIEWABLE_ONE, homeContainsOneSelectedLevel);
-    homeView.setEnabled(HomeView.ActionType.MAKE_ALL_LEVELS_VIEWABLE, levels.size() > 1);
-    homeView.setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);
-    homeView.setEnabled(HomeView.ActionType.DELETE_LEVEL, homeContainsOneSelectedLevel);
+    enableLevelActions(homeView);
     homeView.setEnabled(HomeView.ActionType.ZOOM_IN, true);
     homeView.setEnabled(HomeView.ActionType.ZOOM_OUT, true);
     homeView.setEnabled(HomeView.ActionType.EXPORT_TO_SVG, true); 
@@ -331,8 +309,6 @@ public class HomeController implements Controller {
     boolean emptyStoredCameras = home.getStoredCameras().isEmpty();
     homeView.setEnabled(HomeView.ActionType.DELETE_POINTS_OF_VIEW, !emptyStoredCameras);
     homeView.setEnabled(HomeView.ActionType.CREATE_PHOTOS_AT_POINTS_OF_VIEW, !emptyStoredCameras);
-    homeView.setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);
-    homeView.setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, levels.size() > 1);
     homeView.setEnabled(HomeView.ActionType.DETACH_3D_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.ATTACH_3D_VIEW, true);
     homeView.setEnabled(HomeView.ActionType.VIEW_FROM_OBSERVER, true);
@@ -344,6 +320,27 @@ public class HomeController implements Controller {
     homeView.setEnabled(HomeView.ActionType.ABOUT, true);
     enableCreationToolsActions(homeView);
     homeView.setTransferEnabled(true);
+  }
+
+  /**
+   * Enables actions handling levels.
+   */
+  private void enableLevelActions(HomeView homeView) {
+    boolean modificationState = getPlanController().isModificationState();
+    homeView.setEnabled(HomeView.ActionType.ADD_LEVEL, !modificationState);
+    homeView.setEnabled(HomeView.ActionType.ADD_LEVEL_AT_SAME_ELEVATION, !modificationState);
+    List<Level> levels = this.home.getLevels();
+    Level selectedLevel = this.home.getSelectedLevel();
+    boolean homeContainsOneSelectedLevel = levels.size() > 1 && selectedLevel != null;
+    homeView.setEnabled(HomeView.ActionType.SELECT_ALL_AT_ALL_LEVELS, !modificationState && levels.size() > 1);
+    homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_VIEWABLE, !modificationState && homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_UNVIEWABLE, !modificationState && homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.MAKE_LEVEL_ONLY_VIEWABLE_ONE, homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.MAKE_ALL_LEVELS_VIEWABLE, levels.size() > 1);
+    homeView.setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.DELETE_LEVEL, !modificationState && homeContainsOneSelectedLevel);
+    homeView.setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);
+    homeView.setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, levels.size() > 1);
   }
 
   /**
@@ -367,6 +364,19 @@ public class HomeController implements Controller {
       this.homeView = this.viewFactory.createHomeView(this.home, this.preferences, this);
       enableDefaultActions(this.homeView);
       addListeners();
+
+      // If home version is more recent than current version
+      if (this.home.getName() != null
+          && this.home.getVersion() > Home.CURRENT_VERSION) {
+        // Warn the user that view will display a home created with a more recent version
+        this.homeView.invokeLater(new Runnable() {
+            public void run() {
+              String message = preferences.getLocalizedString(HomeController.class,
+                  "moreRecentVersionHome", home.getName());
+              getView().showMessage(message);
+            }
+          });
+      }
     }
     return this.homeView;
   }
@@ -442,11 +452,8 @@ public class HomeController implements Controller {
         new FurnitureCatalogChangeListener(this));
     this.preferences.getTexturesCatalog().addTexturesListener(
         new TexturesCatalogChangeListener(this));
-    UserPreferencesPropertiesChangeListener listener = 
-        new UserPreferencesPropertiesChangeListener(this);
-    for (UserPreferences.Property property : UserPreferences.Property.values()) {
-      this.preferences.addPropertyChangeListener(property, listener);
-    }
+    // Listen to all property changes to save them when any of them change
+    this.preferences.addPropertyChangeListener(new UserPreferencesPropertiesChangeListener(this));
       
     addCatalogSelectionListener();
     addHomeBackgroundImageListener();
@@ -1124,7 +1131,7 @@ public class HomeController implements Controller {
     this.home.addLabelsListener((CollectionListener<Label>)homeItemsListener);
     this.home.getCompass().addPropertyChangeListener(new PropertyChangeListener() {
         public void propertyChange(PropertyChangeEvent ev) {
-          if (Compass.Property.VISIBLE.equals(ev.getPropertyName())) {
+          if (Compass.Property.VISIBLE.name().equals(ev.getPropertyName())) {
             enableSelectAllAction();
           }
         }
@@ -1155,21 +1162,12 @@ public class HomeController implements Controller {
             }
             home.setSelectedItems(selectedItemsAtLevel);
           }
-          enableCreationToolsActions(getView());
-          enableBackgroungImageActions(getView(), selectedLevel == null 
+          HomeView view = getView();
+          enableCreationToolsActions(view);
+          enableBackgroungImageActions(view, selectedLevel == null
               ? home.getBackgroundImage()
               : selectedLevel.getBackgroundImage());
-          List<Level> levels = home.getLevels();
-          boolean homeContainsOneSelectedLevel = levels.size() > 1 && selectedLevel != null;
-          getView().setEnabled(HomeView.ActionType.SELECT_ALL_AT_ALL_LEVELS, levels.size() > 1);
-          getView().setEnabled(HomeView.ActionType.MAKE_LEVEL_VIEWABLE, homeContainsOneSelectedLevel);
-          getView().setEnabled(HomeView.ActionType.MAKE_LEVEL_UNVIEWABLE, homeContainsOneSelectedLevel);
-          getView().setEnabled(HomeView.ActionType.MAKE_LEVEL_ONLY_VIEWABLE_ONE, homeContainsOneSelectedLevel);
-          getView().setEnabled(HomeView.ActionType.MAKE_ALL_LEVELS_VIEWABLE, levels.size() > 1);
-          getView().setEnabled(HomeView.ActionType.MODIFY_LEVEL, homeContainsOneSelectedLevel);
-          getView().setEnabled(HomeView.ActionType.DELETE_LEVEL, homeContainsOneSelectedLevel);
-          getView().setEnabled(HomeView.ActionType.DISPLAY_ALL_LEVELS, levels.size() > 1);
-          getView().setEnabled(HomeView.ActionType.DISPLAY_SELECTED_LEVEL, levels.size() > 1);
+          enableLevelActions(view);
         }
       };
     this.home.addPropertyChangeListener(Home.Property.SELECTED_LEVEL, selectedLevelListener);
@@ -1233,7 +1231,9 @@ public class HomeController implements Controller {
             enableActionsBoundToSelection();
             enableSelectAllAction();
             HomeView view = getView();
-            if (getPlanController().isModificationState()) {
+            enableLevelActions(view);
+            boolean modificationState = getPlanController().isModificationState();
+            if (modificationState) {
               view.setEnabled(HomeView.ActionType.PASTE, false);
               view.setEnabled(HomeView.ActionType.UNDO, false);
               view.setEnabled(HomeView.ActionType.REDO, false);
@@ -1242,6 +1242,8 @@ public class HomeController implements Controller {
               view.setEnabled(HomeView.ActionType.UNDO, undoManager.canUndo());
               view.setEnabled(HomeView.ActionType.REDO, undoManager.canRedo());
             }
+            view.setEnabled(HomeView.ActionType.LOCK_BASE_PLAN, !modificationState);
+            view.setEnabled(HomeView.ActionType.UNLOCK_BASE_PLAN, !modificationState);
           }
         });
     getPlanController().addPropertyChangeListener(PlanController.Property.MODE, 
@@ -1469,12 +1471,7 @@ public class HomeController implements Controller {
     undoSupport.beginUpdate();
     getPlanController().deleteItems(items);
     // Add a undoable edit to change presentation name
-    undoSupport.postEdit(new AbstractUndoableEdit() { 
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, "undoCutName");
-        }      
-      });
+    undoSupport.postEdit(new LocalizedUndoableEdit(preferences, HomeController.class, "undoCutName"));
     // End compound edit
     undoSupport.endUpdate();
   }
@@ -1554,7 +1551,8 @@ public class HomeController implements Controller {
       // Start a compound edit that adds walls, furniture, rooms, dimension lines, polylines and labels to home
       UndoableEditSupport undoSupport = getUndoableEditSupport();
       undoSupport.beginUpdate();
-      if (destinationView == getFurnitureController().getView()) {
+      if (destinationView != null
+          && destinationView == getFurnitureController().getView()) {
         getFurnitureController().addFurniture(Home.getFurnitureSubList(items), (HomePieceOfFurniture)beforeItem);
       } else {
       getPlanController().addItems(items);
@@ -1570,12 +1568,7 @@ public class HomeController implements Controller {
         getPlanController().adjustMagnetizedPieceOfFurniture((HomePieceOfFurniture)items.get(0), dx, dy);
       } 
       }
-      undoSupport.postEdit(new AbstractUndoableEdit() {      
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(HomeController.class, presentationNameKey);
-          }      
-        });
+      undoSupport.postEdit(new LocalizedUndoableEdit(this.preferences, HomeController.class, presentationNameKey));
      
       // End compound edit
       undoSupport.endUpdate();
@@ -1636,22 +1629,33 @@ public class HomeController implements Controller {
       this.home.setSelectedItems(importedFurniture);
       
       // Add a undoable edit that will select the imported furniture at redo
-      undoSupport.postEdit(new AbstractUndoableEdit() {      
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            home.setSelectedItems(importedFurniture);
-          }
+      undoSupport.postEdit(new DroppingEndUndoableEdit(this.home, this.preferences,
+          importedFurniture.toArray(new HomePieceOfFurniture [importedFurniture.size()])));
+    }
   
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(HomeController.class, "undoDropName");
-          }      
-        });
+	// End compound edit
+	undoSupport.endUpdate();
+  }      
+
+  /**
+   * Undoable edit for dropping end.
+   */
+  private static class DroppingEndUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final HomePieceOfFurniture [] importedFurniture;
+
+    public DroppingEndUndoableEdit(Home home, UserPreferences preferences,
+                                   HomePieceOfFurniture [] importedFurniture) {
+      super(preferences, HomeController.class, "undoDropName");
+      this.home = home;
+      this.importedFurniture = importedFurniture;
     }
    
-    // End compound edit
-    undoSupport.endUpdate();
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      home.setSelectedItems(Arrays.asList(this.importedFurniture));
+    }
   }
 
   /**
@@ -1666,13 +1670,7 @@ public class HomeController implements Controller {
     getFurnitureController().addFurnitureToGroup(addedFurniture, 
         (HomeFurnitureGroup)this.home.getSelectedItems().get(0));
     adjustFurnitureSizeAndElevation(addedFurniture, true);
-    undoSupport.postEdit(new AbstractUndoableEdit() {      
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, "undoPasteToGroupName");
-        }      
-      });
-   
+    undoSupport.postEdit(new LocalizedUndoableEdit(preferences, HomeController.class, "undoPasteToGroupName"));
     // End compound edit
     undoSupport.endUpdate();
   }
@@ -1798,21 +1796,31 @@ public class HomeController implements Controller {
     } 
     
     // Add a undoable edit to change presentation name
-    undoSupport.postEdit(new AbstractUndoableEdit() {      
-        @Override
-        public void redo() throws CannotRedoException {
-          home.setSelectedItems(selectedItems);
-          super.redo();
-        }
-  
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, "undoPasteStyleName");
-        }      
-      });
+    undoSupport.postEdit(new PastingStyleEndUndoableEdit(this.home, this.preferences,
+        selectedItems.toArray(new Selectable [selectedItems.size()])));
     // End compound edit
     undoSupport.endUpdate();
   }
+
+  /**
+   * Undoable edit for pasting style end.
+   */
+  private static class PastingStyleEndUndoableEdit extends LocalizedUndoableEdit {
+    private final Home home;
+    private final Selectable [] selectedItems;
+
+    public PastingStyleEndUndoableEdit(Home home, UserPreferences preferences, Selectable [] selectedItems) {
+      super(preferences, HomeController.class, "undoPasteStyleName");
+      this.home = home;
+      this.selectedItems = selectedItems;
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedItems(Arrays.asList(this.selectedItems));
+    }
+  }      
   
   /**
    * Returns the transfer data matching the requested types.
@@ -2783,6 +2791,20 @@ public class HomeController implements Controller {
   }
   
   /**
+   * Enables magnetism in preferences.
+   */
+  public void enableMagnetism() {
+    this.preferences.setMagnetismEnabled(true);
+  }
+
+  /**
+   * Disables magnetism in preferences.
+   */
+  public void disableMagnetism() {
+    this.preferences.setMagnetismEnabled(false);
+  }
+
+  /**
    * Displays a tip message dialog depending on the given mode and 
    * sets the active mode of the plan controller. 
    */
@@ -2852,46 +2874,56 @@ public class HomeController implements Controller {
    */
   private void toggleBackgroundImageVisibility(final String presentationName) {
     final Level selectedLevel = this.home.getSelectedLevel();
-    doToggleBackgroundImageVisibility(); 
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          home.setSelectedLevel(selectedLevel);
-          doToggleBackgroundImageVisibility(); 
-        }
+    doToggleBackgroundImageVisibility(this.home);
+    getUndoableEditSupport().postEdit(new BackgroundImageVisibilityTogglingUndoableEdit(
+        this.home, this.preferences, presentationName, selectedLevel));
+  }
+
+  /**
+   * Undoable edit for toggling background image visibility.
+   */
+  private static class BackgroundImageVisibilityTogglingUndoableEdit extends LocalizedUndoableEdit {
+    private final Home  home;
+    private final Level selectedLevel;
+
+    private BackgroundImageVisibilityTogglingUndoableEdit(Home home, UserPreferences preferences, String presentationName,
+                                                          Level selectedLevel) {
+      super(preferences, HomeController.class, presentationName);
+      this.home = home;
+      this.selectedLevel = selectedLevel;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.home.setSelectedLevel(this.selectedLevel);
+      doToggleBackgroundImageVisibility(this.home);
+    }
         
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          home.setSelectedLevel(selectedLevel);
-          doToggleBackgroundImageVisibility();
-        }
-        
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(HomeController.class, presentationName);
-        }
-      };
-    getUndoableEditSupport().postEdit(undoableEdit);
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedLevel(this.selectedLevel);
+      doToggleBackgroundImageVisibility(this.home);
+    }
   }
 
   /**
    * Toggles visibility of the background image.
    */
-  private void doToggleBackgroundImageVisibility() {
-    BackgroundImage backgroundImage = this.home.getSelectedLevel() != null
-        ? this.home.getSelectedLevel().getBackgroundImage()
-        : this.home.getBackgroundImage();
+  private static void doToggleBackgroundImageVisibility(Home home) {
+    BackgroundImage backgroundImage = home.getSelectedLevel() != null
+        ? home.getSelectedLevel().getBackgroundImage()
+        : home.getBackgroundImage();
     backgroundImage = new BackgroundImage(backgroundImage.getImage(),
         backgroundImage.getScaleDistance(), 
         backgroundImage.getScaleDistanceXStart(), backgroundImage.getScaleDistanceYStart(), 
         backgroundImage.getScaleDistanceXEnd(), backgroundImage.getScaleDistanceYEnd(),
         backgroundImage.getXOrigin(), backgroundImage.getYOrigin(), !backgroundImage.isVisible());
-    if (this.home.getSelectedLevel() != null) {
-      this.home.getSelectedLevel().setBackgroundImage(backgroundImage);
+    if (home.getSelectedLevel() != null) {
+      home.getSelectedLevel().setBackgroundImage(backgroundImage);
     } else {
-      this.home.setBackgroundImage(backgroundImage);
+      home.setBackgroundImage(backgroundImage);
     }
   }
   
@@ -2908,35 +2940,47 @@ public class HomeController implements Controller {
       oldImage = this.home.getBackgroundImage();
       this.home.setBackgroundImage(null);
     }
-    UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-      @Override
-      public void undo() throws CannotUndoException {
-        super.undo();
-        home.setSelectedLevel(selectedLevel);
-        if (selectedLevel != null) {
-          selectedLevel.setBackgroundImage(oldImage);
-        } else {
-          home.setBackgroundImage(oldImage);
-        }
+    getUndoableEditSupport().postEdit(new BackgroundImageDeletionUndoableEdit(this.home, this.preferences,
+        selectedLevel, oldImage));
+  }
+
+  /**
+   * Undoable edit for background image deletion.
+   */
+  private static class BackgroundImageDeletionUndoableEdit extends LocalizedUndoableEdit {
+    private final Home            home;
+    private final Level           selectedLevel;
+    private final BackgroundImage oldImage;
+
+    private BackgroundImageDeletionUndoableEdit(Home home, UserPreferences preferences,
+                                                Level selectedLevel, BackgroundImage oldImage) {
+      super(preferences, HomeController.class, "undoDeleteBackgroundImageName");
+      this.home = home;
+      this.oldImage = oldImage;
+      this.selectedLevel = selectedLevel;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      this.home.setSelectedLevel(this.selectedLevel);
+      if (this.selectedLevel != null) {
+        this.selectedLevel.setBackgroundImage(this.oldImage);
+      } else {
+        this.home.setBackgroundImage(this.oldImage);
       }
+    }
       
-      @Override
-      public void redo() throws CannotRedoException {
-        super.redo();
-        home.setSelectedLevel(selectedLevel);
-        if (selectedLevel != null) {
-          selectedLevel.setBackgroundImage(null);
-        } else {
-          home.setBackgroundImage(null);
-        }
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedLevel(this.selectedLevel);
+      if (this.selectedLevel != null) {
+        this.selectedLevel.setBackgroundImage(null);
+      } else {
+        this.home.setBackgroundImage(null);
       }
-      
-      @Override
-      public String getPresentationName() {
-        return preferences.getLocalizedString(HomeController.class, "undoDeleteBackgroundImageName");
-      }
-    };
-    getUndoableEditSupport().postEdit(undoableEdit);
+    }
   }
   
   /**

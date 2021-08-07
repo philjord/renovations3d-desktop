@@ -58,6 +58,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.jogamp.java3d.BranchGroup;
+import org.jogamp.java3d.Transform3D;
 import javax.swing.Action;
 import javax.swing.ComboBoxEditor;
 import javax.swing.DefaultListCellRenderer;
@@ -85,9 +87,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-
-import org.jogamp.java3d.BranchGroup;
-import org.jogamp.java3d.Transform3D;
 import org.jogamp.vecmath.Matrix3f;
 import org.jogamp.vecmath.Vector3d;
 import org.jogamp.vecmath.Vector3f;
@@ -240,7 +239,7 @@ public class ImportedFurnitureWizardStepsPanel extends JPanel
                   ImportedFurnitureWizardStepsPanel.class, "findModelsMessage.title");
               findModelsMessageTextArea.setEditable(false);
               findModelsMessageTextArea.setOpaque(false);
-              JOptionPane.showMessageDialog(SwingUtilities.getRootPane(ImportedFurnitureWizardStepsPanel.this), 
+              SwingTools.showMessageDialog(ImportedFurnitureWizardStepsPanel.this,
                   findModelsMessageTextArea, findModelsTitle, 
                   JOptionPane.INFORMATION_MESSAGE);
             }

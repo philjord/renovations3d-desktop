@@ -17,6 +17,8 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+//PJPJPJ added to Renovations3D project so it can be not exported so a replacement can be created in Android project, identical to SweetHome3D
 package com.eteks.sweethome3d.io;
 
 import java.beans.PropertyChangeEvent;
@@ -108,6 +110,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String NEW_WALL_HEIGHT                           = "newHomeWallHeight";
   private static final String NEW_WALL_BASEBOARD_THICKNESS              = "newWallBaseboardThickness";
   private static final String NEW_WALL_BASEBOARD_HEIGHT                 = "newWallBaseboardHeight";
+  private static final String NEW_ROOM_FLOOR_COLOR                      = "newRoomFloorColor";
   private static final String NEW_FLOOR_THICKNESS                       = "newFloorThickness";
   private static final String CHECK_UPDATES_ENABLED                     = "checkUpdatesEnabled";
   private static final String UPDATES_MINIMUM_DATE                      = "updatesMinimumDate";
@@ -337,6 +340,12 @@ public class FileUserPreferences extends UserPreferences {
         defaultPreferences.getNewWallBaseboardThickness()));
     setNewWallBaseboardHeight(preferences.getFloat(NEW_WALL_BASEBOARD_HEIGHT,
         defaultPreferences.getNewWallBaseboardHeight()));
+    String newRoomFloorColor = preferences.get(NEW_ROOM_FLOOR_COLOR, null);
+    if (newRoomFloorColor != null) {
+      setNewRoomFloorColor(Integer.decode(newRoomFloorColor) | 0xFF000000);
+    } else {
+      setNewRoomFloorColor(defaultPreferences.getNewRoomFloorColor());
+    }
     setNewFloorThickness(preferences.getFloat(NEW_FLOOR_THICKNESS, 
         defaultPreferences.getNewFloorThickness()));
     setCheckUpdatesEnabled(preferences.getBoolean(CHECK_UPDATES_ENABLED,
@@ -867,7 +876,7 @@ public class FileUserPreferences extends UserPreferences {
   }
   
   /**
-   * Read modifiable textures catalog from preferences.
+   * Reads modifiable textures catalog from preferences.
    */
   private void readModifiableTexturesCatalog(Preferences preferences) {
     File preferencesFolder;
@@ -949,9 +958,9 @@ public class FileUserPreferences extends UserPreferences {
     }
     preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
     preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
-    preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, isAerialViewCenteredOnSelectionEnabled());
     preferences.putBoolean(OBSERVER_CAMERA_SELECTED_AT_CHANGE, isObserverCameraSelectedAtChange());
+    preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
     preferences.putBoolean(RULERS_VISIBLE, isRulersVisible());
     preferences.putBoolean(GRID_VISIBLE, isGridVisible());
     String defaultFontName = getDefaultFontName();
@@ -972,6 +981,12 @@ public class FileUserPreferences extends UserPreferences {
     preferences.putFloat(NEW_WALL_HEIGHT, getNewWallHeight());
     preferences.putFloat(NEW_WALL_BASEBOARD_THICKNESS, getNewWallBaseboardThickness());   
     preferences.putFloat(NEW_WALL_BASEBOARD_HEIGHT, getNewWallBaseboardHeight());
+    Integer newRoomFloorColor = getNewRoomFloorColor();
+    if (newRoomFloorColor != null) {
+      preferences.put(NEW_ROOM_FLOOR_COLOR, String.format("#%6X", newRoomFloorColor & 0xFFFFFF).replace(' ', '0'));
+    } else {
+      preferences.remove(NEW_ROOM_FLOOR_COLOR);
+    }
     preferences.putFloat(NEW_FLOOR_THICKNESS, getNewFloorThickness());   
     preferences.putBoolean(CHECK_UPDATES_ENABLED, isCheckUpdatesEnabled());
     Long updatesMinimumDate = getUpdatesMinimumDate();

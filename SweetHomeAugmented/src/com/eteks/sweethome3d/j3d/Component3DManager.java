@@ -164,6 +164,9 @@ public class Component3DManager {
     if (this.offScreenImageSupported == null) {
       if ("false".equalsIgnoreCase(System.getProperty(CHECK_OFF_SCREEN_IMAGE_SUPPORT, "true"))) {
         this.offScreenImageSupported = Boolean.FALSE;
+      } else if (OperatingSystem.isMacOSX()) {
+        // Avoid testing under macOS where it can lead to deadlocks during getOffScreenImage call with JOGL 2.4
+        this.offScreenImageSupported = Boolean.TRUE;
       } else {
         SimpleUniverse universe = null;
         try {
@@ -199,16 +202,14 @@ public class Component3DManager {
   private Canvas3D getCanvas3D(GraphicsConfiguration deviceConfiguration,
                                boolean offscreen,
                                final RenderingObserver renderingObserver) {
-	 	//PJPJPJPJPJ
-	  /*GraphicsConfiguration configuration;
+	  /* PJPJPJPJPJ GraphicsConfiguration configuration;
     if (GraphicsEnvironment.isHeadless()) {
       configuration = null;
     } else if (deviceConfiguration == null
                || deviceConfiguration.getDevice() == this.defaultScreenConfiguration.getDevice()) {
       configuration = this.defaultScreenConfiguration;
     } else {
-   
-      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D();      
+      GraphicsConfigTemplate3D template = createGraphicsConfigurationTemplate3D(this.depthSize);
       configuration = deviceConfiguration.getDevice().getBestConfiguration(template);
       if (configuration == null) {
         configuration = deviceConfiguration.getDevice().getBestConfiguration(new GraphicsConfigTemplate3D());
@@ -367,7 +368,7 @@ public class Component3DManager {
       offScreenCanvas.waitForOffScreenRendering();
       
       // If latch count becomes equal to 0 during the past instructions or in the coming 10 milliseconds, 
-      // this means that a rendering error happened
+      // this means that a rendering error happened (for example, in case changing default depth size isn't supported)
       if (latch.await(10, TimeUnit.MILLISECONDS)) {
         throw new IllegalRenderingStateException("Off screen rendering unavailable");
       }
@@ -385,7 +386,7 @@ public class Component3DManager {
           // Free off screen buffer and context
           offScreenCanvas.setOffScreenBuffer(null);
         } catch (NullPointerException ex) {          
-        	ex.printStackTrace();
+          // Java 3D 1.3 may throw an exception
         }
       }
       // Reset previous rendering error listener
@@ -485,8 +486,9 @@ public class Component3DManager {
         if (this.timer == null) {
           this.timer = new Timer(100, new ActionListener() {
               public void actionPerformed(ActionEvent ev) {
-                // Graphics parameter isn't actually used by Canvas3D class
-                ObservedCanvas3D.super.paint(null);
+                Graphics g = getGraphics();
+                ObservedCanvas3D.super.paint(g);
+                g.dispose();
               }
             });
           this.timer.setRepeats(false);            

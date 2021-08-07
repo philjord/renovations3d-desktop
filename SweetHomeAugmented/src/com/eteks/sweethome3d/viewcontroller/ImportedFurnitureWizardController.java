@@ -26,7 +26,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 
-import javaxswing.undo.AbstractUndoableEdit;
 import javaxswing.undo.CannotRedoException;
 import javaxswing.undo.CannotUndoException;
 import javaxswing.undo.UndoableEdit;
@@ -238,8 +237,8 @@ public class ImportedFurnitureWizardController extends WizardController
     this.home.setAllLevelsSelection(false);
     if (this.undoSupport != null) {
       UndoableEdit undoableEdit = new PieceOfFurnitureImportationUndoableEdit(
-          this.home, this.preferences, oldSelection, basePlanLocked, allLevelsSelection,
-          piece, pieceIndex);
+          this.home, this.preferences, oldSelection.toArray(new Selectable [oldSelection.size()]),
+          basePlanLocked, allLevelsSelection, piece, pieceIndex);
       this.undoSupport.postEdit(undoableEdit);
     }
   }
@@ -248,10 +247,9 @@ public class ImportedFurnitureWizardController extends WizardController
    * Undoable edit for piece importation. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class PieceOfFurnitureImportationUndoableEdit extends AbstractUndoableEdit {
+  private static class PieceOfFurnitureImportationUndoableEdit extends LocalizedUndoableEdit {
     private final Home                 home;
-    private final UserPreferences      preferences;
-    private final List<Selectable>     oldSelection;
+    private final Selectable []        oldSelection;
     private final boolean              oldBasePlanLocked;
     private final boolean              oldAllLevelsSelection;
     private final HomePieceOfFurniture piece;
@@ -259,13 +257,13 @@ public class ImportedFurnitureWizardController extends WizardController
 
     private PieceOfFurnitureImportationUndoableEdit(Home home,
                                                     UserPreferences preferences, 
-                                                    List<Selectable> oldSelection,
+                                                    Selectable [] oldSelection,
                                                     boolean oldBasePlanLocked,
                                                     boolean oldAllLevelsSelection, 
                                                     HomePieceOfFurniture piece, 
                                                     int pieceIndex) {
+      super(preferences, ImportedFurnitureWizardController.class, "undoImportFurnitureName");
       this.home = home;
-      this.preferences = preferences;
       this.oldSelection = oldSelection;
       this.oldBasePlanLocked = oldBasePlanLocked;
       this.oldAllLevelsSelection = oldAllLevelsSelection;
@@ -277,7 +275,7 @@ public class ImportedFurnitureWizardController extends WizardController
     public void undo() throws CannotUndoException {
       super.undo();
       this.home.deletePieceOfFurniture(this.piece);
-      this.home.setSelectedItems(this.oldSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
       this.home.setAllLevelsSelection(this.oldAllLevelsSelection);
       this.home.setBasePlanLocked(this.oldBasePlanLocked);
     }
@@ -291,12 +289,6 @@ public class ImportedFurnitureWizardController extends WizardController
         this.home.setBasePlanLocked(false);
       }
       this.home.setAllLevelsSelection(false);
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(ImportedFurnitureWizardController.class, 
-          "undoImportFurnitureName");
     }
   }
 

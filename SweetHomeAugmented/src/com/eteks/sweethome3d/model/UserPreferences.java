@@ -41,8 +41,6 @@ import java.util.PropertyPermission;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 
-import com.eteks.sweethome3d.viewcontroller.UserPreferencesController.Property;
-
 /**
  * User preferences.
  * @author Emmanuel Puybaret
@@ -55,7 +53,7 @@ public abstract class UserPreferences {
   public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, CURRENCY, VALUE_ADDED_TAX_ENABLED, DEFAULT_VALUE_ADDED_TAX_PERCENTAGE,
                         MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME,
         FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
-        NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_WALL_SIDEBOARD_THICKNESS, NEW_WALL_SIDEBOARD_HEIGHT, NEW_FLOOR_THICKNESS, 
+                        NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_WALL_SIDEBOARD_THICKNESS, NEW_WALL_SIDEBOARD_HEIGHT, NEW_ROOM_FLOOR_COLOR, NEW_FLOOR_THICKNESS,
         RECENT_HOMES, IGNORED_ACTION_TIP, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
         AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, OBSERVER_CAMERA_SELECTED_AT_CHANGE, CHECK_UPDATES_ENABLED, 
         UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS, RECENT_COLORS, RECENT_TEXTURES, HOME_EXAMPLES}
@@ -89,7 +87,7 @@ public abstract class UserPreferences {
     DEFAULT_SUPPORTED_LANGUAGES = defaultSupportedLanguages;
   }
   
-  private PropertyChangeSupport          propertyChangeSupport;//not final 
+  private PropertyChangeSupport          propertyChangeSupport;//PJ not final 
   private final Map<Class<?>, ResourceBundle>  classResourceBundles;
   private final Map<String, ResourceBundle>    resourceBundles;
 
@@ -121,6 +119,7 @@ public abstract class UserPreferences {
   private float            newWallHeight;
   private float            newWallBaseboardThickness;
   private float            newWallBaseboardHeight;
+  private Integer          newRoomFloorColor;
   private float            newFloorThickness;
   private List<String>     recentHomes;
   private boolean          checkUpdatesEnabled;
@@ -215,7 +214,28 @@ public abstract class UserPreferences {
   public abstract void write() throws RecorderException;
   
   /**
-   * Adds the <code>listener</code> in parameter to these preferences. 
+   * Adds the property change <code>listener</code> in parameter to these preferences.
+   * <br>Caution: a user preferences instance generally exists during all the application ;
+   * therefore you should take care of not bounding permanently listeners to this
+   * object (for example, do not create anonymous listeners on user preferences
+   * in classes depending on an edited home).
+   * @since 6.4
+   */
+  public void addPropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.addPropertyChangeListener(listener);
+  }
+
+  /**
+   * Removes the property change <code>listener</code> in parameter from these preferences.
+   * @since 6.4
+   */
+  public void removePropertyChangeListener(PropertyChangeListener listener) {
+    this.propertyChangeSupport.removePropertyChangeListener(listener);
+  }
+
+  /**
+   * Adds the <code>listener</code> in parameter to these preferences to listen
+   * to the changes of the given <code>property</code>.
    * <br>Caution: a user preferences instance generally exists during all the application ;
    * therefore you should take care of not bounding permanently listeners to this
    * object (for example, do not create anonymous listeners on user preferences
@@ -968,6 +988,28 @@ public abstract class UserPreferences {
       this.newWallBaseboardHeight = newWallBaseboardHeight;
       this.propertyChangeSupport.firePropertyChange(Property.NEW_WALL_SIDEBOARD_HEIGHT.name(), 
           oldHeight, newWallBaseboardHeight);
+    }
+  }
+
+  /**
+   * Returns the default color of new rooms in home.
+   * @since 6.4
+   */
+  public Integer getNewRoomFloorColor() {
+    return this.newRoomFloorColor;
+  }
+
+  /**
+   * Sets the default color of new rooms in home, and notifies
+   * listeners of this change.
+   * @since 6.4
+   */
+  public void setNewRoomFloorColor(Integer newRoomFloorColor) {
+    if (this.newRoomFloorColor != newRoomFloorColor) {
+      Integer oldRoomFloorColor = this.newRoomFloorColor;
+      this.newRoomFloorColor = newRoomFloorColor;
+      this.propertyChangeSupport.firePropertyChange(Property.NEW_ROOM_FLOOR_COLOR.name(),
+          oldRoomFloorColor, newRoomFloorColor);
     }
   }
 

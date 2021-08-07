@@ -71,9 +71,9 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
    * in an entry named <code>Home</code>.
    * @param compressionLevel 0-9
    * @param includeTemporaryContent if <code>true</code>, content instances of 
-   *            <code>TemporaryURLContent</code> class referenced by the saved home 
-   *            as well as the content previously saved with it will be written. 
-   *            If <code>false</code>, all the content instances 
+   *            <code>TemporaryURLContent</code> and <code>SimpleURLContent</code> classes
+   *            referenced by the saved home as well as the content previously saved with it
+   *            will be written. If <code>false</code>, all the content instances
    *            referenced by the saved home will be written in the zip stream.  
    */
   public DefaultHomeOutputStream(OutputStream out,
@@ -245,7 +245,6 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
             String zipEntryName = zipEntry.getName();
             if (zipEntryName.startsWith(entryDirectory)) {
               // PJPJ URLEncoder causes trouble on some jvms http://stackoverflow.com/questions/724043/http-url-address-encoding-in-java
-                
               Content siblingContent = new URLContent(new URL("jar:" + zipUrl + "!/" 
                   + URLEncoder.encode(zipEntryName, "UTF-8").replace("+", "%20").replace("%2F", "/")));             
               writeZipEntry(zipOut, entryNameOrDirectory + zipEntryName.substring(lastSlashIndex), siblingContent);
@@ -364,6 +363,7 @@ public class DefaultHomeOutputStream extends FilterOutputStream {
     protected Object replaceObject(Object obj) throws IOException {
       if (obj instanceof TemporaryURLContent 
           || obj instanceof HomeURLContent
+          || obj instanceof SimpleURLContent
           || (contentRecording == ContentRecording.INCLUDE_ALL_CONTENT && obj instanceof Content)) {
         String subEntryName = "";
         if (obj instanceof URLContent) {

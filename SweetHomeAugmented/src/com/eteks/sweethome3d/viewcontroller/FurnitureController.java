@@ -31,10 +31,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javaxswing.undo.AbstractUndoableEdit;
 import javaxswing.undo.CannotRedoException;
 import javaxswing.undo.CannotUndoException;
-import javaxswing.undo.UndoableEdit;
 import javaxswing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.CollectionEvent;
@@ -215,7 +213,7 @@ public class FurnitureController implements Controller {
     final HomePieceOfFurniture [] newFurniture = 
         furniture.toArray(new HomePieceOfFurniture [furniture.size()]);
     // Get indices of added furniture 
-    final int [] furnitureIndex = new int [furniture.size()];
+    final int [] newFurnitureIndex = new int [furniture.size()];
     int insertIndex = group == null
         ? this.home.getFurniture().size()
         : group.getFurniture().size();
@@ -227,20 +225,20 @@ public class FurnitureController implements Controller {
       }
       insertIndex = parentFurniture.indexOf(beforePiece);
     }
-    final HomeFurnitureGroup [] furnitureGroups = group != null
+    final HomeFurnitureGroup [] newFurnitureGroups = group != null
         ? new HomeFurnitureGroup [furniture.size()]
         : null;
     boolean basePlanLocked = oldBasePlanLocked;
     boolean levelUpdated = group != null || furnitureLevels == null;
-    for (int i = 0; i < furnitureIndex.length; i++) {
-      furnitureIndex [i] = insertIndex++;
+    for (int i = 0; i < newFurnitureIndex.length; i++) {
+      newFurnitureIndex [i] = insertIndex++;
       // Unlock base plan if the piece is a part of it
       basePlanLocked &= !isPieceOfFurniturePartOfBasePlan(newFurniture [i]);
       if (furnitureLevels != null) {
         levelUpdated |= furnitureLevels [i] == null;
       }
-      if (furnitureGroups != null) {
-        furnitureGroups [i] = group;
+      if (newFurnitureGroups != null) {
+        newFurnitureGroups [i] = group;
       }
     }  
     final Level [] newFurnitureLevels = levelUpdated ? null : furnitureLevels;
@@ -249,50 +247,82 @@ public class FurnitureController implements Controller {
         ? group.getLevel()
         : this.home.getSelectedLevel();
     
-    doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, newFurnitureLevels, newBasePlanLocked, false);
+    doAddFurniture(this.home, newFurniture, newFurnitureGroups, newFurnitureIndex, furnitureLevel, newFurnitureLevels, newBasePlanLocked, false);
     if (this.undoSupport != null) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-        @Override
-        public void undo() throws CannotUndoException {
-          super.undo();
-          doDeleteFurniture(newFurniture, oldBasePlanLocked, allLevelsSelection); 
-          home.setSelectedItems(oldSelection); 
-        }
-        
-        @Override
-        public void redo() throws CannotRedoException {
-          super.redo();
-          doAddFurniture(newFurniture, furnitureGroups, furnitureIndex, furnitureLevel, newFurnitureLevels, newBasePlanLocked, false);
-        }
-        
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(FurnitureController.class, "undoAddFurnitureName");
-        }
-      };
-      this.undoSupport.postEdit(undoableEdit);
+      this.undoSupport.postEdit(new FurnitureAdditionUndoableEdit(this.home, this.preferences,
+          oldSelection.toArray(new Selectable [oldSelection.size()]), oldBasePlanLocked, allLevelsSelection, newFurniture,
+          newFurnitureIndex, newFurnitureGroups, newFurnitureLevels, furnitureLevel, newBasePlanLocked));
+    }
+  }
+
+  /**
+   * Undoable edit for furniture added to home.
+   */
+  private static class FurnitureAdditionUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final boolean                 allLevelsSelection;
+    private final Selectable []           oldSelection;
+    private final boolean                 oldBasePlanLocked;
+    private final HomePieceOfFurniture [] newFurniture;
+    private final int []                  newFurnitureIndex;
+    private final HomeFurnitureGroup []   newFurnitureGroups;
+    private final Level []                newFurnitureLevels;
+    private final Level                   furnitureLevel;
+    private final boolean                 newBasePlanLocked;
+
+    public FurnitureAdditionUndoableEdit(Home home, UserPreferences preferences, Selectable[] oldSelection,
+                                         boolean oldBasePlanLocked, boolean allLevelsSelection,
+                                         HomePieceOfFurniture [] newFurniture, int [] newFurnitureIndex,
+                                         HomeFurnitureGroup [] newFurnitureGroups, Level [] newFurnitureLevels,
+                                         Level furnitureLevel, boolean newBasePlanLocked) {
+      super(preferences, FurnitureController.class, "undoAddFurnitureName");
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.allLevelsSelection = allLevelsSelection;
+      this.newFurniture = newFurniture;
+      this.newFurnitureIndex = newFurnitureIndex;
+      this.newFurnitureGroups = newFurnitureGroups;
+      this.newFurnitureLevels = newFurnitureLevels;
+      this.furnitureLevel = furnitureLevel;
+      this.newBasePlanLocked = newBasePlanLocked;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      doDeleteFurniture(this.home, this.newFurniture, this.oldBasePlanLocked, this.allLevelsSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
+    }
+    
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      doAddFurniture(this.home, this.newFurniture, this.newFurnitureGroups, this.newFurnitureIndex, this.furnitureLevel,
+      this.newFurnitureLevels, this.newBasePlanLocked, false);
     }
   }
   
-  private void doAddFurniture(HomePieceOfFurniture [] furniture,
-                              HomeFurnitureGroup [] furnitureGroups,
-                              int [] furnitureIndex, 
-                              Level furnitureLevel, 
-                              Level [] furnitureLevels,
-                              boolean basePlanLocked,
-                              boolean allLevelsSelection) {
+  private static void doAddFurniture(Home home,
+                                     HomePieceOfFurniture [] furniture,
+		                             HomeFurnitureGroup [] furnitureGroups,
+		                             int [] furnitureIndex, 
+		                             Level furnitureLevel, 
+		                             Level [] furnitureLevels,
+		                             boolean basePlanLocked,
+		                             boolean allLevelsSelection) {
     for (int i = 0; i < furnitureIndex.length; i++) {
       if (furnitureGroups != null && furnitureGroups [i] != null) {
-        this.home.addPieceOfFurnitureToGroup(furniture [i], furnitureGroups [i], furnitureIndex [i]);
+        home.addPieceOfFurnitureToGroup(furniture [i], furnitureGroups [i], furnitureIndex [i]);
         furniture [i].setVisible(furnitureGroups [i].isVisible());
       } else {
-        this.home.addPieceOfFurniture(furniture [i], furnitureIndex [i]);
+        home.addPieceOfFurniture(furniture [i], furnitureIndex [i]);
       }
       furniture [i].setLevel(furnitureLevels != null ? furnitureLevels [i] : furnitureLevel);
     }
-    this.home.setBasePlanLocked(basePlanLocked);
-    this.home.setSelectedItems(Arrays.asList(furniture)); 
-    this.home.setAllLevelsSelection(allLevelsSelection);
+    home.setBasePlanLocked(basePlanLocked);
+    home.setSelectedItems(Arrays.asList(furniture));
+    home.setAllLevelsSelection(allLevelsSelection);
   }
   
   /**
@@ -364,46 +394,74 @@ public class FurnitureController implements Controller {
         furnitureGroups [i++] = sortedMapEntry.getKey();
       }
     } 
-    doDeleteFurniture(furniture, basePlanLocked, false); 
+    doDeleteFurniture(this.home, furniture, basePlanLocked, false);
     if (this.undoSupport != null) {
-      UndoableEdit undoableEdit = new AbstractUndoableEdit() {
+      this.undoSupport.postEdit(new FurnitureDeletionUndoableEdit(this.home, this.preferences,
+          oldSelection.toArray(new Selectable [oldSelection.size()]), basePlanLocked, allLevelsSelection,
+          furniture, furnitureIndex, furnitureGroups, furnitureLevels));
+    }
+  }
+
+  /**
+   * Undoable edit for furniture deleted from home.
+   */
+  private static class FurnitureDeletionUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final Selectable []           oldSelection;
+    private final boolean                 basePlanLocked;
+    private final boolean                 allLevelsSelection;
+    private final HomePieceOfFurniture [] furniture;
+    private final int []                  furnitureIndex;
+    private final HomeFurnitureGroup []   furnitureGroups;
+    private final Level []                furnitureLevels;
+
+    public FurnitureDeletionUndoableEdit(Home home, UserPreferences preferences,
+                                         Selectable [] oldSelection, boolean basePlanLocked,
+                                         boolean allLevelsSelection, HomePieceOfFurniture [] furniture,
+                                         int [] furnitureIndex, HomeFurnitureGroup [] furnitureGroups,
+                                         Level [] furnitureLevels) {
+      super(preferences, FurnitureController.class, "undoDeleteSelectionName");
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.basePlanLocked = basePlanLocked;
+      this.allLevelsSelection = allLevelsSelection;
+      this.furniture = furniture;
+      this.furnitureIndex = furnitureIndex;
+      this.furnitureGroups = furnitureGroups;
+      this.furnitureLevels = furnitureLevels;
+    }
+
         @Override
         public void undo() throws CannotUndoException {
           super.undo();
-          doAddFurniture(furniture, furnitureGroups, furnitureIndex, null, furnitureLevels, basePlanLocked, allLevelsSelection); 
-          home.setSelectedItems(oldSelection);
+          doAddFurniture(this.home, this.furniture, this.furnitureGroups, this.furnitureIndex, null,
+          this.furnitureLevels, this.basePlanLocked, this.allLevelsSelection);
+      	  this.home.setSelectedItems(Arrays.asList(this.oldSelection));
         }
         
         @Override
         public void redo() throws CannotRedoException {
           super.redo();
-          home.setSelectedItems(Arrays.asList(furniture));
-          doDeleteFurniture(furniture, basePlanLocked, false); 
+          this.home.setSelectedItems(Arrays.asList(this.furniture));
+          doDeleteFurniture(this.home, this.furniture, this.basePlanLocked, false);
         }
-        
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(FurnitureController.class, "undoDeleteSelectionName");
-        }
-      };
-      this.undoSupport.postEdit(undoableEdit);
-    }
   }
   
-  private void doDeleteFurniture(HomePieceOfFurniture [] furniture, 
+  private static void doDeleteFurniture(Home home,
+                                        HomePieceOfFurniture [] furniture,
                                  boolean basePlanLocked,
                                  boolean allLevelsSelection) { 
     for (HomePieceOfFurniture piece : furniture) {
-      this.home.deletePieceOfFurniture(piece);
+      home.deletePieceOfFurniture(piece);
     }
-    this.home.setBasePlanLocked(basePlanLocked);
-    this.home.setAllLevelsSelection(allLevelsSelection);
+    home.setBasePlanLocked(basePlanLocked);
+    home.setAllLevelsSelection(allLevelsSelection);
   }
 
   /**
    * Searches all the groups among furniture and its children.
    */
-  private void searchGroups(List<HomePieceOfFurniture> furniture,
+  private static void searchGroups(List<HomePieceOfFurniture> furniture,
                             List<HomeFurnitureGroup> groups) {
     for (HomePieceOfFurniture piece : furniture) {
       if (piece instanceof HomeFurnitureGroup) {
@@ -416,7 +474,7 @@ public class FurnitureController implements Controller {
   /**
    * Returns the furniture group that contains the given <code>piece</code> or <code>null</code> if it can't be found.
    */
-  private HomeFurnitureGroup getPieceOfFurnitureGroup(HomePieceOfFurniture piece, 
+  private static HomeFurnitureGroup getPieceOfFurnitureGroup(HomePieceOfFurniture piece,
                                                       HomeFurnitureGroup furnitureGroup, 
                                                       List<HomePieceOfFurniture> furniture) {
     for (HomePieceOfFurniture homePiece : furniture) {
@@ -448,13 +506,7 @@ public class FurnitureController implements Controller {
       this.undoSupport.beginUpdate();
       deleteFurniture(movedFurniture);
       addFurniture(movedFurniture, furnitureLevels, null, beforePiece);
-      undoSupport.postEdit(new AbstractUndoableEdit() {
-        @Override
-        public String getPresentationName() {
-          return preferences.getLocalizedString(FurnitureController.class, "undoReorderName");
-        }
-      });
-
+      undoSupport.postEdit(new LocalizedUndoableEdit(this.preferences, FurnitureController.class, "undoReorderName"));
       // End compound edit
       undoSupport.endUpdate();
     }
@@ -477,8 +529,8 @@ public class FurnitureController implements Controller {
       selectedFurniture = getFurnitureNotPartOfBasePlan(selectedFurniture);
     }
     if (resetSelection) {
-    this.home.setSelectedItems(selectedFurniture);
-    this.home.setAllLevelsSelection(false);
+      this.home.setSelectedItems(selectedFurniture);
+      this.home.setAllLevelsSelection(false);
     } else {
       List<Selectable> selectedItems = new ArrayList<Selectable>(this.home.getSelectedItems());
       selectedFurniture = new ArrayList<HomePieceOfFurniture>(selectedFurniture);
@@ -504,7 +556,7 @@ public class FurnitureController implements Controller {
   public void selectAll() {
     setSelectedFurniture(this.home.getFurniture());
   }
-  
+
   /**
    * Returns <code>true</code> if the given <code>piece</code> isn't movable.
    */
@@ -514,7 +566,7 @@ public class FurnitureController implements Controller {
 
   /**
    * Returns <code>true</code> if the given <code>piece</code> may be moved.
-   * Default implementation always returns <code>true</code>. 
+   * Default implementation always returns <code>true</code>.
    */
   protected boolean isPieceOfFurnitureMovable(HomePieceOfFurniture piece) {
     return true;
@@ -522,7 +574,7 @@ public class FurnitureController implements Controller {
 
   /**
    * Returns <code>true</code> if the given <code>piece</code> may be deleted.
-   * Default implementation always returns <code>true</code>. 
+   * Default implementation always returns <code>true</code>.
    */
   protected boolean isPieceOfFurnitureDeletable(HomePieceOfFurniture piece) {
     return true;
@@ -547,7 +599,7 @@ public class FurnitureController implements Controller {
   private List<HomePieceOfFurniture> getFurnitureNotPartOfBasePlan(List<HomePieceOfFurniture> furniture) {
     List<HomePieceOfFurniture> furnitureNotPartOfBasePlan = new ArrayList<HomePieceOfFurniture>();
     for (HomePieceOfFurniture piece : furniture) {
-      if (!isPieceOfFurniturePartOfBasePlan(piece)) {        
+      if (!isPieceOfFurniturePartOfBasePlan(piece)) {
         furnitureNotPartOfBasePlan.add(piece);
       }
     }
@@ -555,7 +607,7 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Uses <code>furnitureProperty</code> to sort home furniture 
+   * Uses <code>furnitureProperty</code> to sort home furniture
    * or cancels home furniture sort if home is already sorted on <code>furnitureProperty</code>
    * @param furnitureProperty a property of {@link HomePieceOfFurniture HomePieceOfFurniture} class.
    */
@@ -563,7 +615,7 @@ public class FurnitureController implements Controller {
     if (furnitureProperty.equals(this.home.getFurnitureSortedProperty())) {
       this.home.setFurnitureSortedProperty(null);
     } else {
-      this.home.setFurnitureSortedProperty(furnitureProperty);      
+      this.home.setFurnitureSortedProperty(furnitureProperty);
     }
   }
 
@@ -578,17 +630,17 @@ public class FurnitureController implements Controller {
    * Controls the sort of the furniture in home. If home furniture isn't sorted
    * or is sorted on an other property, it will be sorted on the given
    * <code>furnitureProperty</code> in ascending order. If home furniture is already
-   * sorted on the given <code>furnitureProperty</code>, it will be sorted in descending 
-   * order, if the sort is in ascending order, otherwise it won't be sorted at all 
-   * and home furniture will be listed in insertion order. 
+   * sorted on the given <code>furnitureProperty</code>, it will be sorted in descending
+   * order, if the sort is in ascending order, otherwise it won't be sorted at all
+   * and home furniture will be listed in insertion order.
     * @param furnitureProperty  the furniture property on which the view wants
    *          to sort the furniture it displays.
    */
   public void sortFurniture(HomePieceOfFurniture.SortableProperty furnitureProperty) {
     // Compute sort algorithm described in javadoc
-    final HomePieceOfFurniture.SortableProperty  oldProperty = 
+    final HomePieceOfFurniture.SortableProperty  oldProperty =
         this.home.getFurnitureSortedProperty();
-    final boolean oldDescending = this.home.isFurnitureDescendingSorted(); 
+    final boolean oldDescending = this.home.isFurnitureDescendingSorted();
     boolean descending = false;
     if (furnitureProperty.equals(oldProperty)) {
       if (oldDescending) {
@@ -602,17 +654,17 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Updates the furniture visible properties in home.  
+   * Updates the furniture visible properties in home.
    */
   public void setFurnitureVisibleProperties(List<HomePieceOfFurniture.SortableProperty> furnitureVisibleProperties) {
     this.home.setFurnitureVisibleProperties(furnitureVisibleProperties);
   }
-  
+
   /**
-   * Toggles furniture property visibility in home. 
+   * Toggles furniture property visibility in home.
    */
   public void toggleFurnitureVisibleProperty(HomePieceOfFurniture.SortableProperty furnitureProperty) {
-    List<SortableProperty> furnitureVisibleProperties = 
+    List<SortableProperty> furnitureVisibleProperties =
         new ArrayList<SortableProperty>(this.home.getFurnitureVisibleProperties());
     if (furnitureVisibleProperties.contains(furnitureProperty)) {
       furnitureVisibleProperties.remove(furnitureProperty);
@@ -621,13 +673,13 @@ public class FurnitureController implements Controller {
         furnitureVisibleProperties.add(HomePieceOfFurniture.SortableProperty.NAME);
       }
     } else {
-      // Add furniture property after the visible property that has the previous index in 
+      // Add furniture property after the visible property that has the previous index in
       // the following list
-      List<HomePieceOfFurniture.SortableProperty> propertiesOrder = 
+      List<HomePieceOfFurniture.SortableProperty> propertiesOrder =
           Arrays.asList(new HomePieceOfFurniture.SortableProperty [] {
-              HomePieceOfFurniture.SortableProperty.CATALOG_ID, 
-              HomePieceOfFurniture.SortableProperty.NAME, 
-              HomePieceOfFurniture.SortableProperty.CREATOR, 
+              HomePieceOfFurniture.SortableProperty.CATALOG_ID,
+              HomePieceOfFurniture.SortableProperty.NAME,
+              HomePieceOfFurniture.SortableProperty.CREATOR,
               HomePieceOfFurniture.SortableProperty.WIDTH,
               HomePieceOfFurniture.SortableProperty.DEPTH,
               HomePieceOfFurniture.SortableProperty.HEIGHT,
@@ -645,9 +697,9 @@ public class FurnitureController implements Controller {
               HomePieceOfFurniture.SortableProperty.PRICE,
               HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX_PERCENTAGE,
               HomePieceOfFurniture.SortableProperty.VALUE_ADDED_TAX,
-              HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED}); 
+              HomePieceOfFurniture.SortableProperty.PRICE_VALUE_ADDED_TAX_INCLUDED});
       int propertyIndex = propertiesOrder.indexOf(furnitureProperty) - 1;
-      if (propertyIndex > 0) {      
+      if (propertyIndex > 0) {
         while (propertyIndex > 0) {
           int visiblePropertyIndex = furnitureVisibleProperties.indexOf(propertiesOrder.get(propertyIndex));
           if (visiblePropertyIndex >= 0) {
@@ -665,13 +717,13 @@ public class FurnitureController implements Controller {
     }
     this.home.setFurnitureVisibleProperties(furnitureVisibleProperties);
   }
-  
+
   /**
    * Controls the modification of selected furniture.
    */
   public void modifySelectedFurniture() {
     if (!Home.getFurnitureSubList(this.home.getSelectedItems()).isEmpty()) {
-      new HomeFurnitureController(this.home, this.preferences,  
+      new HomeFurnitureController(this.home, this.preferences,
           this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());
     }
   }
@@ -681,7 +733,7 @@ public class FurnitureController implements Controller {
    */
   public void toggleSelectedFurnitureVisibility() {
     if (Home.getFurnitureSubList(this.home.getSelectedItems()).size() == 1) {
-      HomeFurnitureController controller = new HomeFurnitureController(this.home, this.preferences,  
+      HomeFurnitureController controller = new HomeFurnitureController(this.home, this.preferences,
           this.viewFactory, this.contentManager, this.undoSupport);
       controller.setVisible(!controller.getVisible());
       controller.modifyFurniture();
@@ -692,8 +744,8 @@ public class FurnitureController implements Controller {
    * Groups the selected furniture as one piece of furniture.
    */
   public void groupSelectedFurniture() {
-    List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
-    if (!selectedFurniture.isEmpty()) {
+    HomePieceOfFurniture [] selectedFurniture = getMovableSelectedFurniture();
+    if (selectedFurniture.length > 0) {
       final boolean basePlanLocked = this.home.isBasePlanLocked();
       final boolean allLevelsSelection = this.home.isAllLevelsSelection();
       final List<Selectable> oldSelection = this.home.getSelectedItems();
@@ -716,11 +768,11 @@ public class FurnitureController implements Controller {
         }
         groupedFurnitureCount++;
       }
-      final HomePieceOfFurniture [] groupedPieces = new HomePieceOfFurniture [groupedFurnitureCount]; 
+      final HomePieceOfFurniture [] groupedPieces = new HomePieceOfFurniture [groupedFurnitureCount];
       final int [] groupedPiecesIndex = new int [groupedPieces.length];
       final Level [] groupedPiecesLevel = new Level [groupedPieces.length];
-      final float [] groupPiecesElevation = new float [groupedPieces.length];
-      final boolean [] groupPiecesVisible = new boolean [groupedPieces.length];
+      final float [] groupedPiecesElevation = new float [groupedPieces.length];
+      final boolean [] groupedPiecesVisible = new boolean [groupedPieces.length];
       final HomeFurnitureGroup [] groupedPiecesGroups = new HomeFurnitureGroup [groupedPieces.length];
       Level minLevel = this.home.getSelectedLevel();
       int i = 0;
@@ -730,8 +782,8 @@ public class FurnitureController implements Controller {
           groupedPieces [i] = piece;
           groupedPiecesIndex [i] = pieceEntry.getKey();
           groupedPiecesLevel [i] = piece.getLevel();
-          groupPiecesElevation [i] = piece.getElevation();
-          groupPiecesVisible [i] = piece.isVisible();
+          groupedPiecesElevation [i] = piece.getElevation();
+          groupedPiecesVisible [i] = piece.isVisible();
           groupedPiecesGroups [i] = sortedMapEntry.getKey();
           if (groupedPiecesLevel [i] != null) {
             if (minLevel == null
@@ -741,13 +793,13 @@ public class FurnitureController implements Controller {
           }
           i++;
         }
-      } 
-      final HomeFurnitureGroup group;
+      }
+      final HomeFurnitureGroup newGroup;
       List<HomePieceOfFurniture> groupedFurniture = Arrays.asList(groupedPieces);
       if (groupedFurniture.indexOf(this.leadSelectedPieceOfFurniture) > 0) {
-        group = createHomeFurnitureGroup(groupedFurniture, this.leadSelectedPieceOfFurniture);
+        newGroup = createHomeFurnitureGroup(groupedFurniture, this.leadSelectedPieceOfFurniture);
       } else {
-        group = createHomeFurnitureGroup(groupedFurniture);
+        newGroup = createHomeFurnitureGroup(groupedFurniture);
       }
       // Store piece elevation that could have been updated during grouping
       final float [] groupPiecesNewElevation = new float [groupedPieces.length];
@@ -756,48 +808,91 @@ public class FurnitureController implements Controller {
         groupPiecesNewElevation [i++] = piece.getElevation();
       }
       TreeMap<Integer, HomePieceOfFurniture> homeSortedMap = groupedFurnitureMap.get(null);
-      final int groupIndex = homeSortedMap != null 
+      final int groupIndex = homeSortedMap != null
           ? homeSortedMap.lastKey() + 1 - groupedPieces.length
           : homeFurniture.size();
-      final boolean movable = group.isMovable();
+      final boolean movable = newGroup.isMovable();
       final Level groupLevel = minLevel;
-      
-      doGroupFurniture(groupedPieces, new HomeFurnitureGroup [] {group}, 
+
+      doGroupFurniture(this.home, groupedPieces, new HomeFurnitureGroup [] {newGroup},
           null, new int [] {groupIndex}, new Level [] {groupLevel}, basePlanLocked, false);
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-            @Override
-            public void undo() throws CannotUndoException {
-              super.undo();
-              doUngroupFurniture(new HomeFurnitureGroup [] {group}, groupedPieces, 
-                  groupedPiecesGroups, groupedPiecesIndex, groupedPiecesLevel, basePlanLocked, allLevelsSelection);
-              for (int i = 0; i < groupedPieces.length; i++) {
-                groupedPieces [i].setElevation(groupPiecesElevation [i]);
-                groupedPieces [i].setVisible(groupPiecesVisible [i]);
-              }
-              home.setSelectedItems(oldSelection);
-            }
-            
-            @Override
-            public void redo() throws CannotRedoException {
-              super.redo();
-              for (int i = 0; i < groupedPieces.length; i++) {
-                groupedPieces [i].setElevation(groupPiecesNewElevation [i]);
-                groupedPieces [i].setLevel(null);
-              }
-              group.setMovable(movable);
-              group.setVisible(true);
-              doGroupFurniture(groupedPieces, new HomeFurnitureGroup [] {group}, 
-                  null, new int [] {groupIndex}, new Level [] {groupLevel}, basePlanLocked, false);
-            }
-            
-            @Override
-            public String getPresentationName() {
-              return preferences.getLocalizedString(FurnitureController.class, "undoGroupName");
-            }
-          };
-        this.undoSupport.postEdit(undoableEdit);
+        this.undoSupport.postEdit(new FurnitureGroupingUndoableEdit(this.home, this.preferences,
+            oldSelection.toArray(new Selectable [oldSelection.size()]), basePlanLocked, allLevelsSelection,
+            groupedPieces, groupedPiecesIndex, groupedPiecesGroups, groupedPiecesLevel, groupedPiecesElevation, groupedPiecesVisible,
+            newGroup, groupIndex, groupLevel, groupPiecesNewElevation, movable));
       }
+    }
+  }
+
+  /**
+   * Undoable edit for furniture grouping.
+   */
+  private static class FurnitureGroupingUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final Selectable []           oldSelection;
+    private final boolean                 basePlanLocked;
+    private final boolean                 allLevelsSelection;
+    private final HomePieceOfFurniture [] groupedPieces;
+    private final int []                  groupedPiecesIndex;
+    private final HomeFurnitureGroup []   groupedPiecesGroups;
+    private final Level []                groupedPiecesLevel;
+    private final float []                groupedPiecesElevation;
+    private final boolean []              groupedPiecesVisible;
+    private final HomeFurnitureGroup      newGroup;
+    private final int                     groupIndex;
+    private final Level                   groupLevel;
+    private final float []                groupPiecesNewElevation;
+    private final boolean                 movable;
+
+    public FurnitureGroupingUndoableEdit(Home home, UserPreferences preferences,
+                                         Selectable[] oldSelection, boolean basePlanLocked, boolean allLevelsSelection,
+                                         HomePieceOfFurniture [] groupedPieces, int [] groupedPiecesIndex,
+                                         HomeFurnitureGroup [] groupedPiecesGroups, Level [] groupedPiecesLevel,
+                                         float [] groupedPiecesElevation, boolean [] groupedPiecesVisible,
+                                         HomeFurnitureGroup newGroup, int groupIndex,
+                                         Level groupLevel, float [] groupPiecesNewElevation, boolean movable) {
+      super(preferences, FurnitureController.class, "undoGroupName");
+      this.home = home;
+      this.basePlanLocked = basePlanLocked;
+      this.oldSelection = oldSelection;
+      this.allLevelsSelection = allLevelsSelection;
+      this.groupedPieces = groupedPieces;
+      this.groupedPiecesIndex = groupedPiecesIndex;
+      this.groupedPiecesGroups = groupedPiecesGroups;
+      this.groupedPiecesLevel = groupedPiecesLevel;
+      this.groupedPiecesElevation = groupedPiecesElevation;
+      this.groupedPiecesVisible = groupedPiecesVisible;
+      this.newGroup = newGroup;
+      this.groupIndex = groupIndex;
+      this.groupLevel = groupLevel;
+      this.groupPiecesNewElevation = groupPiecesNewElevation;
+      this.movable = movable;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      doUngroupFurniture(this.home, new HomeFurnitureGroup [] {this.newGroup}, this.groupedPieces,
+          this.groupedPiecesGroups, this.groupedPiecesIndex, this.groupedPiecesLevel, this.basePlanLocked, this.allLevelsSelection);
+      for (int i = 0; i < this.groupedPieces.length; i++) {
+        this.groupedPieces [i].setElevation(this.groupedPiecesElevation [i]);
+        this.groupedPieces [i].setVisible(this.groupedPiecesVisible [i]);
+      }
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      for (int i = 0; i < this.groupedPieces.length; i++) {
+        this.groupedPieces [i].setElevation(this.groupPiecesNewElevation [i]);
+        this.groupedPieces [i].setLevel(null);
+      }
+      this.newGroup.setMovable(this.movable);
+      this.newGroup.setVisible(true);
+      doGroupFurniture(this.home, this.groupedPieces, new HomeFurnitureGroup [] {this.newGroup},
+          null, new int [] {this.groupIndex}, new Level [] {this.groupLevel}, this.basePlanLocked, false);
     }
   }
 
@@ -822,7 +917,7 @@ public class FurnitureController implements Controller {
   /**
    * Returns the count of furniture groups among the given list.
    */
-  private int getFurnitureGroupCount(List<HomePieceOfFurniture> furniture) {
+  private static int getFurnitureGroupCount(List<HomePieceOfFurniture> furniture) {
     int i = 0;
     for (HomePieceOfFurniture piece : furniture) {
       if (piece instanceof HomeFurnitureGroup) {
@@ -832,33 +927,35 @@ public class FurnitureController implements Controller {
     return i;
   }
 
-  private void doGroupFurniture(HomePieceOfFurniture [] groupedPieces,
-                                HomeFurnitureGroup [] groups,
-                                HomeFurnitureGroup [] groupsGroups,
-                                int [] groupsIndex, 
-                                Level [] groupsLevels,
-                                boolean basePlanLocked,
-                                boolean allLevelsSelection) {
-    doDeleteFurniture(groupedPieces, basePlanLocked, allLevelsSelection);
-    doAddFurniture(groups, groupsGroups, groupsIndex, null, groupsLevels, basePlanLocked, allLevelsSelection);
+  private static void doGroupFurniture(Home home,
+                                       HomePieceOfFurniture [] groupedPieces,
+                                       HomeFurnitureGroup [] groups,
+                                       HomeFurnitureGroup [] groupsGroups,
+                                       int [] groupsIndex,
+                                       Level [] groupsLevels,
+                                       boolean basePlanLocked,
+                                       boolean allLevelsSelection) {
+    doDeleteFurniture(home, groupedPieces, basePlanLocked, allLevelsSelection);
+    doAddFurniture(home, groups, groupsGroups, groupsIndex, null, groupsLevels, basePlanLocked, allLevelsSelection);
   }
 
-  private void doUngroupFurniture(HomeFurnitureGroup [] groups,
-                                  HomePieceOfFurniture [] ungroupedPieces,
-                                  HomeFurnitureGroup [] ungroupedPiecesGroups,
-                                  int [] ungroupedPiecesIndex, 
-                                  Level [] ungroupedPiecesLevels,
-                                  boolean basePlanLocked,
-                                  boolean allLevelsSelection) {
-    doDeleteFurniture(groups, basePlanLocked, allLevelsSelection);
-    doAddFurniture(ungroupedPieces, ungroupedPiecesGroups, ungroupedPiecesIndex, null, ungroupedPiecesLevels, basePlanLocked, allLevelsSelection);
+  private static void doUngroupFurniture(Home home,
+                                         HomeFurnitureGroup [] groups,
+                                         HomePieceOfFurniture [] ungroupedPieces,
+                                         HomeFurnitureGroup [] ungroupedPiecesGroups,
+                                         int [] ungroupedPiecesIndex,
+                                         Level [] ungroupedPiecesLevels,
+                                         boolean basePlanLocked,
+                                         boolean allLevelsSelection) {
+    doDeleteFurniture(home, groups, basePlanLocked, allLevelsSelection);
+    doAddFurniture(home, ungroupedPieces, ungroupedPiecesGroups, ungroupedPiecesIndex, null, ungroupedPiecesLevels, basePlanLocked, allLevelsSelection);
   }
 
   /**
    * Ungroups the selected groups of furniture.
    */
   public void ungroupSelectedFurniture() {
-    List<HomeFurnitureGroup> movableSelectedFurnitureGroups = new ArrayList<HomeFurnitureGroup>(); 
+    List<HomeFurnitureGroup> movableSelectedFurnitureGroups = new ArrayList<HomeFurnitureGroup>();
     for (Selectable item : this.home.getSelectedItems()) {
       if (item instanceof HomeFurnitureGroup) {
         HomeFurnitureGroup group = (HomeFurnitureGroup)item;
@@ -866,7 +963,7 @@ public class FurnitureController implements Controller {
           movableSelectedFurnitureGroups.add(group);
         }
       }
-    }  
+    }
     if (!movableSelectedFurnitureGroups.isEmpty()) {
       List<HomePieceOfFurniture> homeFurniture = this.home.getFurniture();
       final boolean oldBasePlanLocked = this.home.isBasePlanLocked();
@@ -890,7 +987,7 @@ public class FurnitureController implements Controller {
         }
         groupsCount++;
       }
-      final HomeFurnitureGroup [] groups = new HomeFurnitureGroup [groupsCount]; 
+      final HomeFurnitureGroup [] groups = new HomeFurnitureGroup [groupsCount];
       final HomeFurnitureGroup [] groupsGroups = new HomeFurnitureGroup [groups.length];
       final int [] groupsIndex = new int [groups.length];
       final Level [] groupsLevels = new Level [groups.length];
@@ -905,7 +1002,7 @@ public class FurnitureController implements Controller {
           HomeFurnitureGroup group = groupEntry.getValue();
           groups [i] = group;
           groupsGroups [i] = sortedMapEntry.getKey();
-          groupsIndex [i] = groupEntry.getKey(); 
+          groupsIndex [i] = groupEntry.getKey();
           groupsLevels [i++] = group.getLevel();
           for (HomePieceOfFurniture groupPiece : group.getFurniture()) {
             ungroupedPiecesList.add(groupPiece);
@@ -913,227 +1010,359 @@ public class FurnitureController implements Controller {
             ungroupedPiecesIndexList.add(endIndex++);
           }
         }
-      } 
-      final HomePieceOfFurniture [] ungroupedPieces = 
-          ungroupedPiecesList.toArray(new HomePieceOfFurniture [ungroupedPiecesList.size()]);      
-      final HomeFurnitureGroup [] ungroupedPiecesGroups = 
-          ungroupedPiecesGroupsList.toArray(new HomeFurnitureGroup [ungroupedPiecesGroupsList.size()]);      
+      }
+      final HomePieceOfFurniture [] ungroupedPieces =
+          ungroupedPiecesList.toArray(new HomePieceOfFurniture [ungroupedPiecesList.size()]);
+      final HomeFurnitureGroup [] ungroupedPiecesGroups =
+          ungroupedPiecesGroupsList.toArray(new HomeFurnitureGroup [ungroupedPiecesGroupsList.size()]);
       final int [] ungroupedPiecesIndex = new int [ungroupedPieces.length];
       final Level [] ungroupedPiecesLevels = new Level [ungroupedPieces.length];
       boolean basePlanLocked = oldBasePlanLocked;
       for (i = 0; i < ungroupedPieces.length; i++) {
-        ungroupedPiecesIndex [i] = ungroupedPiecesIndexList.get(i); 
+        ungroupedPiecesIndex [i] = ungroupedPiecesIndexList.get(i);
         ungroupedPiecesLevels [i] = ungroupedPieces [i].getLevel();
         // Unlock base plan if the piece is a part of it
         basePlanLocked &= !isPieceOfFurniturePartOfBasePlan(ungroupedPieces [i]);
-      }  
+      }
       final boolean newBasePlanLocked = basePlanLocked;
 
-      doUngroupFurniture(groups, ungroupedPieces, ungroupedPiecesGroups, ungroupedPiecesIndex, ungroupedPiecesLevels, newBasePlanLocked, false);
+      doUngroupFurniture(this.home, groups, ungroupedPieces, ungroupedPiecesGroups,
+          ungroupedPiecesIndex, ungroupedPiecesLevels, newBasePlanLocked, false);
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-            @Override
-            public void undo() throws CannotUndoException {
-              super.undo();
-              doGroupFurniture(ungroupedPieces, groups, groupsGroups, groupsIndex, groupsLevels, oldBasePlanLocked, allLevelsSelection);
-              home.setSelectedItems(oldSelection);
-            }
-            
-            @Override
-            public void redo() throws CannotRedoException {
-              super.redo();
-              doUngroupFurniture(groups, ungroupedPieces, ungroupedPiecesGroups, ungroupedPiecesIndex, ungroupedPiecesLevels, newBasePlanLocked, false);
-            }
-            
-            @Override
-            public String getPresentationName() {
-              return preferences.getLocalizedString(FurnitureController.class, "undoUngroupName");
-            }
-          };
-        this.undoSupport.postEdit(undoableEdit);
+        this.undoSupport.postEdit(new FurnitureUngroupingUndoableEdit(this.home, this.preferences,
+            oldSelection.toArray(new Selectable [oldSelection.size()]), oldBasePlanLocked, allLevelsSelection,
+            groups, groupsIndex, groupsGroups, groupsLevels, ungroupedPieces, ungroupedPiecesIndex,
+            ungroupedPiecesGroups, ungroupedPiecesLevels, newBasePlanLocked));
       }
     }
   }
 
   /**
-   * Displays the wizard that helps to import furniture to home. 
+   * Undoable edit for furniture ungrouping.
+   */
+  private static class FurnitureUngroupingUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final boolean                 oldBasePlanLocked;
+    private final Selectable []           oldSelection;
+    private final boolean                 allLevelsSelection;
+    private final HomeFurnitureGroup []   groups;
+    private final int []                  groupsIndex;
+    private final HomeFurnitureGroup []   groupsGroups;
+    private final Level []                groupsLevels;
+    private final HomePieceOfFurniture [] ungroupedPieces;
+    private final int []                  ungroupedPiecesIndex;
+    private final HomeFurnitureGroup []   ungroupedPiecesGroups;
+    private final Level []                ungroupedPiecesLevels;
+    private final boolean                 newBasePlanLocked;
+
+    public FurnitureUngroupingUndoableEdit(Home home, UserPreferences preferences,
+                                           Selectable [] oldSelection, boolean oldBasePlanLocked, boolean allLevelsSelection,
+                                           HomeFurnitureGroup [] groups, int [] groupsIndex,
+                                           HomeFurnitureGroup [] groupsGroups, Level [] groupsLevels,
+                                           HomePieceOfFurniture [] ungroupedPieces, int [] ungroupedPiecesIndex,
+                                           HomeFurnitureGroup [] ungroupedPiecesGroups,
+                                           Level [] ungroupedPiecesLevels, boolean newBasePlanLocked) {
+      super(preferences, FurnitureController.class, "undoUngroupName");
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.oldBasePlanLocked = oldBasePlanLocked;
+      this.allLevelsSelection = allLevelsSelection;
+      this.groups = groups;
+      this.groupsIndex = groupsIndex;
+      this.groupsGroups = groupsGroups;
+      this.groupsLevels = groupsLevels;
+      this.ungroupedPieces = ungroupedPieces;
+      this.ungroupedPiecesIndex = ungroupedPiecesIndex;
+      this.ungroupedPiecesGroups = ungroupedPiecesGroups;
+      this.ungroupedPiecesLevels = ungroupedPiecesLevels;
+      this.newBasePlanLocked = newBasePlanLocked;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      doGroupFurniture(this.home, this.ungroupedPieces, this.groups, this.groupsGroups, this.groupsIndex, this.groupsLevels,
+          this.oldBasePlanLocked, this.allLevelsSelection);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      doUngroupFurniture(this.home, this.groups, this.ungroupedPieces, this.ungroupedPiecesGroups, this.ungroupedPiecesIndex,
+          this.ungroupedPiecesLevels, this.newBasePlanLocked, false);
+    }
+  }
+
+  /**
+   * Displays the wizard that helps to import furniture to home.
    */
   public void importFurniture() {
-    new ImportedFurnitureWizardController(this.home, this.preferences, this, this.viewFactory, 
+    new ImportedFurnitureWizardController(this.home, this.preferences, this, this.viewFactory,
         this.contentManager, this.undoSupport).displayView(getView());
   }
-  
+
   /**
    * Displays the wizard that helps to import furniture to home with a
-   * given model name. 
+   * given model name.
    */
   public void importFurniture(String modelName) {
-    new ImportedFurnitureWizardController(this.home, modelName, this.preferences, this, 
+    new ImportedFurnitureWizardController(this.home, modelName, this.preferences, this,
         this.viewFactory, this.contentManager, this.undoSupport).displayView(getView());
   }
-  
+
   /**
    * Controls the alignment of selected furniture on top of the first selected piece.
    */
   public void alignSelectedFurnitureOnTop() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          float minYLeadPiece = getMinY(leadPiece);
-          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-            HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-            float minY = getMinY(piece);
-            piece.setY(piece.getY() + minYLeadPiece - minY);
-          }
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureTopAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
   }
-  
+
+  private static class FurnitureTopAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureTopAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                             Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                             HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
+    }
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float minYLeadPiece = getMinY(leadPiece);
+      for (HomePieceOfFurniture piece : alignedFurniture) {
+        float minY = getMinY(piece);
+        piece.setY(piece.getY() + minYLeadPiece - minY);
+      }
+    }
+  }
+
   /**
    * Controls the alignment of selected furniture on bottom of the first selected piece.
    */
   public void alignSelectedFurnitureOnBottom() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          float maxYLeadPiece = getMaxY(leadPiece);
-          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-            HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-            float maxY = getMaxY(piece);
-            piece.setY(piece.getY() + maxYLeadPiece - maxY);
-          }
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureBottomAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
+  }
+
+  private static class FurnitureBottomAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureBottomAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                                Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                                HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
+    }
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float maxYLeadPiece = getMaxY(leadPiece);
+      for (HomePieceOfFurniture piece : alignedFurniture) {
+        float maxY = getMaxY(piece);
+        piece.setY(piece.getY() + maxYLeadPiece - maxY);
+      }
+    }
   }
 
   /**
    * Controls the alignment of selected furniture on left of the first selected piece.
    */
   public void alignSelectedFurnitureOnLeft() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          float minXLeadPiece = getMinX(leadPiece);
-          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-            HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-            float minX = getMinX(piece);
-            piece.setX(piece.getX() + minXLeadPiece - minX);
-          }
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureLeftAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
+  }
+
+  private static class FurnitureLeftAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureLeftAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                              Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                              HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
+    }
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float minXLeadPiece = getMinX(leadPiece);
+      for (HomePieceOfFurniture piece : alignedFurniture) {
+        float minX = getMinX(piece);
+        piece.setX(piece.getX() + minXLeadPiece - minX);
+      }
+    }
   }
 
   /**
    * Controls the alignment of selected furniture on right of the first selected piece.
    */
   public void alignSelectedFurnitureOnRight() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          float maxXLeadPiece = getMaxX(leadPiece);
-          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-            HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-            float maxX = getMaxX(piece);
-            piece.setX(piece.getX() + maxXLeadPiece - maxX);
-          }
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureRightAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
+  }
+
+  private static class FurnitureRightAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureRightAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                               Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                              HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
+    }
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float maxXLeadPiece = getMaxX(leadPiece);
+      for (HomePieceOfFurniture piece : alignedFurniture) {
+        float maxX = getMaxX(piece);
+        piece.setX(piece.getX() + maxXLeadPiece - maxX);
+      }
+    }
   }
 
   /**
    * Controls the alignment of selected furniture on the front side of the first selected piece.
    */
   public void alignSelectedFurnitureOnFrontSide() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          float [][] points = leadPiece.getPoints();
-          Line2D frontLine = new Line2D.Float(points [2][0], points [2][1], points [3][0], points [3][1]);    
-          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-            alignPieceOfFurnitureAlongSides(alignedPiece.getPieceOfFurniture(), leadPiece, frontLine, true, null, 0);
-          }
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureFrontSideAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
+  }
+
+  private static class FurnitureFrontSideAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureFrontSideAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                                   Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                                   HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
+    }
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float [][] points = leadPiece.getPoints();
+      Line2D frontLine = new Line2D.Float(points [2][0], points [2][1], points [3][0], points [3][1]);
+      for (HomePieceOfFurniture piece : alignedFurniture) {
+        alignPieceOfFurnitureAlongSides(piece, leadPiece, frontLine, true, null, 0);
+      }
+    }
   }
 
   /**
    * Controls the alignment of selected furniture on the back side of the first selected piece.
    */
   public void alignSelectedFurnitureOnBackSide() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          float [][] points = leadPiece.getPoints();
-          Line2D backLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);    
-          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-            alignPieceOfFurnitureAlongSides(alignedPiece.getPieceOfFurniture(), leadPiece, backLine, false, null, 0);
-          }
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureBackSideAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
+  }
+
+  private static class FurnitureBackSideAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureBackSideAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                                  Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                                  HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
+    }
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float [][] points = leadPiece.getPoints();
+      Line2D backLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);
+      for (HomePieceOfFurniture piece : alignedFurniture) {
+        alignPieceOfFurnitureAlongSides(piece, leadPiece, backLine, false, null, 0);
+      }
+    }
   }
 
   /**
    * Controls the alignment of selected furniture on the left side of the first selected piece.
    */
   public void alignSelectedFurnitureOnLeftSide() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          float [][] points = leadPiece.getPoints();
-          Line2D leftLine = new Line2D.Float(points [3][0], points [3][1], points [0][0], points [0][1]);  
-          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-            alignPieceOfFurnitureAlongLeftOrRightSides(alignedPiece.getPieceOfFurniture(), leadPiece, leftLine, false);
-          }
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureLeftSideAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
+  }
+
+  private static class FurnitureLeftSideAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureLeftSideAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                                  Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                                  HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
+    }
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float [][] points = leadPiece.getPoints();
+      Line2D leftLine = new Line2D.Float(points [3][0], points [3][1], points [0][0], points [0][1]);
+      for (HomePieceOfFurniture piece : alignedFurniture) {
+        alignPieceOfFurnitureAlongLeftOrRightSides(piece, leadPiece, leftLine, false);
+      }
+    }
   }
 
   /**
    * Controls the alignment of selected furniture on the right side of the first selected piece.
    */
   public void alignSelectedFurnitureOnRightSide() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          float [][] points = leadPiece.getPoints();
-          Line2D rightLine = new Line2D.Float(points [1][0], points [1][1], points [2][0], points [2][1]);     
-          for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-            alignPieceOfFurnitureAlongLeftOrRightSides(alignedPiece.getPieceOfFurniture(), leadPiece, rightLine, true);
-          }
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureRightSideAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
+  }
+
+  private static class FurnitureRightSideAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureRightSideAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                                   Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                                   HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
+    }
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float [][] points = leadPiece.getPoints();
+      Line2D rightLine = new Line2D.Float(points [1][0], points [1][1], points [2][0], points [2][1]);
+      for (HomePieceOfFurniture alignedPiece : alignedFurniture) {
+        alignPieceOfFurnitureAlongLeftOrRightSides(alignedPiece, leadPiece, rightLine, true);
+      }
+    }
   }
 
   /**
    * Controls the alignment of selected furniture on the sides of the first selected piece.
    */
   public void alignSelectedFurnitureSideBySide() {
-    alignSelectedFurniture(new AlignmentAction() {
-        public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                                   HomePieceOfFurniture leadPiece) {
-          alignFurnitureSideBySide(alignedFurniture, leadPiece);
-        }
-      });
+    List<Selectable> oldSelection = this.home.getSelectedItems();
+    alignSelectedFurniture(new FurnitureSideBySideAlignmentUndoableEdit(this.home, this.preferences,
+        oldSelection.toArray(new Selectable [oldSelection.size()]),
+        getMovableSelectedFurniture(), this.leadSelectedPieceOfFurniture));
   }
 
-  private void alignFurnitureSideBySide(AlignedPieceOfFurniture [] alignedFurniture, 
-                                        HomePieceOfFurniture leadPiece) {
-    float [][] points = leadPiece.getPoints();
-    final Line2D centerLine = new Line2D.Float(leadPiece.getX(), leadPiece.getY(), 
-        (points [0][0] + points [1][0]) / 2, (points [0][1] + points [1][1]) / 2);
-    List<HomePieceOfFurniture> furnitureSortedAlongBackLine = sortFurniture(alignedFurniture, leadPiece, centerLine);
-    
-    int leadPieceIndex = furnitureSortedAlongBackLine.indexOf(leadPiece);    
-    Line2D backLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);    
-    float sideDistance = leadPiece.getWidthInPlan() / 2;
-    for (int i = leadPieceIndex + 1; i < furnitureSortedAlongBackLine.size(); i++) {
-      sideDistance += alignPieceOfFurnitureAlongSides(furnitureSortedAlongBackLine.get(i), 
-          leadPiece, backLine, false, centerLine, sideDistance);
+  private static class FurnitureSideBySideAlignmentUndoableEdit extends FurnitureAlignmentUndoableEdit {
+    public FurnitureSideBySideAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                                    Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                                    HomePieceOfFurniture leadPiece) {
+      super(home, preferences, oldSelection, selectedFurniture, leadPiece);
     }
-    sideDistance = -leadPiece.getWidthInPlan() / 2;
-    for (int i = leadPieceIndex - 1; i >= 0; i--) {
-      sideDistance -= alignPieceOfFurnitureAlongSides(furnitureSortedAlongBackLine.get(i), 
-          leadPiece, backLine, false, centerLine, sideDistance);
+
+    @Override
+    void alignFurniture(HomePieceOfFurniture [] alignedFurniture, HomePieceOfFurniture leadPiece) {
+      float [][] points = leadPiece.getPoints();
+      final Line2D centerLine = new Line2D.Float(leadPiece.getX(), leadPiece.getY(),
+          (points [0][0] + points [1][0]) / 2, (points [0][1] + points [1][1]) / 2);
+      List<HomePieceOfFurniture> furnitureSortedAlongBackLine = sortFurniture(alignedFurniture, leadPiece, centerLine);
+
+      int leadPieceIndex = furnitureSortedAlongBackLine.indexOf(leadPiece);
+      Line2D backLine = new Line2D.Float(points [0][0], points [0][1], points [1][0], points [1][1]);
+      float sideDistance = leadPiece.getWidthInPlan() / 2;
+      for (int i = leadPieceIndex + 1; i < furnitureSortedAlongBackLine.size(); i++) {
+        sideDistance += alignPieceOfFurnitureAlongSides(furnitureSortedAlongBackLine.get(i),
+            leadPiece, backLine, false, centerLine, sideDistance);
+      }
+      sideDistance = -leadPiece.getWidthInPlan() / 2;
+      for (int i = leadPieceIndex - 1; i >= 0; i--) {
+        sideDistance -= alignPieceOfFurnitureAlongSides(furnitureSortedAlongBackLine.get(i),
+            leadPiece, backLine, false, centerLine, sideDistance);
+      }
     }
   }
 
@@ -1141,16 +1370,14 @@ public class FurnitureController implements Controller {
    * Returns a list containing aligned furniture and lead piece sorted in the order of their distribution along
    * a line orthogonal to the given axis.
    */
-  public List<HomePieceOfFurniture> sortFurniture(AlignedPieceOfFurniture [] furniture,
-                                                  HomePieceOfFurniture leadPiece, 
-                                                  final Line2D orthogonalAxis) {
+  private static List<HomePieceOfFurniture> sortFurniture(HomePieceOfFurniture [] furniture,
+                                                          HomePieceOfFurniture leadPiece,
+                                                          final Line2D orthogonalAxis) {
     List<HomePieceOfFurniture> sortedFurniture = new ArrayList<HomePieceOfFurniture>(furniture.length + 1);
     if (leadPiece != null) {
       sortedFurniture.add(leadPiece);
     }
-    for (AlignedPieceOfFurniture piece : furniture) {
-      sortedFurniture.add(piece.getPieceOfFurniture());
-    }
+    sortedFurniture.addAll(Arrays.asList(furniture));
     Collections.sort(sortedFurniture, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture p1, HomePieceOfFurniture p2) {
           return Double.compare(orthogonalAxis.ptLineDistSq(p2.getX(), p2.getY()) * orthogonalAxis.relativeCCW(p2.getX(), p2.getY()),
@@ -1161,15 +1388,15 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Aligns the given <code>piece</code> along the front or back side of the lead piece and its left or right side 
-   * at a distance equal to <code>sideDistance</code>, and returns the width of the bounding box of 
-   * the <code>piece</code> along the back side axis. 
+   * Aligns the given <code>piece</code> along the front or back side of the lead piece and its left or right side
+   * at a distance equal to <code>sideDistance</code>, and returns the width of the bounding box of
+   * the <code>piece</code> along the back side axis.
    */
-  private double alignPieceOfFurnitureAlongSides(HomePieceOfFurniture piece, HomePieceOfFurniture leadPiece,
-                                                 Line2D frontOrBackLine, boolean frontLine, 
-                                                 Line2D centerLine, float sideDistance) {
-    // Search the distance required to align piece on the front or back side 
-    double distance = frontOrBackLine.relativeCCW(piece.getX(), piece.getY()) * frontOrBackLine.ptLineDist(piece.getX(), piece.getY()) 
+  private static double alignPieceOfFurnitureAlongSides(HomePieceOfFurniture piece, HomePieceOfFurniture leadPiece,
+                                                        Line2D frontOrBackLine, boolean frontLine,
+                                                        Line2D centerLine, float sideDistance) {
+    // Search the distance required to align piece on the front or back side
+    double distance = frontOrBackLine.relativeCCW(piece.getX(), piece.getY()) * frontOrBackLine.ptLineDist(piece.getX(), piece.getY())
         + getPieceBoundingRectangleHeight(piece, -leadPiece.getAngle()) / 2;
     if (frontLine) {
       distance = -distance;
@@ -1186,21 +1413,21 @@ public class FurnitureController implements Controller {
       if (location == 0) {
         location = frontLine ? 1 : -1;
       }
-      distance = sideDistance + location 
-          * (centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);      
+      distance = sideDistance + location
+          * (centerLine.ptLineDist(piece.getX(), piece.getY()) - rotatedBoundingBoxWidth / 2);
       deltaX += (float)(distance * cosLeadPieceAngle);
       deltaY += (float)(distance * sinLeadPieceAngle);
     }
-    
+
     piece.move(deltaX, deltaY);
     return rotatedBoundingBoxWidth;
   }
 
   /**
-   * Aligns the given <code>piece</code> along the left or right side of the lead piece. 
+   * Aligns the given <code>piece</code> along the left or right side of the lead piece.
    */
-  private void alignPieceOfFurnitureAlongLeftOrRightSides(HomePieceOfFurniture piece, HomePieceOfFurniture leadPiece,
-                                                          Line2D leftOrRightLine, boolean rightLine) {
+  private static void alignPieceOfFurnitureAlongLeftOrRightSides(HomePieceOfFurniture piece, HomePieceOfFurniture leadPiece,
+                                                                 Line2D leftOrRightLine, boolean rightLine) {
     // Search the distance required to align piece on the side of the lead piece
     double distance = leftOrRightLine.relativeCCW(piece.getX(), piece.getY()) * leftOrRightLine.ptLineDist(piece.getX(), piece.getY())
         + getPieceBoundingRectangleWidth(piece, -leadPiece.getAngle()) / 2;
@@ -1211,60 +1438,92 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Returns the bounding box width of the given piece when it's rotated of an additional angle.  
+   * Returns the bounding box width of the given piece when it's rotated of an additional angle.
    */
-  private double getPieceBoundingRectangleWidth(HomePieceOfFurniture piece, float additionalAngle) {
-    return Math.abs(piece.getWidthInPlan() * Math.cos(additionalAngle + piece.getAngle())) 
+  private static double getPieceBoundingRectangleWidth(HomePieceOfFurniture piece, float additionalAngle) {
+    return Math.abs(piece.getWidthInPlan() * Math.cos(additionalAngle + piece.getAngle()))
         + Math.abs(piece.getDepthInPlan() * Math.sin(additionalAngle + piece.getAngle()));
   }
 
   /**
-   * Returns the bounding box height of the given piece when it's rotated of an additional angle.  
+   * Returns the bounding box height of the given piece when it's rotated of an additional angle.
    */
-  private double getPieceBoundingRectangleHeight(HomePieceOfFurniture piece, float additionalAngle) {
-    return Math.abs(piece.getWidthInPlan() * Math.sin(additionalAngle + piece.getAngle())) 
+  private static double getPieceBoundingRectangleHeight(HomePieceOfFurniture piece, float additionalAngle) {
+    return Math.abs(piece.getWidthInPlan() * Math.sin(additionalAngle + piece.getAngle()))
         + Math.abs(piece.getDepthInPlan() * Math.cos(additionalAngle + piece.getAngle()));
   }
 
   /**
    * Controls the alignment of selected furniture.
    */
-  private void alignSelectedFurniture(final AlignmentAction alignmentAction) {
-    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
-    if (selectedFurniture.size() >= 2) {
-      final List<Selectable> oldSelection = this.home.getSelectedItems();
-      final HomePieceOfFurniture leadPiece = this.leadSelectedPieceOfFurniture;
-      final AlignedPieceOfFurniture [] alignedFurniture = 
-          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, leadPiece);
-      this.home.setSelectedItems(selectedFurniture);
-      alignmentAction.alignFurniture(alignedFurniture, leadPiece);
+  private void alignSelectedFurniture(final FurnitureAlignmentUndoableEdit alignmentEdit) {
+    HomePieceOfFurniture [] selectedFurniture = getMovableSelectedFurniture();
+    if (selectedFurniture.length >= 2) {
+      this.home.setSelectedItems(Arrays.asList(selectedFurniture));
+      alignmentEdit.alignFurniture();
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-          @Override
-          public void undo() throws CannotUndoException {
-            super.undo();
-            undoAlignFurniture(alignedFurniture); 
-            home.setSelectedItems(oldSelection);
-          }
-          
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            home.setSelectedItems(selectedFurniture);
-            alignmentAction.alignFurniture(alignedFurniture, leadPiece);
-          }
-          
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(FurnitureController.class, "undoAlignName");
-          }
-        };
-        this.undoSupport.postEdit(undoableEdit);
+        this.undoSupport.postEdit(alignmentEdit);
       }
     }
   }
-  
-  private List<HomePieceOfFurniture> getMovableSelectedFurniture() {
+
+  /**
+   * Undoable edit for furniture alignment.
+   */
+  private static abstract class FurnitureAlignmentUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final Selectable []           oldSelection;
+    private final HomePieceOfFurniture [] selectedFurniture;
+    private final HomePieceOfFurniture    leadPiece;
+    private final HomePieceOfFurniture [] alignedFurniture;
+    private final float []                oldX;
+    private final float []                oldY;
+
+    public FurnitureAlignmentUndoableEdit(Home home, UserPreferences preferences,
+                                          Selectable [] oldSelection, HomePieceOfFurniture [] selectedFurniture,
+                                          HomePieceOfFurniture leadPiece) {
+      super(preferences, FurnitureController.class, "undoAlignName");
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.selectedFurniture = selectedFurniture;
+      this.leadPiece = leadPiece;
+      this.alignedFurniture = new HomePieceOfFurniture[leadPiece == null  ? selectedFurniture.length  : selectedFurniture.length - 1];
+      this.oldX = new float [this.alignedFurniture.length];
+      this.oldY = new float [this.alignedFurniture.length];
+      int i = 0;
+      for (HomePieceOfFurniture piece : selectedFurniture) {
+        if (piece != leadPiece) {
+          this.alignedFurniture [i] = piece;
+          this.oldX [i] = piece.getX();
+          this.oldY [i] = piece.getY();
+          i++;
+        }
+      }
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      undoAlignFurniture(this.alignedFurniture, this.oldX, this.oldY);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedItems(Arrays.asList(this.selectedFurniture));
+      alignFurniture();
+    }
+
+    public void alignFurniture() {
+      alignFurniture(this.alignedFurniture, this.leadPiece);
+    }
+
+    abstract void alignFurniture(HomePieceOfFurniture [] alignedFurniture,
+                                 HomePieceOfFurniture leadPiece);
+  }
+
+  private HomePieceOfFurniture [] getMovableSelectedFurniture() {
     List<HomePieceOfFurniture> movableSelectedFurniture = new ArrayList<HomePieceOfFurniture>();
     for (Selectable item : this.home.getSelectedItems()) {
       if (item instanceof HomePieceOfFurniture) {
@@ -1273,63 +1532,63 @@ public class FurnitureController implements Controller {
           movableSelectedFurniture.add(piece);
         }
       }
-    }  
-    return movableSelectedFurniture;
+    }
+    return movableSelectedFurniture.toArray(new HomePieceOfFurniture [movableSelectedFurniture.size()]);
   }
 
-  private void undoAlignFurniture(AlignedPieceOfFurniture [] alignedFurniture) {
-    for (AlignedPieceOfFurniture alignedPiece : alignedFurniture) {
-      HomePieceOfFurniture piece = alignedPiece.getPieceOfFurniture();
-      piece.setX(alignedPiece.getX());
-      piece.setY(alignedPiece.getY());
+  private static void undoAlignFurniture(HomePieceOfFurniture [] alignedFurniture, float [] x, float [] y) {
+    for (int i = 0; i < alignedFurniture.length; i++) {
+      HomePieceOfFurniture piece = alignedFurniture [i];
+      piece.setX(x [i]);
+      piece.setY(y [i]);
     }
   }
-  
+
   /**
-   * Returns the minimum abscissa of the vertices of <code>piece</code>.  
+   * Returns the minimum abscissa of the vertices of <code>piece</code>.
    */
-  private float getMinX(HomePieceOfFurniture piece) {
+  private static float getMinX(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
     float minX = Float.POSITIVE_INFINITY;
     for (float [] point : points) {
       minX = Math.min(minX, point [0]);
-    } 
+    }
     return minX;
   }
 
   /**
-   * Returns the maximum abscissa of the vertices of <code>piece</code>.  
+   * Returns the maximum abscissa of the vertices of <code>piece</code>.
    */
-  private float getMaxX(HomePieceOfFurniture piece) {
+  private static float getMaxX(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
     float maxX = Float.NEGATIVE_INFINITY;
     for (float [] point : points) {
       maxX = Math.max(maxX, point [0]);
-    } 
+    }
     return maxX;
   }
 
   /**
-   * Returns the minimum ordinate of the vertices of <code>piece</code>.  
+   * Returns the minimum ordinate of the vertices of <code>piece</code>.
    */
-  private float getMinY(HomePieceOfFurniture piece) {
+  private static float getMinY(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
     float minY = Float.POSITIVE_INFINITY;
     for (float [] point : points) {
       minY = Math.min(minY, point [1]);
-    } 
+    }
     return minY;
   }
 
   /**
-   * Returns the maximum ordinate of the vertices of <code>piece</code>.  
+   * Returns the maximum ordinate of the vertices of <code>piece</code>.
    */
-  private float getMaxY(HomePieceOfFurniture piece) {
+  private static float getMaxY(HomePieceOfFurniture piece) {
     float [][] points = piece.getPoints();
     float maxY = Float.NEGATIVE_INFINITY;
     for (float [] point : points) {
       maxY = Math.max(maxY, point [1]);
-    } 
+    }
     return maxY;
   }
 
@@ -1339,53 +1598,77 @@ public class FurnitureController implements Controller {
   public void distributeSelectedFurnitureHorizontally() {
     distributeSelectedFurniture(true);
   }
-  
+
   /**
    * Controls the distribution of the selected furniture along vertical axis.
    */
   public void distributeSelectedFurnitureVertically() {
     distributeSelectedFurniture(false);
   }
-  
+
   /**
    * Controls the distribution of the selected furniture along the axis orthogonal to the given one.
    */
   public void distributeSelectedFurniture(final boolean horizontal) {
-    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
-    if (selectedFurniture.size() >= 3) {
+    final HomePieceOfFurniture [] alignedFurniture = getMovableSelectedFurniture();
+    if (alignedFurniture.length >= 3) {
       final List<Selectable> oldSelection = this.home.getSelectedItems();
-      final AlignedPieceOfFurniture [] alignedFurniture = 
-          AlignedPieceOfFurniture.getAlignedFurniture(selectedFurniture, null);
-      this.home.setSelectedItems(selectedFurniture);
+      final float [] oldX = new float [alignedFurniture.length];
+      final float [] oldY = new float [alignedFurniture.length];
+      for (int i = 0; i < alignedFurniture.length; i++) {
+        oldX [i] = alignedFurniture [i].getX();
+        oldY [i] = alignedFurniture [i].getY();
+      }
+      this.home.setSelectedItems(Arrays.asList(alignedFurniture));
       doDistributeFurnitureAlongAxis(alignedFurniture, horizontal);
       if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-          @Override
-          public void undo() throws CannotUndoException {
-            super.undo();
-            undoAlignFurniture(alignedFurniture); 
-            home.setSelectedItems(oldSelection);
-          }
-          
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            home.setSelectedItems(selectedFurniture);
-            doDistributeFurnitureAlongAxis(alignedFurniture, horizontal);
-          }
-          
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(FurnitureController.class, "undoDistributeName");
-          }
-        };
-        this.undoSupport.postEdit(undoableEdit);
+        this.undoSupport.postEdit(new FurnitureDistributionUndoableEdit(this.home, this.preferences,
+            oldSelection.toArray(new Selectable [oldSelection.size()]), oldX, oldY, alignedFurniture, horizontal));
       }
     }
   }
 
-  private void doDistributeFurnitureAlongAxis(AlignedPieceOfFurniture [] alignedFurniture,
-                                              boolean horizontal) {
+  /**
+   * Undoable edit for furniture distribution.
+   */
+  private static class FurnitureDistributionUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final Selectable []           oldSelection;
+    private float []                      oldX;
+    private float []                      oldY;
+    private final HomePieceOfFurniture [] alignedFurniture;
+    private final boolean                 horizontal;
+
+    public FurnitureDistributionUndoableEdit(Home home,
+                                             UserPreferences preferences,
+                                             Selectable [] oldSelection, float [] oldX, float[] oldY,
+                                             HomePieceOfFurniture [] alignedFurniture, boolean horizontal) {
+      super(preferences, FurnitureController.class, "undoDistributeName");
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.oldX = oldX;
+      this.oldY = oldY;
+      this.alignedFurniture = alignedFurniture;
+      this.horizontal = horizontal;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      undoAlignFurniture(this.alignedFurniture, this.oldX, this.oldY);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedItems(Arrays.asList(this.alignedFurniture));
+      doDistributeFurnitureAlongAxis(this.alignedFurniture, this.horizontal);
+    }
+  }
+
+  private static void doDistributeFurnitureAlongAxis(HomePieceOfFurniture [] alignedFurniture,
+                                                     boolean horizontal) {
     Line2D orthogonalAxis = horizontal ? new Line2D.Float(0, 0, 0, -1) : new Line2D.Float(0, 0, 1, 0);
     List<HomePieceOfFurniture> furnitureHorizontallySorted = sortFurniture(alignedFurniture, null, orthogonalAxis);
     float axisAngle = (float)(horizontal ? 0 : Math.PI / 2);
@@ -1393,8 +1676,11 @@ public class FurnitureController implements Controller {
     double firstPieceBoundingRectangleHalfWidth = getPieceBoundingRectangleWidth(firstPiece, axisAngle) / 2;
     HomePieceOfFurniture lastPiece = furnitureHorizontallySorted.get(furnitureHorizontallySorted.size() - 1);
     double lastPieceBoundingRectangleHalfWidth = getPieceBoundingRectangleWidth(lastPiece, axisAngle) / 2;
-    double gap = Math.abs(orthogonalAxis.ptLineDist(lastPiece.getX(), lastPiece.getY()) * orthogonalAxis.relativeCCW(lastPiece.getX(), lastPiece.getY()) 
-          - orthogonalAxis.ptLineDist(firstPiece.getX(), firstPiece.getY()) * orthogonalAxis.relativeCCW(firstPiece.getX(), firstPiece.getY()))
+    double gap = Math.abs(
+          orthogonalAxis.ptLineDist(lastPiece.getX(), lastPiece.getY())
+          * orthogonalAxis.relativeCCW(lastPiece.getX(), lastPiece.getY())
+        - orthogonalAxis.ptLineDist(firstPiece.getX(), firstPiece.getY())
+          * orthogonalAxis.relativeCCW(firstPiece.getX(), firstPiece.getY()))
         - lastPieceBoundingRectangleHalfWidth
         - firstPieceBoundingRectangleHalfWidth;
     double [] furnitureWidthsAlongAxis = new double [furnitureHorizontallySorted.size() - 2];
@@ -1404,8 +1690,8 @@ public class FurnitureController implements Controller {
       gap -= furnitureWidthsAlongAxis [i - 1];
     }
     gap /= furnitureHorizontallySorted.size() - 1;
-    float xOrY = (horizontal ? firstPiece.getX() : firstPiece.getY()) 
-        + (float)(firstPieceBoundingRectangleHalfWidth + gap); 
+    float xOrY = (horizontal ? firstPiece.getX() : firstPiece.getY())
+        + (float)(firstPieceBoundingRectangleHalfWidth + gap);
     for (int i = 1; i < furnitureHorizontallySorted.size() - 1; i++) {
       HomePieceOfFurniture piece = furnitureHorizontallySorted.get(i);
       if (horizontal) {
@@ -1422,61 +1708,79 @@ public class FurnitureController implements Controller {
    * @since 4.4
    */
   public void resetFurnitureElevation() {
-    final List<HomePieceOfFurniture> selectedFurniture = getMovableSelectedFurniture();
-    if (selectedFurniture.size() >= 1) {
+    final HomePieceOfFurniture [] selectedFurniture = getMovableSelectedFurniture();
+    if (selectedFurniture.length >= 1) {
       final List<Selectable> oldSelection = this.home.getSelectedItems();
-      final float [] furnitureOldElevation = new float [selectedFurniture.size()];
-      for (int i = 0; i < selectedFurniture.size(); i++) {
-        furnitureOldElevation [i] = selectedFurniture.get(i).getElevation();
-      }
-      this.home.setSelectedItems(selectedFurniture);
-      doResetFurnitureElevation(selectedFurniture);
-      if (this.undoSupport != null) {
-        UndoableEdit undoableEdit = new AbstractUndoableEdit() {
-          @Override
-          public void undo() throws CannotUndoException {
-            super.undo();
-            for (int i = 0; i < selectedFurniture.size(); i++) {
-              selectedFurniture.get(i).setElevation(furnitureOldElevation [i]);
-            }
-            home.setSelectedItems(oldSelection);
+      final float [] furnitureOldElevation = new float [selectedFurniture.length];
+      final float [] furnitureNewElevation = new float [selectedFurniture.length];
+      for (int i = 0; i < selectedFurniture.length; i++) {
+        HomePieceOfFurniture piece = selectedFurniture [i];
+        furnitureOldElevation [i] = piece.getElevation();
+        HomePieceOfFurniture highestSurroundingPiece = getHighestSurroundingPieceOfFurniture(piece, Arrays.asList(selectedFurniture));
+        if (highestSurroundingPiece != null) {
+          float elevation = highestSurroundingPiece.getElevation()
+              + highestSurroundingPiece.getHeightInPlan() * highestSurroundingPiece.getDropOnTopElevation();
+          if (highestSurroundingPiece.getLevel() != null) {
+            elevation += highestSurroundingPiece.getLevel().getElevation() - piece.getLevel().getElevation();
           }
-          
-          @Override
-          public void redo() throws CannotRedoException {
-            super.redo();
-            home.setSelectedItems(selectedFurniture);
-            doResetFurnitureElevation(selectedFurniture);
-          }
-          
-          @Override
-          public String getPresentationName() {
-            return preferences.getLocalizedString(FurnitureController.class, "undoResetElevation");
-          }
-        };
-        this.undoSupport.postEdit(undoableEdit);
-      }
-    }
-  }
-  
-  private void doResetFurnitureElevation(List<HomePieceOfFurniture> selectedFurniture) {
-    for (HomePieceOfFurniture piece : selectedFurniture) {
-      HomePieceOfFurniture highestSurroundingPiece = getHighestSurroundingPieceOfFurniture(piece, selectedFurniture);
-      if (highestSurroundingPiece != null) {
-        float elevation = highestSurroundingPiece.getElevation() 
-            + highestSurroundingPiece.getHeightInPlan() * highestSurroundingPiece.getDropOnTopElevation();
-        if (highestSurroundingPiece.getLevel() != null) {
-          elevation += highestSurroundingPiece.getLevel().getElevation() - piece.getLevel().getElevation();
+          furnitureNewElevation [i] = Math.max(0, elevation);
+        } else {
+          furnitureNewElevation [i] = 0;
         }
-        piece.setElevation(Math.max(0, elevation));
-      } else {
-        piece.setElevation(0);
+      }
+      this.home.setSelectedItems(Arrays.asList(selectedFurniture));
+      doSetFurnitureElevation(selectedFurniture, furnitureNewElevation);
+      if (this.undoSupport != null) {
+        this.undoSupport.postEdit(new FurnitureElevationResetUndoableEdit(this.home, this.preferences,
+            oldSelection.toArray(new Selectable [oldSelection.size()]), furnitureOldElevation, selectedFurniture, furnitureNewElevation));
       }
     }
   }
 
   /**
-   * Returns the highest piece of furniture that includes the given <code>piece</code> 
+   * Undoable edit for furniture elevation reset.
+   */
+  private static class FurnitureElevationResetUndoableEdit extends LocalizedUndoableEdit {
+    private final Home                    home;
+    private final Selectable []           oldSelection;
+    private final float []                furnitureOldElevation;
+    private final HomePieceOfFurniture [] selectedFurniture;
+    private float []                      furnitureNewElevation;
+
+    public FurnitureElevationResetUndoableEdit(Home home, UserPreferences preferences,
+                                               Selectable [] oldSelection, float [] furnitureOldElevation,
+                                               HomePieceOfFurniture [] selectedFurniture, float [] furnitureNewElevation) {
+      super(preferences, FurnitureController.class, "undoResetElevation");
+      this.home = home;
+      this.oldSelection = oldSelection;
+      this.furnitureOldElevation = furnitureOldElevation;
+      this.selectedFurniture = selectedFurniture;
+      this.furnitureNewElevation = furnitureNewElevation;
+    }
+
+    @Override
+    public void undo() throws CannotUndoException {
+      super.undo();
+      doSetFurnitureElevation(this.selectedFurniture, this.furnitureOldElevation);
+      this.home.setSelectedItems(Arrays.asList(this.oldSelection));
+    }
+
+    @Override
+    public void redo() throws CannotRedoException {
+      super.redo();
+      this.home.setSelectedItems(Arrays.asList(this.selectedFurniture));
+      doSetFurnitureElevation(this.selectedFurniture, this.furnitureNewElevation);
+    }
+  }
+
+  private static void doSetFurnitureElevation(HomePieceOfFurniture [] selectedFurniture, float [] furnitureNewElevation) {
+    for (int i = 0; i < selectedFurniture.length; i++) {
+      selectedFurniture [i].setElevation(furnitureNewElevation [i]);
+    }
+  }
+
+  /**
+   * Returns the highest piece of furniture that includes the given <code>piece</code>
    * with a margin error of 5% of the smallest side length.
    * @since 4.4
    */
@@ -1484,7 +1788,7 @@ public class FurnitureController implements Controller {
     List<HomePieceOfFurniture> ignoredFurniture = Collections.emptyList();
     return getHighestSurroundingPieceOfFurniture(piece, ignoredFurniture);
   }
-  
+
   private HomePieceOfFurniture getHighestSurroundingPieceOfFurniture(HomePieceOfFurniture piece,
                                                                      List<HomePieceOfFurniture> ignoredFurniture) {
     float [][] piecePoints = piece.getPoints();
@@ -1492,7 +1796,7 @@ public class FurnitureController implements Controller {
     HomePieceOfFurniture highestSurroundingPiece = null;
     float highestElevation = Float.MIN_VALUE;
     for (HomePieceOfFurniture homePiece : getFurnitureInSameGroup(piece)) {
-      if (homePiece != piece 
+      if (homePiece != piece
           && !ignoredFurniture.contains(homePiece)
           && isPieceOfFurnitureVisibleAtSelectedLevel(homePiece)
           && homePiece.getDropOnTopElevation() >= 0) {
@@ -1504,7 +1808,7 @@ public class FurnitureController implements Controller {
           }
         }
         if (surroundingPieceContainsPiece) {
-          float elevation = homePiece.getElevation() 
+          float elevation = homePiece.getElevation()
               + homePiece.getHeightInPlan() * homePiece.getDropOnTopElevation();
           if (elevation > highestElevation) {
             highestElevation = elevation;
@@ -1515,7 +1819,7 @@ public class FurnitureController implements Controller {
     }
     return highestSurroundingPiece;
   }
-  
+
   /**
    * Returns the furniture list of the given <code>piece</code> which belongs to same group
    * or home furniture if it doesn't belong to home furniture.
@@ -1530,8 +1834,8 @@ public class FurnitureController implements Controller {
       return homeFurniture;
     }
   }
-  
-  private List<HomePieceOfFurniture> getFurnitureInSameGroup(HomePieceOfFurniture piece, List<HomePieceOfFurniture> furniture) {
+
+  private static List<HomePieceOfFurniture> getFurnitureInSameGroup(HomePieceOfFurniture piece, List<HomePieceOfFurniture> furniture) {
     for (HomePieceOfFurniture piece2 : furniture) {
       if (piece2 == piece) {
         return furniture;
@@ -1546,7 +1850,7 @@ public class FurnitureController implements Controller {
   }
 
   /**
-   * Returns <code>true</code> if the given piece is viewable and 
+   * Returns <code>true</code> if the given piece is viewable and
    * its height and elevation make it viewable at the selected level in home.
    * @since 4.4
    */
@@ -1558,10 +1862,10 @@ public class FurnitureController implements Controller {
         && (piece.getLevel() == selectedLevel
             || piece.isAtLevel(selectedLevel));
   }
-  
+
   /**
    * Controls the change of value of a visual property in home.
-   * @deprecated {@link #setVisualProperty(String, Object) setVisualProperty} should be replaced by a call to 
+   * @deprecated {@link #setVisualProperty(String, Object) setVisualProperty} should be replaced by a call to
    * {@link #setHomeProperty(String, String)} to ensure the property can be easily saved and read.
    * @since 5.0
    */
@@ -1577,57 +1881,5 @@ public class FurnitureController implements Controller {
   public void setHomeProperty(String propertyName,
                                 String propertyValue) {
     this.home.setProperty(propertyName, propertyValue);
-  }
-
-  /**
-   * Stores the current x or y value of an aligned piece of furniture.
-   */
-  private static class AlignedPieceOfFurniture {
-    private HomePieceOfFurniture piece;
-    private float                x;
-    private float                y;
-    
-    public AlignedPieceOfFurniture(HomePieceOfFurniture piece) {
-      this.piece = piece;
-      this.x = piece.getX();
-      this.y = piece.getY();
-    }
-
-    public HomePieceOfFurniture getPieceOfFurniture() {
-      return this.piece;
-    }
-
-    public float getX() {
-      return this.x;
-    }
-
-    public float getY() {
-      return this.y;
-    }
-
-    /**
-     * A helper method that returns an array of <code>AlignedPieceOfFurniture</code>
-     * built from <code>furniture</code> pieces excepted for <code>leadPiece</code>.
-     */
-    public static AlignedPieceOfFurniture [] getAlignedFurniture(List<HomePieceOfFurniture> furniture, 
-                                                                 HomePieceOfFurniture leadPiece) {
-      final AlignedPieceOfFurniture[] alignedFurniture =
-          new AlignedPieceOfFurniture[leadPiece == null  ? furniture.size()  : furniture.size() - 1];
-      int i = 0;
-      for (HomePieceOfFurniture piece : furniture) {
-        if (piece != leadPiece) {
-          alignedFurniture[i++] = new AlignedPieceOfFurniture(piece);
-        }
-      }
-      return alignedFurniture;
-    }
-  }
-
-  /**
-   * Describes how to align furniture on a lead piece.
-   */
-  private static interface AlignmentAction {
-    public void alignFurniture(AlignedPieceOfFurniture [] alignedFurniture, 
-                               HomePieceOfFurniture leadPiece);
   }
 }

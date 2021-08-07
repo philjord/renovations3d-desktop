@@ -25,10 +25,8 @@ import java.beans.PropertyChangeSupport;
 import java.net.URL;
 import java.util.List;
 
-import javaxswing.undo.AbstractUndoableEdit;
 import javaxswing.undo.CannotRedoException;
 import javaxswing.undo.CannotUndoException;
-import javaxswing.undo.UndoableEdit;
 import javaxswing.undo.UndoableEditSupport;
 
 import com.eteks.sweethome3d.model.BackgroundImage;
@@ -124,34 +122,32 @@ public class BackgroundImageWizardController extends WizardController
       this.home.setBackgroundImage(image);
     }
     boolean modification = oldImage == null;
-    UndoableEdit undoableEdit = 
-        new BackgroundImageUndoableEdit(this.home, selectedLevel, 
-            this.preferences, modification, oldImage, image);
-    this.undoSupport.postEdit(undoableEdit);
+    this.undoSupport.postEdit(new BackgroundImageUndoableEdit(this.home, this.preferences,
+        selectedLevel, oldImage, image, modification));
   }
 
   /**
    * Undoable edit for background image. This class isn't anonymous to avoid
    * being bound to controller and its view.
    */
-  private static class BackgroundImageUndoableEdit extends AbstractUndoableEdit {
+  private static class BackgroundImageUndoableEdit extends LocalizedUndoableEdit {
     private final Home            home;
     private final Level           level;
-    private final UserPreferences preferences;
-    private final boolean         modification;
     private final BackgroundImage oldImage;
     private final BackgroundImage image;
 
     private BackgroundImageUndoableEdit(Home home,
-                                        Level level, 
                                         UserPreferences preferences,
-                                        boolean modification,
+                                        Level level, 
                                         BackgroundImage oldImage,
-                                        BackgroundImage image) {
+                                        BackgroundImage image,
+                                        boolean modification) {
+      super(preferences, BackgroundImageWizardController.class,
+            modification
+              ? "undoImportBackgroundImageName"
+              : "undoModifyBackgroundImageName");
       this.home = home;
       this.level = level;
-      this.preferences = preferences;
-      this.modification = modification;
       this.oldImage = oldImage;
       this.image = image;
     }
@@ -176,14 +172,6 @@ public class BackgroundImageWizardController extends WizardController
       } else {
         this.home.setBackgroundImage(this.image);
       } 
-    }
-
-    @Override
-    public String getPresentationName() {
-      return this.preferences.getLocalizedString(BackgroundImageWizardController.class,
-          this.modification 
-              ? "undoImportBackgroundImageName"
-              : "undoModifyBackgroundImageName");
     }
   }
 

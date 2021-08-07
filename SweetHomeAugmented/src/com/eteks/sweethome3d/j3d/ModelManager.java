@@ -345,9 +345,9 @@ public class ModelManager {
     bounds.getLower(lower);
     Point3d upper = new Point3d();
     bounds.getUpper(upper);
-    return new Point3f((float)(lower.getX() + upper.getX()) / 2,
-        (float)(lower.getY() + upper.getY()) / 2,
-        (float)(lower.getZ() + upper.getZ()) / 2);
+    return new Point3f((float)(lower.x + upper.x) / 2,
+        (float)(lower.y + upper.y) / 2,
+        (float)(lower.z + upper.z) / 2);
   }
 
   /**
@@ -1336,9 +1336,9 @@ public class ModelManager {
     transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
     transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
     transformGroup.setCapability(TransformGroup.ENABLE_PICK_REPORTING);    
+    transformGroup.setCapability(TransformGroup.ALLOW_PARENT_READ);
     transformGroup.setUserData(deformableGroupPrefix + DEFORMABLE_TRANSFORM_GROUP_SUFFIX);    
-    transformGroup.setPickable(true);
-    transformGroup.setCapability(TransformGroup.ALLOW_PARENT_READ);    
+    transformGroup.setPickable(true);  
     // Store the node around which objects should turn
     for (Node child : children) {
       if (child != null) {    	  
@@ -1408,7 +1408,8 @@ public class ModelManager {
       ((Light)node).setEnable(false);
     } else if (node instanceof Shape3D) {
       node.setCapability(Node.ALLOW_PICKABLE_WRITE);
-      Appearance appearance = ((Shape3D)node).getAppearance();
+      Shape3D shape = ((Shape3D)node);
+      Appearance appearance = shape.getAppearance();
       if (appearance != null) {
     	//allow texture to be read (ModelPreviewComponent needs this)
       	appearance.setCapability(Appearance.ALLOW_TEXTURE_READ);

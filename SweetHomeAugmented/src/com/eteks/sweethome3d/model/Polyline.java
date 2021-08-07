@@ -26,8 +26,6 @@ import javaawt.geom.GeneralPath;
 import javaawt.geom.PathIterator;
 import javaawt.geom.Point2D;
 import javaawt.geom.Rectangle2D;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.Arrays;
@@ -88,7 +86,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   private Float                elevation;
   private Level                level;
   
-  private transient PropertyChangeSupport propertyChangeSupport = new PropertyChangeSupport(this);
   private transient Shape polylinePathCache;
   private transient Shape shapeCache;
 
@@ -99,6 +96,14 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     this(points, 1, CapStyle.BUTT, JoinStyle.MITER, DashStyle.SOLID, ArrowStyle.NONE, ArrowStyle.NONE, false, 0xFF000000);
   }
                   
+  /**
+   * Creates a polyline from the given coordinates.
+   * @since 6.4
+   */
+  public Polyline(String id, float [][] points) {
+    this(id, points, 1, CapStyle.BUTT, JoinStyle.MITER, DashStyle.SOLID, 0f, ArrowStyle.NONE, ArrowStyle.NONE, false, 0xFF000000);
+  }
+
   /**
    * Creates a polyline from the given coordinates.
    */
@@ -117,6 +122,19 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
                   CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle,
                   float dashOffset, ArrowStyle startArrowStyle,
                   ArrowStyle endArrowStyle, boolean closedPath, int color) {
+    this(createId("polyline"), points, thickness, capStyle, joinStyle, dashStyle, dashOffset,
+        startArrowStyle, endArrowStyle, closedPath, color);
+  }
+
+  /**
+   * Creates a polyline from the given coordinates.
+   * @since 6.4
+   */
+  public Polyline(String id, float [][] points, float thickness,
+                  CapStyle capStyle, JoinStyle joinStyle, DashStyle dashStyle,
+                  float dashOffset, ArrowStyle startArrowStyle,
+                  ArrowStyle endArrowStyle, boolean closedPath, int color) {
+    super(id);
     this.points = deepCopy(points);
     this.thickness = thickness;
     this.capStyle = capStyle;
@@ -133,13 +151,16 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
    * Initializes polyline transient fields.
    */
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-    this.propertyChangeSupport = new PropertyChangeSupport(this);
+    this.capStyle = CapStyle.BUTT;
+    this.joinStyle = JoinStyle.MITER;
+    this.dashStyle = DashStyle.SOLID;
+    this.startArrowStyle = ArrowStyle.NONE;
+    this.endArrowStyle = ArrowStyle.NONE;
     in.defaultReadObject();
     // Read styles from strings
     try {
       if (this.capStyleName != null) {
         this.capStyle = CapStyle.valueOf(this.capStyleName);
-        this.capStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant 
@@ -147,7 +168,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     try {
       if (this.joinStyleName != null) {
         this.joinStyle = JoinStyle.valueOf(this.joinStyleName);
-        this.joinStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant 
@@ -155,7 +175,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     try {
       if (this.dashStyleName != null) {
         this.dashStyle = DashStyle.valueOf(this.dashStyleName);
-        this.dashStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant 
@@ -163,7 +182,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     try {
       if (this.startArrowStyleName != null) {
         this.startArrowStyle = ArrowStyle.valueOf(this.startArrowStyleName);
-        this.startArrowStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant 
@@ -171,36 +189,10 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     try {
       if (this.endArrowStyleName != null) {
         this.endArrowStyle = ArrowStyle.valueOf(this.endArrowStyleName);
-        this.endArrowStyleName = null;
       }
     } catch (IllegalArgumentException ex) {
       // Ignore malformed enum constant 
     }
-  }
-
-  private void writeObject(java.io.ObjectOutputStream out) throws IOException {
-    // Write enums as strings to be able to read enums later 
-    // even if they change in later versions
-    this.capStyleName = this.capStyle.name();
-    this.joinStyleName = this.joinStyle.name();
-    this.dashStyleName = this.dashStyle.name();
-    this.startArrowStyleName = this.startArrowStyle.name();
-    this.endArrowStyleName = this.endArrowStyle.name();
-    out.defaultWriteObject();
-  }
-
-  /**
-   * Adds the property change <code>listener</code> in parameter to this wall.
-   */
-  public void addPropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.addPropertyChangeListener(listener);
-  }
-
-  /**
-   * Removes the property change <code>listener</code> in parameter from this wall.
-   */
-  public void removePropertyChangeListener(PropertyChangeListener listener) {
-    this.propertyChangeSupport.removePropertyChangeListener(listener);
   }
 
   /**
@@ -244,7 +236,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     this.points = deepCopy(points);
     this.polylinePathCache = null;
     this.shapeCache = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, points);
+    firePropertyChange(Property.POINTS.name(), oldPoints, points);
   }
 
   /**
@@ -272,7 +264,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     this.points = newPoints;
     this.polylinePathCache = null;
     this.shapeCache = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
+    firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
   
   /**
@@ -291,7 +283,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       this.points [index][1] = y;
       this.polylinePathCache = null;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
+      firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
     }
   }
   
@@ -312,7 +304,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     this.points = newPoints;
     this.polylinePathCache = null;
     this.shapeCache = null;
-    this.propertyChangeSupport.firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
+    firePropertyChange(Property.POINTS.name(), oldPoints, deepCopy(this.points));
   }
   
   /**
@@ -330,7 +322,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (thickness != this.thickness) {
       float oldThickness = this.thickness;
       this.thickness = thickness;
-      this.propertyChangeSupport.firePropertyChange(Property.THICKNESS.name(), oldThickness, thickness);
+      firePropertyChange(Property.THICKNESS.name(), oldThickness, thickness);
     }
   }
   
@@ -349,7 +341,8 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (capStyle != this.capStyle) {
       CapStyle oldStyle = this.capStyle;
       this.capStyle = capStyle;
-      this.propertyChangeSupport.firePropertyChange(Property.CAP_STYLE.name(), oldStyle, capStyle);
+      this.capStyleName = this.capStyle.name();
+      firePropertyChange(Property.CAP_STYLE.name(), oldStyle, capStyle);
     }
   }
   
@@ -368,9 +361,10 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (joinStyle != this.joinStyle) {
       JoinStyle oldJoinStyle = this.joinStyle;
       this.joinStyle = joinStyle;
+      this.joinStyleName = this.joinStyle.name();
       this.polylinePathCache = null;
       this.shapeCache = null;
-      this.propertyChangeSupport.firePropertyChange(Property.JOIN_STYLE.name(), oldJoinStyle, joinStyle);
+      firePropertyChange(Property.JOIN_STYLE.name(), oldJoinStyle, joinStyle);
     }
   }
   
@@ -391,11 +385,12 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
       float [] oldDashPattern = getDashPattern();
       DashStyle oldDashStyle = this.dashStyle;
       this.dashStyle = dashStyle;
+      this.dashStyleName = this.dashStyle.name();
       if (dashStyle != DashStyle.CUSTOMIZED) {
         this.dashPattern = null;
       }
-      this.propertyChangeSupport.firePropertyChange(Property.DASH_PATTERN.name(), oldDashPattern, getDashPattern());
-      this.propertyChangeSupport.firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, dashStyle);
+      firePropertyChange(Property.DASH_PATTERN.name(), oldDashPattern, getDashPattern());
+      firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, dashStyle);
     }
   }
   
@@ -431,11 +426,12 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (!Arrays.equals(dashPattern, this.dashPattern)) {
       float [] oldDashPattern = getDashPattern();
       this.dashPattern = dashPattern.clone();
-      this.propertyChangeSupport.firePropertyChange(Property.DASH_PATTERN.name(), oldDashPattern, dashPattern);
+      firePropertyChange(Property.DASH_PATTERN.name(), oldDashPattern, dashPattern);
       // Always emit a DASH_STYLE change to let existing listeners know that the pattern change
       DashStyle oldDashStyle = this.dashStyle;
       this.dashStyle = DashStyle.CUSTOMIZED;
-      this.propertyChangeSupport.firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, DashStyle.CUSTOMIZED);
+      this.dashStyleName = this.dashStyle.name();
+      firePropertyChange(Property.DASH_STYLE.name(), oldDashStyle, DashStyle.CUSTOMIZED);
     }
   }
 
@@ -458,7 +454,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (dashOffset != this.dashOffset) {
       float oldDashOffset = this.dashOffset;
       this.dashOffset = dashOffset;
-      this.propertyChangeSupport.firePropertyChange(Property.DASH_OFFSET.name(), oldDashOffset, dashOffset);
+      firePropertyChange(Property.DASH_OFFSET.name(), oldDashOffset, dashOffset);
     }
   }
 
@@ -477,7 +473,8 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (startArrowStyle != this.startArrowStyle) {
       ArrowStyle oldStartArrowStyle = this.startArrowStyle;
       this.startArrowStyle = startArrowStyle;
-      this.propertyChangeSupport.firePropertyChange(Property.START_ARROW_STYLE.name(), oldStartArrowStyle, startArrowStyle);
+      this.startArrowStyleName = this.startArrowStyle.name();
+      firePropertyChange(Property.START_ARROW_STYLE.name(), oldStartArrowStyle, startArrowStyle);
     }
   }
   
@@ -496,7 +493,8 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (endArrowStyle != this.endArrowStyle) {
       ArrowStyle oldEndArrowStyle = this.endArrowStyle;
       this.endArrowStyle = endArrowStyle;
-      this.propertyChangeSupport.firePropertyChange(Property.END_ARROW_STYLE.name(), oldEndArrowStyle, endArrowStyle);
+      this.endArrowStyleName = this.endArrowStyle.name();
+      firePropertyChange(Property.END_ARROW_STYLE.name(), oldEndArrowStyle, endArrowStyle);
     }
   }
   
@@ -514,7 +512,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   public void setClosedPath(boolean closedPath) {
     if (closedPath != this.closedPath) {
       this.closedPath = closedPath;
-      this.propertyChangeSupport.firePropertyChange(Property.CLOSED_PATH.name(), !closedPath, closedPath);
+      firePropertyChange(Property.CLOSED_PATH.name(), !closedPath, closedPath);
     }
   }
   
@@ -533,7 +531,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (color != this.color) {
       int oldColor = this.color;
       this.color = color;
-      this.propertyChangeSupport.firePropertyChange(Property.COLOR.name(), oldColor, color);
+      firePropertyChange(Property.COLOR.name(), oldColor, color);
     }
   }
 
@@ -553,7 +551,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
 
   /**
    * Returns the elevation of this polyline in 3D.
-   * @return an elevation or <code>null</code> if the polyline shouldn't be displayed in 3D.
    * @since 6.0
    */
   public float getElevation() {
@@ -569,7 +566,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (this.elevation != null && elevation != this.elevation) {
       float oldElevation = this.elevation;
       this.elevation = elevation;
-      this.propertyChangeSupport.firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
+      firePropertyChange(Property.ELEVATION.name(), oldElevation, elevation);
     }
   }
 
@@ -588,8 +585,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   public void setVisibleIn3D(boolean visibleIn3D) {
     if (visibleIn3D ^ (this.elevation != null)) {
       this.elevation = visibleIn3D ? Float.valueOf(0) : null;
-      this.propertyChangeSupport.firePropertyChange(Property.VISIBLE_IN_3D.name(),
-          !visibleIn3D, visibleIn3D);
+      firePropertyChange(Property.VISIBLE_IN_3D.name(), !visibleIn3D, visibleIn3D);
     }
   }
 
@@ -608,7 +604,7 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
     if (level != this.level) {
       Level oldLevel = this.level;
       this.level = level;
-      this.propertyChangeSupport.firePropertyChange(Property.LEVEL.name(), oldLevel, level);
+      firePropertyChange(Property.LEVEL.name(), oldLevel, level);
     }
   }
 
@@ -764,7 +760,6 @@ public class Polyline extends HomeObject implements Selectable, Elevatable {
   @Override
   public Polyline clone() {
     Polyline clone = (Polyline)super.clone();
-    clone.propertyChangeSupport = new PropertyChangeSupport(clone);
     clone.level = null;
     return clone;
   }
