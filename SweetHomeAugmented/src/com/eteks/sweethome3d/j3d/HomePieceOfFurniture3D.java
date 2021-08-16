@@ -254,11 +254,23 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 	@Override
 	public void update() {
       if (isVisible()) {
+    	updatePieceOfFurnitureModelTransformations();
+  		updatePieceOfFurnitureTransform();
+  		updatePieceOfFurnitureColorAndTexture(false);
+      }
+  	  updateLight();
+  	  updatePieceOfFurnitureVisibility();
+  	}
+  	public void update(boolean waitTextureLoadingEnd) {
+      if (isVisible()) {
+        updatePieceOfFurnitureModelTransformations();
+  		updatePieceOfFurnitureTransform();
+  		updatePieceOfFurnitureColorAndTexture(waitTextureLoadingEnd);
 	    HomePieceOfFurniture piece = (HomePieceOfFurniture)getUserData();
 	    TransformGroup transformGroup = (TransformGroup)getChild(0);
 	    Node normalization = ((Group)transformGroup.getChild(0)).getChild(0);
 	    if (piece.getModel().equals(transformGroup.getUserData())
-	        && Arrays.deepEquals(piece.getModelRotation(), (float [][])normalization.getUserData())) {
+	      && Arrays.deepEquals(piece.getModelRotation(), (float [][])normalization.getUserData())) {
 	      updatePieceOfFurnitureModelTransformations();
 		  updatePieceOfFurnitureTransform();
 		  updatePieceOfFurnitureColorAndTexture(false);
@@ -428,6 +440,9 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
 		if(!visible && isShowOutline)
 			showOutline(false);
 	}
+	
+	 
+	
 
   /**
    * Sets the transformations applied to piece model parts.

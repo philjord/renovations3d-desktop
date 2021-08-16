@@ -4274,7 +4274,8 @@ public class PlanController extends FurnitureController implements Controller {
    * Returns the selected dimension line with an end extension line
    * at (<code>x</code>, <code>y</code>).
    */
-  private DimensionLine getResizedDimensionLineStartAt(float x, float y) {
+  //PJPJ
+  public DimensionLine getResizedDimensionLineStartAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
@@ -4314,7 +4315,7 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) at its middle.
    */
   //PJPJ
-  private DimensionLine getOffsetDimensionLineAt(float x, float y) {
+  public DimensionLine getOffsetDimensionLineAt(float x, float y) {
     List<Selectable> selectedItems = this.home.getSelectedItems();
     if (selectedItems.size() == 1
         && selectedItems.get(0) instanceof DimensionLine
@@ -4703,7 +4704,7 @@ public class PlanController extends FurnitureController implements Controller {
    * at (<code>x</code>, <code>y</code>) that can be used to elevate the piece.
    */
   //PJPJ
-  private HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
+  public HomePieceOfFurniture getElevatedPieceOfFurnitureAt(float x, float y) {
     HomePieceOfFurniture selectedPiece = getSelectedMovablePieceOfFurniture();
     if (selectedPiece != null) {
       float margin = getIndicatorMargin();
