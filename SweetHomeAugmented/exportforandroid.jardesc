@@ -11,6 +11,7 @@
         </sealing>
     </manifest>
     <selectedElements exportClassFiles="true" exportJavaFiles="false" exportOutputFolder="false">
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_zh_TW.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io.resources.frame"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.plugin"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{ImportedFurnitureWizardStepsView.java"/>
@@ -18,8 +19,6 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_sr.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.pl"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{ObserverCameraController.java"/>
-        <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.android_props.resources.actions"/>
-        <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.android_props"/>
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{Object3DBranch.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_vi.properties"/>
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{Ground3D.java"/>
@@ -31,11 +30,11 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_in.properties"/>
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{Label3D.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_pt.properties"/>
-        <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.android_props.resources"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_sv.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_hu.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_fi.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{HomeApplication.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_de.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{Selectable.java"/>
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{ShapeTools.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.swing.resources.icons"/>
@@ -46,8 +45,10 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_pl.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.fr"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{HomeXMLExporter.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_sv.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{IllegalHomonymException.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.es"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_it.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_zh_TW.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{HomeContentContext.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_ru.properties"/>
@@ -56,6 +57,7 @@
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.tools{TemporaryURLContent.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{PatternsCatalog.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_bg.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.cs"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_tr.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_hu.properties"/>
@@ -72,7 +74,6 @@
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.zh_CN"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{CollectionChangeSupport.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{CatalogTexture.java"/>
-        <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.android_props.resources.cursors"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{PhotoController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_bg.properties"/>
@@ -85,9 +86,12 @@
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{HomePieceOfFurniture3D.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.en"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_zh_TW.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_fr.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_hu.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_nl.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{HomeXMLHandler.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_ja.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_en_US.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{ThreadedTaskView.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{DefaultPatternTexture.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_ru.properties"/>
@@ -110,14 +114,18 @@
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_nl.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io.resources.texturableCylinder"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_fr.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_pl.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{AbstractPhotoController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_ru.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{TransferableView.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_cs.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_zh_CN.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_fr.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{DialogView.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_de.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io.resources.curtains"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_ru.properties"/>
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{Wall3D.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{HomeEnvironment.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_de.properties"/>
@@ -142,6 +150,7 @@
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{ObjectXMLExporter.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_cs.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_cs.properties"/>
+        <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.swing.resources.actions"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{TextStyle.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_sv.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.sv"/>
@@ -162,6 +171,7 @@
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{HomeTexture.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io.resources.patterns"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_el.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_hu.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.ru"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{Level.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{DamagedHomeIOException.java"/>
@@ -179,6 +189,7 @@
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{Room3D.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{CatalogLight.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_pt.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_pt.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{VideoController.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io.resources.mannequin"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{ContentManager.java"/>
@@ -186,6 +197,7 @@
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{PlanView.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_sv.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_bg.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_vi.properties"/>
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{PhotoRenderer.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/SupportedLanguages.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{DamagedHomeRecorderException.java"/>
@@ -193,10 +205,13 @@
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.pt"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{Base64.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_ja.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package_it.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_cs.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{Content.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{HomeRecorder.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/HomeComponent3D.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_es.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_it.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{CatalogPieceOfFurniture.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{ContentRecording.java"/>
@@ -204,15 +219,19 @@
         <file path="/Renovations3DDesktop/src/com/eteks/sweethome3d/j3d/PhotoRenderer.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{Elevatable.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_en_AU.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{ImportedTextureWizardController.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_nl.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_es.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{CollectionEvent.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/ContributedFurnitureCatalog.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultTexturesCatalog_pl.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_el.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{Baseboard.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/HomePDFPrinter.properties"/>
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{Polyline3D.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{LightSource.java"/>
+        <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.swing.resources.cursors"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/model/LengthUnit_ar.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{Transformation.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/viewcontroller/package.properties"/>
@@ -221,7 +240,6 @@
         <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.j3d{Object3DBranchFactory.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help.zh_TW"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller{TextureChoiceView.java"/>
-        <javaElement handleIdentifier="=Renovations3DDesktop/src&lt;com.eteks.sweethome3d.android_props.resources.icons"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.viewcontroller.resources.help"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_es.properties"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_vi.properties"/>
@@ -231,6 +249,8 @@
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{ResourceBundleTools.java"/>
         <file path="/SweetHome3D/src/com/eteks/sweethome3d/io/DefaultFurnitureCatalog_pt.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io{HomeFileRecorder.java"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_en_CA.properties"/>
+        <file path="/SweetHome3D/src/com/eteks/sweethome3d/swing/package_ja.properties"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.io.resources.examples"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{HomeLight.java"/>
         <javaElement handleIdentifier="=SweetHome3D/src=/org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY=/SweetHome3D\/natives\/windows-amd64=/&lt;com.eteks.sweethome3d.model{SelectionEvent.java"/>
