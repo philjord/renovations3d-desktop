@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry excluding="src/" kind="src" path=""/>
 	<classpathentry kind="lib" path="lib/iText-2.1.7.jar"/>
 	<classpathentry kind="lib" path="lib/freehep-vectorgraphics-svg-2.1.1b.jar"/>
 	<classpathentry kind="lib" path="lib/jmf.jar"/>
@@ -22,6 +23,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/SweetHome3D"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-core"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/java3d-utils"/>
-	<classpathentry kind="lib" path="C:/temp/jogamp-fat/jogamp-fat2.4.0.jar"/>
+	<classpathentry kind="lib" path="C:/temp/jogamp-fat-2.5.jar"/>
 	<classpathentry kind="output" path="classes"/>
 </classpath>

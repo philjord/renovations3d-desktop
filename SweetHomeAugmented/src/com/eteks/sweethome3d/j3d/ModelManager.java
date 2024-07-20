@@ -207,6 +207,12 @@ public class ModelManager {
 
   private static final Material               DEFAULT_MATERIAL = new Material();
   
+  static {
+	    DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
+	    DEFAULT_MATERIAL.setShininess(1);
+	    DEFAULT_MATERIAL.setSpecularColor(0, 0, 0);
+	  }
+  
   private static final float MINIMUM_SIZE = 0.001f;
 
   private static final String ADDITIONAL_LOADER_CLASSES = "com.eteks.sweethome3d.j3d.additionalLoaderClasses";
