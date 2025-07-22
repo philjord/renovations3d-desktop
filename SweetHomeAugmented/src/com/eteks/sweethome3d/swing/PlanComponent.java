@@ -6736,9 +6736,8 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         Viewer viewer = viewingPlatform.getViewers() [0];      
         org.jogamp.java3d.View view = viewer.getView();
         view.setProjectionPolicy( org.jogamp.java3d.View.PARALLEL_PROJECTION);
-//PJPJ these are correct and result in no icon under java3d 1.7
-//        view.setFrontClipDistance(-1.1f);
-//        view.setBackClipDistance(1.1f);
+        view.setFrontClipDistance(0.01f);
+        view.setBackClipDistance(100f);
         sceneRoot = new BranchGroup();
         // Prepare scene root
         sceneRoot.setCapability(BranchGroup.ALLOW_LOCALE_READ);
@@ -6747,14 +6746,14 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
         sceneRoot.setCapability(BranchGroup.ALLOW_CHILDREN_EXTEND);
         Background background = new Background(1.1f, 1.1f, 1.1f);
         background.setCapability(Background.ALLOW_COLOR_WRITE);
-        background.setApplicationBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
+        background.setApplicationBounds(new BoundingBox(new Point3d(-11, -11, -11), new Point3d(11, 11, 11)));
         sceneRoot.addChild(background);
         Light [] lights = {new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(1.5f, -0.8f, -1)),         
                            new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(-1.5f, -0.8f, -1)), 
                            new DirectionalLight(new Color3f(0.6f, 0.6f, 0.6f), new Vector3f(0, -0.8f, 1)), 
                            new AmbientLight(new Color3f(0.2f, 0.2f, 0.2f))};
         for (Light light : lights) {
-          light.setInfluencingBounds(new BoundingBox(new Point3d(-1.1, -1.1, -1.1), new Point3d(1.1, 1.1, 1.1)));
+          light.setInfluencingBounds(new BoundingBox(new Point3d(-11, -11, -11), new Point3d(11, 11, 11)));
           sceneRoot.addChild(light);
         }
         universe.addBranchGraph(sceneRoot);
@@ -6782,7 +6781,16 @@ public class PlanComponent extends JComponent implements PlanView, Scrollable, P
       scaleTransform.setScale(new Vector3d(2 / pieceWidth, 2 / pieceHeight, 2 / pieceDepth));
       TransformGroup modelTransformGroup = new TransformGroup();
       modelTransformGroup.setTransform(scaleTransform);
+      
+      
+      
+      
+      
       modelTransformGroup.addChild(pieceNode);
+      
+      
+      
+      
       // Replace model textures by clones because Java 3D doesn't accept all the time 
       // to share textures between offscreen and onscreen environments 
       cloneTexture(pieceNode, new IdentityHashMap<Texture, Texture>());

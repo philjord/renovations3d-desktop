@@ -1106,9 +1106,6 @@ public class HomePieceOfFurniture3D extends Object3DBranch {
       // (note that DEFAULT_TEXTURED_SHAPE_POLYGON_ATTRIBUTES and NORMAL_FLIPPED_TEXTURED_SHAPE_POLYGON_ATTRIBUTES
       // don't have their ALLOW_CULL_FACE_WRITE capability set but as their cull face is set to CULL_NONE,
       // their setCullFace method is never called)
-    	//TODO:
-    	System.out.println("one of these is called because Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES is being processed by");
-    	System.out.println("setColorAndTexture but should probably be trapped and excluded, the outline shape3D should be spotted and not updated");
       ex.printStackTrace();
     }
   }
