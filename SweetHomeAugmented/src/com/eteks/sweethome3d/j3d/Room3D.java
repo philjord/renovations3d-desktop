@@ -31,6 +31,9 @@ import java.util.List;
 import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.Geometry;
+import org.jogamp.java3d.Group;
+import org.jogamp.java3d.IndexedGeometryArray;
+import org.jogamp.java3d.IndexedLineStripArray;
 import org.jogamp.java3d.Node;
 import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
@@ -50,6 +53,7 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
 
 /**
@@ -58,10 +62,6 @@ import com.eteks.sweethome3d.model.Wall;
 public class Room3D extends Object3DBranch {
   private static final int FLOOR_PART  = 0;
   private static final int CEILING_PART = 1;
-  
-  private static final int OUTLINE_PART = 2;
-  
-  private final Home home;
 
   /**
    * Creates the 3D room matching the given home <code>room</code>.
@@ -86,20 +86,48 @@ public class Room3D extends Object3DBranch {
                 boolean ignoreCeilingPart,
                 boolean ignoreDrawingMode,
                 boolean waitTextureLoadingEnd) {
-    setUserData(room);
-    this.home = home;
+    this(room, home, null, home, ignoreCeilingPart, ignoreDrawingMode, waitTextureLoadingEnd);
+  }
+
+  /**
+   * Creates the 3D room matching the given home <code>room</code>.
+   */
+  public Room3D(Room room, Home home, UserPreferences preferences, Object context,
+                boolean ignoreCeilingPart,
+                boolean ignoreDrawingMode,
+                boolean waitTextureLoadingEnd) {
+    super(room, home, preferences, context);
 
     // Allow room branch to be removed from its parent
     setCapability(BranchGroup.ALLOW_DETACH);
     // Allow to read branch shape children
     setCapability(BranchGroup.ALLOW_CHILDREN_READ);    
+    setCapability(BranchGroup.ALLOW_PICKABLE_WRITE);
     
-    // Add room floor and ceiling empty shapes to branch
-    addChild(createRoomPartShape(FLOOR_PART));
-    addChild(createRoomPartShape(CEILING_PART));
+    //PJPJ for picking
+    setPickable(true);
+    setCapability(Node.ENABLE_PICK_REPORTING);// this is the SGP I want returned from picking
     
-    // child 2 is now the outliner
-    addChild(createRoomPartShape(OUTLINE_PART));
+    // Add room floor and cellar empty shapes to branch
+    for (int i = 0; i < 2; i++) {
+      Group roomPartGroup = new Group();
+      roomPartGroup.setCapability(Group.ALLOW_CHILDREN_READ);
+      roomPartGroup.addChild(createRoomPartShape(false));
+      if (!ignoreDrawingMode) {
+        roomPartGroup.addChild(createRoomPartShape(true));
+      }
+      addChild(roomPartGroup);
+      //PJPJ for picking
+      roomPartGroup.setPickable(true);
+    }
+    // Add selection node
+    Shape3D roomSelectionShape = new Shape3D();
+    roomSelectionShape.setAppearance(getSelectionAppearance());
+    roomSelectionShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+    roomSelectionShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+    roomSelectionShape.setPickable(false);
+    addChild(roomSelectionShape);
+    
     // Set room shape geometry and appearance
     updateRoomGeometry();
     updateRoomAppearance(waitTextureLoadingEnd);
@@ -110,73 +138,21 @@ public class Room3D extends Object3DBranch {
       // Avoid making ceiling pickable because they can't be viewed from top
       getChild(CEILING_PART).setPickable(false);
     }
-    
-    // allow picking, but note it is on the floor and varies based on floor visibility
-	setPickable(true);    	
-	setCapability(Node.ENABLE_PICK_REPORTING);
-	((Shape3D)getChild(FLOOR_PART)).setCapability(Node.ALLOW_PICKABLE_WRITE);
   }
 
   /**
    * Returns a new room part shape with no geometry  
    * and a default appearance with a white material.
    */
-  private Node createRoomPartShape(int part) {
+
+  private Node createRoomPartShape(boolean outline) {
     Shape3D roomShape = new Shape3D();
     // Allow room shape to change its geometry
     roomShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
     roomShape.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
     roomShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     
-    Appearance roomAppearance;
-    
-    // stencil based outlining
-    int outlineStencilMask = Object3DBranch.ROOM_STENCIL_MASK;
-    RenderingAttributes renderingAttributes = new RenderingAttributes();
-    if (part == OUTLINE_PART) {    	
-    	roomAppearance = new SimpleShaderAppearance(Object3DBranch.OUTLINE_COLOR);// special non auto build version for outlining
-    	roomAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
-    	roomAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
-    	roomAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
-    	// for outlines
-  		renderingAttributes.setStencilEnable(true);
-  		renderingAttributes.setStencilWriteMask(outlineStencilMask);
-  		renderingAttributes.setStencilFunction(RenderingAttributes.NOT_EQUAL, outlineStencilMask, outlineStencilMask);
-  		renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_KEEP, //
-  				RenderingAttributes.STENCIL_KEEP, //
-  				RenderingAttributes.STENCIL_KEEP);
-  		// geoms often have colors in verts
-  		renderingAttributes.setIgnoreVertexColors(true);
-  		// draw it even when hidden
-  		renderingAttributes.setDepthBufferEnable(false);
-  		renderingAttributes.setDepthTestFunction(RenderingAttributes.ALWAYS);	
-  		renderingAttributes.setVisible(false);
-  		
-	} else {
-    	roomAppearance = new SimpleShaderAppearance();
-
-		renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-	    roomAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-	    roomAppearance.setMaterial(DEFAULT_MATERIAL);      
-	    roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
-	    roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
-	    roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
-	    
-	    ((SimpleShaderAppearance)roomAppearance).setUpdatableCapabilities();
-	    
-	    // only floor contributes to stenciling
-		if(part == FLOOR_PART)
-		{
-		    renderingAttributes.setStencilEnable(false);
-		    renderingAttributes.setStencilWriteMask(outlineStencilMask);
-		    renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
-		    renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_REPLACE, //
-		    		RenderingAttributes.STENCIL_REPLACE, //
-					RenderingAttributes.STENCIL_REPLACE);  
-		}
-	}
-    
-
+    SimpleShaderAppearance roomAppearance = new SimpleShaderAppearance();
     roomShape.setAppearance(roomAppearance);
     roomAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
     TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
@@ -184,11 +160,24 @@ public class Room3D extends Object3DBranch {
     transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
     roomAppearance.setTransparencyAttributes(transparencyAttributes);
     roomAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+    RenderingAttributes renderingAttributes = new RenderingAttributes();
     renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-    renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);
-    
     roomAppearance.setRenderingAttributes(renderingAttributes);
-    
+ 
+    if (outline) {
+      roomAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
+      roomAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
+      roomAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
+    } else {
+      roomAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+      roomAppearance.setMaterial(DEFAULT_MATERIAL);
+      roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
+      roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
+      roomAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
+      //PJPJ for picking
+      makePickable(roomShape);
+    }   
+    roomAppearance.setUpdatableCapabilities();// allow shader rebuilding, after all the edits to the appearance above	    
     return roomShape;
   }
 
@@ -204,39 +193,45 @@ public class Room3D extends Object3DBranch {
   private void updateRoomGeometry() {
     updateRoomPartGeometry(FLOOR_PART, ((Room)getUserData()).getFloorTexture());
     updateRoomPartGeometry(CEILING_PART, ((Room)getUserData()).getCeilingTexture());
-    
-    //copy floor to outline
-    Shape3D floorShape = (Shape3D)getChild(FLOOR_PART);
-    Shape3D outlineShape = (Shape3D)getChild(OUTLINE_PART);
-    outlineShape.removeAllGeometries();
-    for (int i = 0; i < floorShape.numGeometries(); i++) 
-    	outlineShape.addGeometry(floorShape.getGeometry(i));
-    
+    Room room = (Room)getUserData();
+    setPickable(getHome().getEnvironment().getWallsAlpha() == 0
+        || room.getLevel() == null
+        || room.getLevel().getElevation() <= 0);    
   }
   
   private void updateRoomPartGeometry(int roomPart, HomeTexture texture) {
-    Shape3D roomShape = (Shape3D)getChild(roomPart);
-    int currentGeometriesCount = roomShape.numGeometries();
-    Room room = (Room)getUserData();
-    if (room.getLevel() == null || room.getLevel().isViewableAndVisible()) {
-      /*for (Geometry roomGeometry : createRoomGeometries(roomPart, texture)) {
-        roomShape.addGeometry(roomGeometry);
-    	}*/
-		// Now put all geometries into one large geometry array for better rendering performance	
-		Geometry[] gs = createRoomGeometries(roomPart, texture);
-		if (gs.length > 0)
-		{
-			GeometryInfo gi = GeometryMerger.mergeGeometryArray(gs);
-		    roomShape.addGeometry(makePickable(gi.getIndexedGeometryArray(true,true,true,true,true)));
-		}
-    }
-    for (int i = currentGeometriesCount - 1; i >= 0; i--) {
-      roomShape.removeGeometry(i);
-    }
-  }
-  
-  
- 
+	  Group roomPartGroup = (Group)getChild(roomPart);
+	    Shape3D roomFilledShape = (Shape3D)roomPartGroup.getChild(0);
+	    Shape3D roomOutlineShape = roomPartGroup.numChildren() > 1
+	        ? (Shape3D)roomPartGroup.getChild(1)
+	        : null;
+	    int currentGeometriesCount = roomFilledShape.numGeometries();
+	    Room room = (Room)getUserData();
+	    if (room.getLevel() == null || room.getLevel().isViewableAndVisible()) {
+	      /*for (Geometry roomGeometry : createRoomGeometries(roomPart, texture)) {
+	        roomFilledShape.addGeometry(roomGeometry);
+	        if (roomOutlineShape != null) {
+	          roomOutlineShape.addGeometry(roomGeometry);
+	        }
+	      }*/
+			//PJPJ Now put all geometries into one large geometry array for better rendering performance	
+	    	Geometry[] gs = createRoomGeometries(roomPart, texture);
+			if (gs.length > 0) {
+				GeometryInfo gi = GeometryMerger.mergeGeometryArray(gs);
+				roomFilledShape.addGeometry(makePickable(gi.getIndexedGeometryArray(true,true,true,true,true)));
+			}
+	    }
+	    for (int i = currentGeometriesCount - 1; i >= 0; i--) {
+	    	roomFilledShape.removeGeometry(i);
+	        if (roomOutlineShape != null) {
+	          roomOutlineShape.removeGeometry(i);
+	        }
+	    }
+	    
+	    Shape3D roomSelectionShape = (Shape3D)getChild(2);
+	    roomSelectionShape.addGeometry(createRoomSelectionGeometry());
+	    roomSelectionShape.removeGeometry(0);
+   }
   
   /**
    * Returns room geometry computed from its points.
@@ -248,7 +243,7 @@ public class Room3D extends Object3DBranch {
          || roomPart == CEILING_PART && room.isCeilingVisible())
         && points.length > 2) {
       Level roomLevel = room.getLevel();
-      List<Level> levels = this.home.getLevels();
+      List<Level> levels = getHome().getLevels();
       boolean lastLevel = isLastLevel(roomLevel, levels);
       float floorBottomElevation;
       float roomElevation;
@@ -274,7 +269,7 @@ public class Room3D extends Object3DBranch {
       // and room ceilings at same elevation as the floor bottom  
       final List<Room> roomsAtSameElevation = new ArrayList<Room>();
       List<Room> ceilingsAtSameFloorBottomElevation = new ArrayList<Room>();
-      for (Room homeRoom : this.home.getRooms()) {
+      for (Room homeRoom : getHome().getRooms()) {
         Level homeRoomLevel = homeRoom.getLevel();
         if (homeRoomLevel == null || homeRoomLevel.isViewableAndVisible()) {
           if (room == homeRoom // Store also the room itself to know its order among rooms at same elevation
@@ -321,7 +316,7 @@ public class Room3D extends Object3DBranch {
               && lastLevel) {
         visibleStaircases = Collections.emptyList();
       } else {
-        visibleStaircases = getVisibleStaircases(this.home.getFurniture(), roomPart, roomLevel, 
+        visibleStaircases = getVisibleStaircases(getHome().getFurniture(), roomPart, roomLevel,
             roomLevel.getElevation() == firstLevelElevation);
       }
 
@@ -371,7 +366,7 @@ public class Room3D extends Object3DBranch {
       }
       
       List<Geometry> geometries = new ArrayList<Geometry> (3);      
-      final float subpartSize = this.home.getEnvironment().getSubpartSizeUnderLight();
+      final float subpartSize = getHome().getEnvironment().getSubpartSizeUnderLight();
       
       if (!roomPointsWithoutHoles.isEmpty()) {
         List<float []> roomPointElevations = new ArrayList<float[]>();
@@ -603,6 +598,33 @@ public class Room3D extends Object3DBranch {
     if (texture != null) {
       TexCoord2f [] textureCoords = new TexCoord2f [vertexCount];
       i = 0;
+      if (texture.isFittingArea()) {
+        // Compute room border texture coordinates
+        for (float [][] geometryPoints : geometryRooms) {
+          for (int j = 0; j < geometryPoints.length; j++) {
+            textureCoords [i++] =
+            textureCoords [i++] = new TexCoord2f(geometryPoints [j][0], -geometryPoints [j][1]);
+            int nextPoint = j < geometryPoints.length - 1
+                ? j + 1
+                : 0;
+            textureCoords [i++] =
+            textureCoords [i++] = new TexCoord2f(geometryPoints [nextPoint][0], -geometryPoints [nextPoint][1]);
+          }
+        }
+        // Compute holes borders texture coordinates
+        for (float [][] geometryHole : geometryHoles) {
+          for (int j = 0; j < geometryHole.length; j++) {
+            textureCoords [i] = new TexCoord2f(geometryHole [j][0], -geometryHole [j][1]);
+            int nextPoint = j < geometryHole.length - 1
+                ? j + 1
+                : 0;
+            textureCoords [i + 1] = new TexCoord2f(geometryHole [nextPoint][0], -geometryHole [nextPoint][1]);
+            textureCoords [i + 2] = textureCoords [i + 1];
+            textureCoords [i + 3] = textureCoords [i];
+            i += 4;
+          }
+        }
+      } else {
       // Compute room border texture coordinates
       for (float [][] geometryPoints : geometryRooms) {
         for (int j = 0; j < geometryPoints.length; j++) {
@@ -631,11 +653,12 @@ public class Room3D extends Object3DBranch {
           textureCoords [i++] = new TexCoord2f(0, roomLevel.getFloorThickness());
         }
       }
+      }
       geometryInfo.setTextureCoordinateParams(1, 2);
       geometryInfo.setTextureCoordinates(0, textureCoords);
     }
     
-    geometryInfo.convertToIndexedTriangles();// Quads are not allowed on modern pipelines
+    geometryInfo.convertToIndexedTriangles();//PJPJ Quads are not allowed on modern pipelines
     // Generate normals
     new NormalGenerator(Math.PI / 8).generateNormals(geometryInfo);
     return makePickable(geometryInfo.getIndexedGeometryArray(true,true,true,true,true));
@@ -693,19 +716,53 @@ public class Room3D extends Object3DBranch {
   private float getRoomHeightAt(float x, float y) {
     double smallestDistance = Float.POSITIVE_INFINITY;
     Room room = (Room)getUserData();
+    Home home = getHome();
     Level roomLevel = room.getLevel();
     float roomElevation = roomLevel != null
         ? roomLevel.getElevation()
         : 0;
     float roomHeight = roomElevation + 
-        (roomLevel == null ? this.home.getWallHeight() : roomLevel.getHeight());
-    List<Level> levels = this.home.getLevels();
+        (roomLevel == null ? home.getWallHeight() : roomLevel.getHeight());
+    List<Level> levels = home.getLevels();
     if (roomLevel == null || isLastLevel(roomLevel, levels)) {
+      if (room.isCeilingFlat()) {
+        // Search the highest wall at last level
+        boolean roomHeightSet = false;
+        for (Wall wall : home.getWalls()) {
+          if ((wall.getLevel() == null || wall.getLevel().isViewable())
+              && wall.isAtLevel(roomLevel)) {
+            if (wall.getHeight() != null) {
+              float wallHeight = wall.getHeight();
+              if (wall.getLevel() != null) {
+                wallHeight += wall.getLevel().getElevation();
+              }
+              if (roomHeightSet) {
+                roomHeight = Math.max(roomHeight, wallHeight);
+              } else {
+                roomHeight = wallHeight;
+                roomHeightSet = true;
+              }
+            }
+            if (wall.getHeightAtEnd() != null) {
+              float wallHeightAtEnd = wall.getHeightAtEnd();
+              if (wall.getLevel() != null) {
+                wallHeightAtEnd += wall.getLevel().getElevation();
+              }
+              if (roomHeightSet) {
+                roomHeight = Math.max(roomHeight, wallHeightAtEnd);
+              } else {
+                roomHeight = wallHeightAtEnd;
+                roomHeightSet = true;
+              }
+            }
+          }
+        }
+      } else {
       // Search the closest wall point to x, y at last level
       Wall closestWall = null;
       float [][] closestWallPoints = null;
       int closestIndex = -1;
-      for (Wall wall : this.home.getWalls()) {
+        for (Wall wall : home.getWalls()) {
         if ((wall.getLevel() == null || wall.getLevel().isViewable())
             && wall.isAtLevel(roomLevel)) {
           float [][] points = wall.getPoints();
@@ -727,7 +784,7 @@ public class Room3D extends Object3DBranch {
         if (closestIndex == 0 || closestIndex == closestWallPoints.length - 1) { // Wall start
           roomHeight += wallHeightAtStart != null 
               ? wallHeightAtStart 
-              : this.home.getWallHeight();
+                : home.getWallHeight();
         } else { // Wall end
           if (closestWall.isTrapezoidal()) {
             Float arcExtent = closestWall.getArcExtent();
@@ -755,7 +812,8 @@ public class Room3D extends Object3DBranch {
                   + (closestWall.getHeightAtEnd() - wallHeightAtStart) * arcExtentToClosestWallPoint / arcExtent);
             }
           } else {
-            roomHeight += (wallHeightAtStart != null ? wallHeightAtStart : this.home.getWallHeight());
+              roomHeight += (wallHeightAtStart != null ? wallHeightAtStart : home.getWallHeight());
+            }
           }
         }
       }
@@ -771,27 +829,118 @@ public class Room3D extends Object3DBranch {
   }
 
   /**
+   * Returns the selection geometry of this room.
+   */  
+  private Geometry createRoomSelectionGeometry() {	  
+    Room room = (Room)getUserData();
+    Level roomLevel = room.getLevel();
+    List<Level> levels = getHome().getLevels();
+    float floorBottomElevation;
+    float roomElevation;
+    if (roomLevel != null) {
+      roomElevation = roomLevel.getElevation();
+      floorBottomElevation = roomElevation - roomLevel.getFloorThickness();
+    } else {
+      roomElevation = 0;
+      floorBottomElevation = 0;
+    }
+    float firstLevelElevation;
+    if (levels.size() == 0) {
+      firstLevelElevation = 0;
+    } else {
+      firstLevelElevation = levels.get(0).getElevation();
+    }
+    boolean floorVisible = room.isFloorVisible();
+    boolean floorBottomVisible = floorVisible
+        && roomLevel != null
+        && roomElevation != firstLevelElevation;
+
+    float [][] roomPoints = room.getPoints();
+    boolean ceilingVisible = room.isCeilingVisible();
+    if (!floorVisible && !ceilingVisible) {
+      // If floor and ceiling not visible, draw at least floor contour for feedback
+      floorVisible = true;
+    }
+    Point3f [] selectionCoordinates = new Point3f [roomPoints.length * ((floorVisible ? (floorBottomVisible ? 2 : 1) : 0)
+                                                   + (ceilingVisible ? 1 : 0))];
+    int [] indices = new int [(floorVisible ? (floorBottomVisible ? (roomPoints.length + 1) * 2 + roomPoints.length * 2 : roomPoints.length + 1) : 0)
+                              + (ceilingVisible ? (roomPoints.length + 1) : 0)];
+    int [] stripCounts = new int [(floorVisible ? (floorBottomVisible ? 2 + roomPoints.length : 1) : 0)
+                                  + (ceilingVisible ? 1 : 0)];
+    int j = 0, k = 0, l = 0;
+    if (floorVisible) {
+      // Contour at room elevation
+      for (int i = 0; i < roomPoints.length; i++, j++) {
+        selectionCoordinates [j] = new Point3f(roomPoints [i][0], roomElevation, roomPoints [i][1]);
+        indices [k++] = j;
+      }
+      indices [k++] = 0;
+      stripCounts [l++] = roomPoints.length + 1;
+
+      if (floorBottomVisible) {
+        // Contour at floor bottom
+        for (int i = 0; i < roomPoints.length; i++, j++) {
+          selectionCoordinates [j] = new Point3f(roomPoints [i][0], floorBottomElevation, roomPoints [i][1]);
+          indices [k++] = j;
+        }
+        indices [k++] = roomPoints.length;
+        stripCounts [l++] = roomPoints.length + 1;
+
+        for (int i = 0; i < roomPoints.length; i++) {
+          indices [k++] = i;
+          indices [k++] = i + roomPoints.length;
+          stripCounts [l++] = 2;
+        }
+      }
+    }
+
+    if (ceilingVisible) {
+      // Contour at room ceiling
+      for (int i = 0; i < roomPoints.length; i++, j++) {
+        selectionCoordinates [j] = new Point3f(roomPoints [i][0], getRoomHeightAt(roomPoints [i][0], roomPoints [i][1]), roomPoints [i][1]);
+        indices [k++] = j;
+      }
+      indices [k++] = selectionCoordinates.length - roomPoints.length;
+      stripCounts [l++] = roomPoints.length + 1;
+    }
+
+    IndexedLineStripArray geometry = new IndexedLineStripArray(selectionCoordinates.length, IndexedGeometryArray.COORDINATES, indices.length, stripCounts);
+    geometry.setCoordinates(0, selectionCoordinates);
+    geometry.setCoordinateIndices(0, indices);
+    return geometry;
+  }
+
+  /**
    * Sets room appearance with its color, texture.
    */
   private void updateRoomAppearance(boolean waitTextureLoadingEnd) {
     Room room = (Room)getUserData();
-    // only allow picking if we can see the floor and only pick the floor itself
-	((Shape3D)getChild(FLOOR_PART)).setPickable(room.isFloorVisible());
-	  	  
-	Shape3D roomFloorShape3D = (Shape3D)getChild(FLOOR_PART);
+    Group roomFloorGroup = (Group)getChild(FLOOR_PART);
     boolean ignoreFloorTransparency = room.getLevel() == null || room.getLevel().getElevation() <= 0;
-    updateFilledRoomPartAppearance(roomFloorShape3D.getAppearance(),
+    updateFilledRoomPartAppearance(((Shape3D)roomFloorGroup.getChild(0)).getAppearance(),
         room.getFloorTexture(), waitTextureLoadingEnd, room.getFloorColor(), room.getFloorShininess(),
-        room.isFloorVisible(), ignoreFloorTransparency, true);
-    
-      
-    Shape3D roomCeilingShape3D = (Shape3D)getChild(CEILING_PART);
-    // Ignore ceiling transparency for rooms without level for backward compatibility 
-    boolean ignoreCeillingTransparency = room.getLevel() == null; 
-    updateFilledRoomPartAppearance(roomCeilingShape3D.getAppearance(),
-        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(),
-        room.isCeilingVisible(), ignoreCeillingTransparency, true);     
+        room.isFloorVisible(), ignoreFloorTransparency, roomFloorGroup.numChildren() == 1, true);
+    if (roomFloorGroup.numChildren() > 1) {
+      updateOutlineRoomPartAppearance(((Shape3D)roomFloorGroup.getChild(1)).getAppearance(), room.isFloorVisible());
     }
+    
+    if (numChildren() > 2) {
+      Group roomCeilingGroup = (Group)getChild(CEILING_PART);
+      // Ignore ceiling transparency for rooms without level for backward compatibility 
+      boolean ignoreCeillingTransparency = room.getLevel() == null; 
+      updateFilledRoomPartAppearance(((Shape3D)roomCeilingGroup.getChild(0)).getAppearance(),
+        room.getCeilingTexture(), waitTextureLoadingEnd, room.getCeilingColor(), room.getCeilingShininess(),
+        room.isCeilingVisible(), ignoreCeillingTransparency, roomCeilingGroup.numChildren() == 1, false);   
+      if (roomCeilingGroup.numChildren() > 1) {
+        updateOutlineRoomPartAppearance(((Shape3D)roomCeilingGroup.getChild(1)).getAppearance(), room.isCeilingVisible());
+      }
+    }
+    
+    Appearance selectionShapeAppearance = ((Shape3D)getChild(numChildren() > 2 ? 2 : 1)).getAppearance();
+    selectionShapeAppearance.getRenderingAttributes().setVisible(getUserPreferences() != null
+        && getUserPreferences().isEditingIn3DViewEnabled()
+        && getHome().isItemSelected(room));
+  }
   
   /**
    * Sets filled room part appearance with its color, texture and visibility.
@@ -803,38 +952,45 @@ public class Room3D extends Object3DBranch {
                                         float shininess,
                                         boolean visible,
                                         boolean ignoreTransparency,
-                                        boolean ignoreDrawingMode) {
+                                              boolean ignoreDrawingMode,
+                                              boolean floor) {
     if (roomPartTexture == null) {
       roomPartAppearance.setMaterial(getMaterial(roomPartColor, roomPartColor, shininess));
       roomPartAppearance.setTexture(null);
     } else {
       // Update material and texture of room part
       roomPartAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, shininess));
+      Room room = (Room)getUserData();
+      if (roomPartTexture.isFittingArea()) {
+        roomPartAppearance.setTextureAttributes(getTextureAttributesFittingArea(roomPartTexture, room.getPoints(), floor));
+      } else {
       roomPartAppearance.setTextureAttributes(getTextureAttributes(roomPartTexture, true));
+      }
       final TextureManager textureManager = TextureManager.getInstance();
       textureManager.loadTexture(roomPartTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
-                texture = getHomeTextureClone(texture, home);
+                texture = getContextTexture(texture, getContext());
                 if (roomPartAppearance.getTexture() != texture) {
                   roomPartAppearance.setTexture(texture);
                 }
               }
             });
     }
-    if (!ignoreTransparency) { 
+    TransparencyAttributes transparencyAttributes = roomPartAppearance.getTransparencyAttributes();
+    float upperRoomsAlpha = getHome().getEnvironment().getWallsAlpha();
       // Update room part transparency
-      float upperRoomsAlpha = this.home.getEnvironment().getWallsAlpha();
-      TransparencyAttributes transparencyAttributes = roomPartAppearance.getTransparencyAttributes();
+    if (ignoreTransparency || upperRoomsAlpha == 0) {
+      transparencyAttributes.setTransparency(0);
+      // If alpha is equal to zero, turn off transparency to get better results
+      transparencyAttributes.setTransparencyMode(TransparencyAttributes.NONE);
+    } else {
       transparencyAttributes.setTransparency(upperRoomsAlpha);
-      // If alpha is equal to zero, turn off transparency to get better results 
-      transparencyAttributes.setTransparencyMode(upperRoomsAlpha == 0 
-          ? TransparencyAttributes.NONE 
-          : TransparencyAttributes.NICEST);
+      transparencyAttributes.setTransparencyMode(TransparencyAttributes.NICEST);
     }
     // Update room part visibility
     RenderingAttributes renderingAttributes = roomPartAppearance.getRenderingAttributes();
-    HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+    HomeEnvironment.DrawingMode drawingMode = getHome().getEnvironment().getDrawingMode();
     renderingAttributes.setVisible(visible
         && (ignoreDrawingMode
             || drawingMode == null
@@ -849,28 +1005,9 @@ public class Room3D extends Object3DBranch {
                                                boolean visible) {
     // Update room part visibility
     RenderingAttributes renderingAttributes = roomPartAppearance.getRenderingAttributes();
-    HomeEnvironment.DrawingMode drawingMode = this.home.getEnvironment().getDrawingMode();
+    HomeEnvironment.DrawingMode drawingMode = getHome().getEnvironment().getDrawingMode();
     renderingAttributes.setVisible(visible
         && (drawingMode == HomeEnvironment.DrawingMode.OUTLINE
             || drawingMode == HomeEnvironment.DrawingMode.FILL_AND_OUTLINE));
-  }
-  
-	@Override
-	public void showOutline(boolean isSelected)
-	{
-		Shape3D outlineShape = ((Shape3D)getChild(OUTLINE_PART));
-		RenderingAttributes ra1 = outlineShape.getAppearance().getRenderingAttributes();
-		ra1.setVisible(isSelected);
-		
-		Shape3D floorShape = ((Shape3D)getChild(FLOOR_PART));
-		RenderingAttributes ra0 = floorShape.getAppearance().getRenderingAttributes();
-		ra0.setStencilEnable(isSelected);
-		isShowOutline = isSelected;	 
-	}
-	private boolean isShowOutline = false;
-	@Override
-	public boolean isShowOutline()
-	{
-		return isShowOutline;
-	}
+  } 
 }

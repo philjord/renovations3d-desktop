@@ -596,8 +596,7 @@ public class OBJWriter extends FilterWriter {
       if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
         if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
         	//PJPJPJ added support for nio style
-  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-  			{
+  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0) {
   			// Write vertices coordinates
   	          FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
   	          int vertexSize = vertexData.limit() / geometryArray.getVertexCount();
@@ -634,9 +633,7 @@ public class OBJWriter extends FilterWriter {
   	                  oppositeSideNormalIndexSubstitutes, addedNormals, cullFace, backFaceNormalFlip);
   	            }
   	          }
-  			}
-  			else
-  			{
+  			} else {
 	          float [] vertexData = geometryArray.getInterleavedVertices();
 	          int vertexSize = vertexData.length / geometryArray.getVertexCount();
 	          // Write vertices coordinates 
@@ -674,8 +671,7 @@ public class OBJWriter extends FilterWriter {
   			}
         } else {
         	//PJPJPJ added support for nio style
-  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-  			{
+  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0) {
   			// Write vertices coordinates
   	          FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
   	          for (int index = 0, i = 0, n = geometryArray.getVertexCount(); index < n; index++, i += 3) {
@@ -1073,9 +1069,8 @@ public class OBJWriter extends FilterWriter {
       vertexIndex3 = tmp;
     }
     //PJPJP added the coords index only case
-    if((geometryArray.getVertexFormat() & GeometryArray.USE_COORD_INDEX_ONLY) != 0)
-    {
-    if (textureCoordinatesGenerated) {
+    if((geometryArray.getVertexFormat() & GeometryArray.USE_COORD_INDEX_ONLY) != 0) {
+      if (textureCoordinatesGenerated) {
         if (normalsDefined) {
           this.out.write("f " + (vertexIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 
               + "/" + (textureCoordinatesIndexSubstitutes [geometryArray.getCoordinateIndex(vertexIndex1)]) 

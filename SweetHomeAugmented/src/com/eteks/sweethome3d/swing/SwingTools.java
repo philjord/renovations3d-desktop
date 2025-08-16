@@ -123,6 +123,8 @@ public class SwingTools {
   private static Border unfocusedViewBorder;
   private static Border focusedViewBorder;
 
+  //PJPJ No Fonts
+
   private SwingTools() {
     // This class contains only tools
   }
@@ -284,6 +286,8 @@ public class SwingTools {
     } else if (UIManager.getLookAndFeel().getClass().getName().equals("com.sun.java.swing.plaf.motif.MotifLookAndFeel")) {
       updateSwingResourceBundle("com.sun.java.swing.plaf.motif.resources.motif", classLoaders, language);
     } 
+    
+    //PJPJ No Fonts
   }
 
   /**
@@ -673,7 +677,7 @@ public class SwingTools {
    * If the <code>imageUrl</code> is incorrect, nothing happens.
    */
   public static void showSplashScreenWindow(URL imageUrl) {
-    final ImageIcon image = new ImageIcon(imageUrl);
+    final ImageIcon image = getImageIcon(imageUrl);
       // Try to find an image scale without getResolutionScale()
       // because look and feel is probably not set yet
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
@@ -948,7 +952,7 @@ public class SwingTools {
   }
   
   /**
-   * Separated static class to be able to exclude JNLP library from classpath. 
+   * Separate static class to be able to exclude JNLP library from classpath.
    */
 /*  private static class BrowserSupport {
     public static boolean showDocumentInBrowser(URL url) {
@@ -1073,7 +1077,8 @@ public class SwingTools {
                                  Polyline.CapStyle capStyle,
                                  Polyline.JoinStyle joinStyle, 
                                  Polyline.DashStyle dashStyle) {
-    return PlanComponent.ShapeTools.getStroke(thickness, capStyle, joinStyle, dashStyle.getDashPattern(), 0);
+    //PJ use my ShapeTools
+    return PlanComponent.ShapeTools.getStroke(thickness, capStyle, joinStyle, dashStyle != Polyline.DashStyle.SOLID ? dashStyle.getDashPattern() : null, 0);
   }
 
   private static Float defaultResolutionScale;
@@ -1117,6 +1122,8 @@ public class SwingTools {
       }
   }
 
+// PJPJ ignore win11
+
     float userResolutionScale = getUserResolutionScale();
     if (userResolutionScale != 1) {
       Font buttonFont = updateComponentFontSize("Button.font", userResolutionScale);
@@ -1152,6 +1159,7 @@ public class SwingTools {
       updateComponentFontSize("FormattedTextField.font", userResolutionScale);
       updateComponentFontSize("PasswordField.font", userResolutionScale);
       updateComponentFontSize("TextArea.font", userResolutionScale);
+      updateComponentFontSize("TextPane.font", userResolutionScale);
       updateComponentFontSize("EditorPane.font", userResolutionScale);
       updateComponentFontSize("TitledBorder.font", userResolutionScale);
       updateComponentFontSize("ToolBar.font", userResolutionScale);
@@ -1161,6 +1169,7 @@ public class SwingTools {
       UIManager.put("OptionPane.buttonFont", buttonFont);
       }
     updateComponentSize("SplitPane.dividerSize", getResolutionScale());
+    //PJPJ ignore LAF    
     }
 
   private static Font updateComponentFontSize(String fontKey, float resolutionScale) {
@@ -1213,7 +1222,7 @@ public class SwingTools {
   public static ImageIcon getScaledImageIcon(URL imageUrl) {
     float resolutionScale = getResolutionScale();
     if (resolutionScale == 1) {
-      return new ImageIcon(imageUrl);
+      return getImageIcon(imageUrl);
     } else {
       try {
         BufferedImage image = ImageIO.read(imageUrl);
@@ -1225,13 +1234,43 @@ public class SwingTools {
       }
     }
   }  
-  //PJPJPJ a fine system ignored for now
+
   
   /**
    * Returns the image icon matching the given URL, possibly managing a multi resolution when possible.
    */
-  
+private static ImageIcon getImageIcon(URL imageUrl) {  
+    /*if (OperatingSystem.isJavaVersionGreaterOrEqual("1.9")
+        && !OperatingSystem.isMacOSX()) {
+      Image image2x = getImageAtScale(imageUrl, 2);
+      if (image2x != null) {
+        // Instantiate Java 9 BaseMultiResolutionImage class by reflection
+        // (under Mac OS X, it's the default behavior)
+        try {
+          return new ImageIcon((Image)Class.forName("java.awt.image.BaseMultiResolutionImage").getConstructor(Image[].class).
+              newInstance((Object)new Image[] {ImageIO.read(imageUrl), image2x}));
+        } catch (IOException ex) {
+        } catch (Exception ex) {
+          ex.printStackTrace();
+        }
+      }
+    }*/
+    return new ImageIcon(imageUrl);
+  }
   /**
    * Returns the image at the given scale from its suffix @2x, @3x...
    */
+   /* //PJPJPJ  getImageAtScale ignored 
+  private static BufferedImage getImageAtScale(URL imageUrl, int scale) {
+    try {
+      String file = imageUrl.toString();
+      int pointIndex = file.lastIndexOf('.');
+      if (pointIndex >= 0) {
+        return ImageIO.read(new URL(file.substring(0, pointIndex) + "@" + scale + "x" + file.substring(pointIndex)));
+      }
+    } catch (MalformedURLException ex) {
+    } catch (IOException ex) {
+    }
+    return null;
+  }*/    
 }

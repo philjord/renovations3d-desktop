@@ -52,11 +52,11 @@ public abstract class UserPreferences {
    */
   public enum Property {LANGUAGE, SUPPORTED_LANGUAGES, UNIT, CURRENCY, VALUE_ADDED_TAX_ENABLED, DEFAULT_VALUE_ADDED_TAX_PERCENTAGE,
                         MAGNETISM_ENABLED, RULERS_VISIBLE, GRID_VISIBLE, DEFAULT_FONT_NAME,
-        FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
+        				FURNITURE_VIEWED_FROM_TOP, FURNITURE_MODEL_ICON_SIZE, ROOM_FLOOR_COLORED_OR_TEXTURED, WALL_PATTERN, NEW_WALL_PATTERN,    
                         NEW_WALL_THICKNESS, NEW_WALL_HEIGHT, NEW_WALL_SIDEBOARD_THICKNESS, NEW_WALL_SIDEBOARD_HEIGHT, NEW_ROOM_FLOOR_COLOR, NEW_FLOOR_THICKNESS,
-        RECENT_HOMES, IGNORED_ACTION_TIP, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
-        AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, OBSERVER_CAMERA_SELECTED_AT_CHANGE, CHECK_UPDATES_ENABLED, 
-        UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS, RECENT_COLORS, RECENT_TEXTURES, HOME_EXAMPLES}
+        				RECENT_HOMES, IGNORED_ACTION_TIP, FURNITURE_CATALOG_VIEWED_IN_TREE, NAVIGATION_PANEL_VISIBLE, 
+                        AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, OBSERVER_CAMERA_SELECTED_AT_CHANGE, EDITING_IN_3D_VIEW_ENABLED, CHECK_UPDATES_ENABLED,
+                        UPDATES_MINIMUM_DATE, AUTO_SAVE_DELAY_FOR_RECOVERY, AUTO_COMPLETION_STRINGS, RECENT_COLORS, RECENT_TEXTURES, HOME_EXAMPLES, PHOTO_RENDERER}
  
   public static final String FURNITURE_LIBRARY_TYPE = "Furniture library"; 
   public static final String TEXTURES_LIBRARY_TYPE  = "Textures library"; 
@@ -102,9 +102,10 @@ public abstract class UserPreferences {
   private BigDecimal       defaultValueAddedTaxPercentage;
   private LengthUnit       unit;
   private boolean          furnitureCatalogViewedInTree = true;
+  private boolean          navigationPanelVisible = true;
+  private boolean          editingIn3DViewEnabled;
   private boolean          aerialViewCenteredOnSelectionEnabled;
   private boolean          observerCameraSelectedAtChange = true;
-  private boolean          navigationPanelVisible = true;
   private boolean          magnetismEnabled    = true;
   private boolean          rulersVisible       = true;
   private boolean          gridVisible         = true;
@@ -129,6 +130,7 @@ public abstract class UserPreferences {
   private List<Integer>      recentColors;
   private List<TextureImage> recentTextures;
   private List<HomeDescriptor> homeExamples;
+  private String               photoRenderer;
 
   /**
    * Creates user preferences.<br> 
@@ -659,6 +661,34 @@ public abstract class UserPreferences {
   }
   
   /**
+   * Returns whether interactive editing in 3D view is enabled or not.
+   * @since 7.2
+   */
+  public boolean isEditingIn3DViewEnabled() {
+    return true;//PJ don't want this off ever this.editingIn3DViewEnabled;
+  }
+
+  /**
+   * Sets whether interactive editing in 3D view is enabled or not.
+   * @since 7.2
+   */
+  public void setEditingIn3DViewEnabled(boolean editingIn3DViewEnabled) {
+    if (editingIn3DViewEnabled != this.editingIn3DViewEnabled) {
+      this.editingIn3DViewEnabled = editingIn3DViewEnabled;
+      this.propertyChangeSupport.firePropertyChange(Property.EDITING_IN_3D_VIEW_ENABLED.name(),
+          !editingIn3DViewEnabled, editingIn3DViewEnabled);
+    }
+  }
+
+  /**
+   * Returns whether aerial view should be centered on selection or not.
+   * @since 4.0
+   */
+  public boolean isAerialViewCenteredOnSelectionEnabled() {
+    return this.aerialViewCenteredOnSelectionEnabled;
+  }
+
+  /**
    * Sets whether aerial view should be centered on selection or not.
    * @since 4.0
    */
@@ -671,11 +701,11 @@ public abstract class UserPreferences {
   }
   
   /**
-   * Returns whether aerial view should be centered on selection or not.
-   * @since 4.0
+   * Returns whether the observer camera should be selected at each change.
+   * @since 5.5
    */
-  public boolean isAerialViewCenteredOnSelectionEnabled() {
-    return this.aerialViewCenteredOnSelectionEnabled;
+  public boolean isObserverCameraSelectedAtChange() {
+    return this.observerCameraSelectedAtChange;
   }
 
   /**
@@ -688,14 +718,6 @@ public abstract class UserPreferences {
       this.propertyChangeSupport.firePropertyChange(Property.OBSERVER_CAMERA_SELECTED_AT_CHANGE.name(), 
           !observerCameraSelectedAtChange, observerCameraSelectedAtChange);
     }
-  }
-  
-  /**
-   * Returns whether the observer camera should be selected at each change.
-   * @since 5.5
-   */
-  public boolean isObserverCameraSelectedAtChange() {
-    return this.observerCameraSelectedAtChange;
   }
   
   /**
@@ -1294,6 +1316,27 @@ public abstract class UserPreferences {
    */
   public List<HomeDescriptor> getHomeExamples() {
     return Collections.unmodifiableList(this.homeExamples);
+  }
+
+  /**
+   * Sets the preferred rendering engine used to create photos.
+   * @since 7.0
+   */
+  public void setPhotoRenderer(String photoRenderer) {
+    if (photoRenderer != this.photoRenderer
+        && (photoRenderer == null || !photoRenderer.equals(this.photoRenderer))) {
+      String oldPhotoRenderer = this.photoRenderer;
+      this.photoRenderer = photoRenderer;
+      this.propertyChangeSupport.firePropertyChange(Property.PHOTO_RENDERER.name(), oldPhotoRenderer, photoRenderer);
+    }
+  }
+
+  /**
+   * Returns the preferred rendering engine used to create photos.
+   * @since 7.0
+   */
+  public String getPhotoRenderer() {
+    return this.photoRenderer;
   }
 
   /**

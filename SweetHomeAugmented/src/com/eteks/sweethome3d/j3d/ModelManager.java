@@ -131,77 +131,87 @@ import com.eteks.sweethome3d.tools.URLContent;
  */
 public class ModelManager {
   /**
+   * Special shapes prefix;
+   */
+  public static final String    SPECIAL_SHAPE_PREFIX = "sweethome3d_";
+  /**
    * <code>Shape3D</code> user data prefix for window pane shapes. 
    */
-  public static final String WINDOW_PANE_SHAPE_PREFIX = "sweethome3d_window_pane";
+  public static final String    WINDOW_PANE_SHAPE_PREFIX = SPECIAL_SHAPE_PREFIX + "window_pane";
   /**
    * <code>Shape3D</code> user data prefix for mirror shapes. 
    */
-  public static final String MIRROR_SHAPE_PREFIX = "sweethome3d_window_mirror";
+  public static final String    MIRROR_SHAPE_PREFIX = SPECIAL_SHAPE_PREFIX + "window_mirror";
   /**
    * <code>Shape3D</code> user data prefix for lights. 
    */
-  public static final String LIGHT_SHAPE_PREFIX = "sweethome3d_light";
+  public static final String    LIGHT_SHAPE_PREFIX = SPECIAL_SHAPE_PREFIX + "light";
   /**
    * <code>Node</code> user data prefix for mannequin parts.
    */
-  public static final String    MANNEQUIN_ABDOMEN_PREFIX        = "sweethome3d_mannequin_abdomen";
-  public static final String    MANNEQUIN_CHEST_PREFIX          = "sweethome3d_mannequin_chest";
-  public static final String    MANNEQUIN_PELVIS_PREFIX         = "sweethome3d_mannequin_pelvis";
-  public static final String    MANNEQUIN_NECK_PREFIX           = "sweethome3d_mannequin_neck";
-  public static final String    MANNEQUIN_HEAD_PREFIX           = "sweethome3d_mannequin_head";
-  public static final String    MANNEQUIN_LEFT_SHOULDER_PREFIX  = "sweethome3d_mannequin_left_shoulder";
-  public static final String    MANNEQUIN_LEFT_ARM_PREFIX       = "sweethome3d_mannequin_left_arm";
-  public static final String    MANNEQUIN_LEFT_ELBOW_PREFIX     = "sweethome3d_mannequin_left_elbow";
-  public static final String    MANNEQUIN_LEFT_FOREARM_PREFIX   = "sweethome3d_mannequin_left_forearm";
-  public static final String    MANNEQUIN_LEFT_WRIST_PREFIX     = "sweethome3d_mannequin_left_wrist";
-  public static final String    MANNEQUIN_LEFT_HAND_PREFIX      = "sweethome3d_mannequin_left_hand";
-  public static final String    MANNEQUIN_LEFT_HIP_PREFIX       = "sweethome3d_mannequin_left_hip";
-  public static final String    MANNEQUIN_LEFT_THIGH_PREFIX     = "sweethome3d_mannequin_left_thigh";
-  public static final String    MANNEQUIN_LEFT_KNEE_PREFIX      = "sweethome3d_mannequin_left_knee";
-  public static final String    MANNEQUIN_LEFT_LEG_PREFIX       = "sweethome3d_mannequin_left_leg";
-  public static final String    MANNEQUIN_LEFT_ANKLE_PREFIX     = "sweethome3d_mannequin_left_ankle";
-  public static final String    MANNEQUIN_LEFT_FOOT_PREFIX      = "sweethome3d_mannequin_left_foot";
-  public static final String    MANNEQUIN_RIGHT_SHOULDER_PREFIX = "sweethome3d_mannequin_right_shoulder";
-  public static final String    MANNEQUIN_RIGHT_ARM_PREFIX      = "sweethome3d_mannequin_right_arm";
-  public static final String    MANNEQUIN_RIGHT_ELBOW_PREFIX    = "sweethome3d_mannequin_right_elbow";
-  public static final String    MANNEQUIN_RIGHT_FOREARM_PREFIX  = "sweethome3d_mannequin_right_forearm";
-  public static final String    MANNEQUIN_RIGHT_WRIST_PREFIX    = "sweethome3d_mannequin_right_wrist";
-  public static final String    MANNEQUIN_RIGHT_HAND_PREFIX     = "sweethome3d_mannequin_right_hand";
-  public static final String    MANNEQUIN_RIGHT_HIP_PREFIX      = "sweethome3d_mannequin_right_hip";
-  public static final String    MANNEQUIN_RIGHT_THIGH_PREFIX    = "sweethome3d_mannequin_right_thigh";
-  public static final String    MANNEQUIN_RIGHT_KNEE_PREFIX     = "sweethome3d_mannequin_right_knee";
-  public static final String    MANNEQUIN_RIGHT_LEG_PREFIX      = "sweethome3d_mannequin_right_leg";
-  public static final String    MANNEQUIN_RIGHT_ANKLE_PREFIX    = "sweethome3d_mannequin_right_ankle";
-  public static final String    MANNEQUIN_RIGHT_FOOT_PREFIX     = "sweethome3d_mannequin_right_foot";
+  public static final String    MANNEQUIN_ABDOMEN_PREFIX        = SPECIAL_SHAPE_PREFIX + "mannequin_abdomen";
+  public static final String    MANNEQUIN_CHEST_PREFIX          = SPECIAL_SHAPE_PREFIX + "mannequin_chest";
+  public static final String    MANNEQUIN_PELVIS_PREFIX         = SPECIAL_SHAPE_PREFIX + "mannequin_pelvis";
+  public static final String    MANNEQUIN_NECK_PREFIX           = SPECIAL_SHAPE_PREFIX + "mannequin_neck";
+  public static final String    MANNEQUIN_HEAD_PREFIX           = SPECIAL_SHAPE_PREFIX + "mannequin_head";
+  public static final String    MANNEQUIN_LEFT_SHOULDER_PREFIX  = SPECIAL_SHAPE_PREFIX + "mannequin_left_shoulder";
+  public static final String    MANNEQUIN_LEFT_ARM_PREFIX       = SPECIAL_SHAPE_PREFIX + "mannequin_left_arm";
+  public static final String    MANNEQUIN_LEFT_ELBOW_PREFIX     = SPECIAL_SHAPE_PREFIX + "mannequin_left_elbow";
+  public static final String    MANNEQUIN_LEFT_FOREARM_PREFIX   = SPECIAL_SHAPE_PREFIX + "mannequin_left_forearm";
+  public static final String    MANNEQUIN_LEFT_WRIST_PREFIX     = SPECIAL_SHAPE_PREFIX + "mannequin_left_wrist";
+  public static final String    MANNEQUIN_LEFT_HAND_PREFIX      = SPECIAL_SHAPE_PREFIX + "mannequin_left_hand";
+  public static final String    MANNEQUIN_LEFT_HIP_PREFIX       = SPECIAL_SHAPE_PREFIX + "mannequin_left_hip";
+  public static final String    MANNEQUIN_LEFT_THIGH_PREFIX     = SPECIAL_SHAPE_PREFIX + "mannequin_left_thigh";
+  public static final String    MANNEQUIN_LEFT_KNEE_PREFIX      = SPECIAL_SHAPE_PREFIX + "mannequin_left_knee";
+  public static final String    MANNEQUIN_LEFT_LEG_PREFIX       = SPECIAL_SHAPE_PREFIX + "mannequin_left_leg";
+  public static final String    MANNEQUIN_LEFT_ANKLE_PREFIX     = SPECIAL_SHAPE_PREFIX + "mannequin_left_ankle";
+  public static final String    MANNEQUIN_LEFT_FOOT_PREFIX      = SPECIAL_SHAPE_PREFIX + "mannequin_left_foot";
+  public static final String    MANNEQUIN_RIGHT_SHOULDER_PREFIX = SPECIAL_SHAPE_PREFIX + "mannequin_right_shoulder";
+  public static final String    MANNEQUIN_RIGHT_ARM_PREFIX      = SPECIAL_SHAPE_PREFIX + "mannequin_right_arm";
+  public static final String    MANNEQUIN_RIGHT_ELBOW_PREFIX    = SPECIAL_SHAPE_PREFIX + "mannequin_right_elbow";
+  public static final String    MANNEQUIN_RIGHT_FOREARM_PREFIX  = SPECIAL_SHAPE_PREFIX + "mannequin_right_forearm";
+  public static final String    MANNEQUIN_RIGHT_WRIST_PREFIX    = SPECIAL_SHAPE_PREFIX + "mannequin_right_wrist";
+  public static final String    MANNEQUIN_RIGHT_HAND_PREFIX     = SPECIAL_SHAPE_PREFIX + "mannequin_right_hand";
+  public static final String    MANNEQUIN_RIGHT_HIP_PREFIX      = SPECIAL_SHAPE_PREFIX + "mannequin_right_hip";
+  public static final String    MANNEQUIN_RIGHT_THIGH_PREFIX    = SPECIAL_SHAPE_PREFIX + "mannequin_right_thigh";
+  public static final String    MANNEQUIN_RIGHT_KNEE_PREFIX     = SPECIAL_SHAPE_PREFIX + "mannequin_right_knee";
+  public static final String    MANNEQUIN_RIGHT_LEG_PREFIX      = SPECIAL_SHAPE_PREFIX + "mannequin_right_leg";
+  public static final String    MANNEQUIN_RIGHT_ANKLE_PREFIX    = SPECIAL_SHAPE_PREFIX + "mannequin_right_ankle";
+  public static final String    MANNEQUIN_RIGHT_FOOT_PREFIX     = SPECIAL_SHAPE_PREFIX + "mannequin_right_foot";
 
-  public static final String    MANNEQUIN_ABDOMEN_CHEST_PREFIX  = "sweethome3d_mannequin_abdomen_chest";
-  public static final String    MANNEQUIN_ABDOMEN_PELVIS_PREFIX = "sweethome3d_mannequin_abdomen_pelvis";
+  public static final String    MANNEQUIN_ABDOMEN_CHEST_PREFIX  = SPECIAL_SHAPE_PREFIX + "mannequin_abdomen_chest";
+  public static final String    MANNEQUIN_ABDOMEN_PELVIS_PREFIX = SPECIAL_SHAPE_PREFIX + "mannequin_abdomen_pelvis";
   /**
    * <code>Node</code> user data prefix for ball / rotating  joints.
    */
-  public static final String    BALL_PREFIX                 = "sweethome3d_ball_";
-  public static final String    ARM_ON_BALL_PREFIX          = "sweethome3d_arm_on_ball_";
+  public static final String    BALL_PREFIX                 = SPECIAL_SHAPE_PREFIX + "ball_";
+  public static final String    ARM_ON_BALL_PREFIX          = SPECIAL_SHAPE_PREFIX + "arm_on_ball_";
   /**
    * <code>Node</code> user data prefix for hinge / rotating opening joints.
    */
-  public static final String    HINGE_PREFIX                = "sweethome3d_hinge_";
-  public static final String    OPENING_ON_HINGE_PREFIX     = "sweethome3d_opening_on_hinge_";
+  public static final String    HINGE_PREFIX                = SPECIAL_SHAPE_PREFIX + "hinge_";
+  public static final String    OPENING_ON_HINGE_PREFIX     = SPECIAL_SHAPE_PREFIX + "opening_on_hinge_";
   public static final String    WINDOW_PANE_ON_HINGE_PREFIX = WINDOW_PANE_SHAPE_PREFIX + "_on_hinge_";
   public static final String    MIRROR_ON_HINGE_PREFIX      = MIRROR_SHAPE_PREFIX + "_on_hinge_";
   /**
    * <code>Node</code> user data prefix for rail / sliding opening joints.
    */
-  public static final String    UNIQUE_RAIL_PREFIX          = "sweethome3d_unique_rail";
-  public static final String    RAIL_PREFIX                 = "sweethome3d_rail_";
-  public static final String    OPENING_ON_RAIL_PREFIX      = "sweethome3d_opening_on_rail_";
+  public static final String    UNIQUE_RAIL_PREFIX          = SPECIAL_SHAPE_PREFIX + "unique_rail";
+  public static final String    RAIL_PREFIX                 = SPECIAL_SHAPE_PREFIX + "rail_";
+  public static final String    OPENING_ON_RAIL_PREFIX      = SPECIAL_SHAPE_PREFIX + "opening_on_rail_";
   public static final String    WINDOW_PANE_ON_RAIL_PREFIX  = WINDOW_PANE_SHAPE_PREFIX + "_on_rail_";
   public static final String    MIRROR_ON_RAIL_PREFIX       = MIRROR_SHAPE_PREFIX + "_on_rail_";
+  /**
+   * <code>Node</code> user data separator for sub transformations.
+   */
+  public static final String    SUB_TRANSFORMATION_SEPARATOR = "_and_";
   /**
    * Deformable group suffix.
    */
   public static final String    DEFORMABLE_TRANSFORM_GROUP_SUFFIX = "_transformation";
   
+  public static final String    EDGE_COLOR_MATERIAL_PREFIX = "edge_color";
+
   private static final TransparencyAttributes WINDOW_PANE_TRANSPARENCY_ATTRIBUTES = 
       new TransparencyAttributes(TransparencyAttributes.NICEST, 0.5f);
 
@@ -485,8 +495,7 @@ public class ModelManager {
           if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
             
         	//PJPJPJ added support for nio style
-    			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-    			{
+    			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0) {
     				FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
 		          int vertexSize = vertexData.limit() / vertexCount;
 		          for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
@@ -495,9 +504,7 @@ public class ModelManager {
 		            vertex.z = vertexData.get(j + 2);
 		            updateBounds(vertex, transformation, lower, upper);
 		          }
-    			}
-    			else
-    			{
+    			} else {
     				float [] vertexData = geometryArray.getInterleavedVertices();
 		            int vertexSize = vertexData.length / vertexCount;
 		            for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
@@ -509,8 +516,7 @@ public class ModelManager {
 		          }
           } else {
         	//PJPJPJ added support for nio style
-  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-  			{
+  			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0) {
   		          FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
   		        for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
   		            vertex.x = vertexCoordinates.get(j);
@@ -518,9 +524,7 @@ public class ModelManager {
   		            vertex.z = vertexCoordinates.get(j + 2);
   		            updateBounds(vertex, transformation, lower, upper);
   		          }
-  			}
-  			else
-  			{
+  			} else {
 	            float [] vertexCoordinates = geometryArray.getCoordRefFloat();
 	            for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
 	              vertex.x = vertexCoordinates [j];
@@ -1243,7 +1247,11 @@ public class ModelManager {
       updateSimpleDeformableModelHierarchy(group, null, BALL_PREFIX, ARM_ON_BALL_PREFIX, null, null);
       // Reorganize sliding openings
       updateSimpleDeformableModelHierarchy(group, UNIQUE_RAIL_PREFIX, RAIL_PREFIX, OPENING_ON_RAIL_PREFIX, WINDOW_PANE_ON_RAIL_PREFIX, MIRROR_ON_RAIL_PREFIX);
-    }    
+      // Reorganize sub hierarchies
+      Set<Node> movedNodes = new HashSet<Node>();
+      while (updateDeformableModelSubTransformedHierarchy(group, group, new String [] {HINGE_PREFIX, BALL_PREFIX, RAIL_PREFIX},
+          new String [] {OPENING_ON_HINGE_PREFIX, ARM_ON_BALL_PREFIX, OPENING_ON_RAIL_PREFIX}, movedNodes)) {
+    } }   
     group.setPickable(true);
     group.setCapability(Node.ALLOW_PARENT_READ);
   }
@@ -1355,7 +1363,86 @@ public class ModelManager {
   }
 
   /**
-   * Return <code>true</code> if the given <code>node</code> or its children contains at least a deformable group.
+   * Updates the first node found in the given <code>group</code> which specifies a transformation
+   * which should depend on another transformed node.
+   * @return <code>true</code> if such a node was found and attached to another transformation
+   */
+  private boolean updateDeformableModelSubTransformedHierarchy(Group group, Node node,
+                                                               String [] referenceNodePrefixes,
+                                                               String [] subTransformationOpeningPrefixes,
+                                                               Set<Node> movedNodes) {
+    if (group != node
+        && !movedNodes.contains(node)) {
+      Object userData = node.getUserData();
+      if (userData instanceof String) {
+        String name = (String)userData;
+        for (String prefix : referenceNodePrefixes) {
+          if (name.startsWith(prefix)) {
+            int index = name.indexOf(SUB_TRANSFORMATION_SEPARATOR);
+            if (index > 0) {
+              for (int i = 0; i < subTransformationOpeningPrefixes.length; i++) {
+                int subTransformationIndex = name.indexOf(subTransformationOpeningPrefixes [i], index + SUB_TRANSFORMATION_SEPARATOR.length());
+                if (subTransformationIndex >= 0) {
+                  movedNodes.add(node); // Don't handle twice the same node
+                  Node referenceNode = node.getParent();
+                  Group parent = (Group)referenceNode.getParent();
+                  if (parent != null) {
+                    int nodeIndex = parent.indexOfChild(referenceNode);
+                    Node pickableGroup = parent.getChild(++nodeIndex);
+                    while (!(pickableGroup instanceof TransformGroup)) {
+                      pickableGroup = parent.getChild(++nodeIndex);
+                    }
+                    int lastDigitIndex = subTransformationIndex + subTransformationOpeningPrefixes [i].length();
+                    while (lastDigitIndex < name.length() && name.charAt(lastDigitIndex) >= '0' && name.charAt(lastDigitIndex) <= '9') {
+                      lastDigitIndex++;
+                    }
+                    // Remove node and its sibling group and attach it to parent transformation
+                    if (attachNodesToPickableTransformGroup(group,
+                          referenceNodePrefixes [i] + name.substring(subTransformationIndex + subTransformationOpeningPrefixes [i].length(), lastDigitIndex),
+                          referenceNode, pickableGroup)) {
+                      return true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    if (node instanceof Group) {
+      Group subGroup = (Group)node;
+      for (int i = subGroup.numChildren() - 1; i >= 0; i--) {
+        if (updateDeformableModelSubTransformedHierarchy(group, (Node)subGroup.getChild(i), referenceNodePrefixes, subTransformationOpeningPrefixes, movedNodes)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private boolean attachNodesToPickableTransformGroup(Node node, String groupPrefix, Node ... movedNodes) {
+    if (node instanceof TransformGroup
+        && (groupPrefix + DEFORMABLE_TRANSFORM_GROUP_SUFFIX).equals(node.getUserData())) {
+      Group group = (Group)node;
+      for (Node movedNode : movedNodes) {
+        ((Group)movedNode.getParent()).removeChild(movedNode);
+        group.addChild(movedNode);
+      }
+      return true;
+    } else if (node instanceof Group) {
+      Iterator<Node> enumeration = ((Group) node).getAllChildren();
+  	  while (enumeration.hasNext()) {
+        if (attachNodesToPickableTransformGroup((Node)enumeration.next(), groupPrefix, movedNodes)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * Returns <code>true</code> if the given <code>node</code> or its children contains at least a deformable group.
    * @param node  the root of a model
    */
   public boolean containsDeformableNode(Node node) {
@@ -1417,9 +1504,9 @@ public class ModelManager {
       Shape3D shape = ((Shape3D)node);
       Appearance appearance = shape.getAppearance();
       if (appearance != null) {
-    	//allow texture to be read (ModelPreviewComponent needs this)
+    	//PJPJ allow texture and material to be read (ModelPreviewComponent needs this)
       	appearance.setCapability(Appearance.ALLOW_TEXTURE_READ);
-      	
+      	appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);      	
         Texture texture = appearance.getTexture();
         if (texture != null) {        	
           // Share textures data as much as possible requesting TextureManager#shareTexture the less often possible
@@ -1470,7 +1557,7 @@ public class ModelManager {
   public void checkAppearancesName(Node node) {
     // Search appearances used by node shapes keeping their enumeration order 
     Set<Appearance> appearances = new LinkedHashSet<Appearance>(); 
-    searchAppearances(node, appearances);
+    searchAppearances(node, false, appearances);
     int i = 0;
     for (Appearance appearance : appearances) {
       try {
@@ -1496,9 +1583,17 @@ public class ModelManager {
    * attributing their <code>creator</code> to them.
    */
   public HomeMaterial [] getMaterials(Node node, String creator) {
+    return getMaterials(node, false, null);
+  }
+
+  /**
+   * Returns the materials used by the children shapes of the given <code>node</code>,
+   * attributing their <code>creator</code> to them.
+   */
+  public HomeMaterial [] getMaterials(Node node, boolean ignoreEdgeColorMaterial, String creator) {
    // Search appearances used by node shapes 
     Set<Appearance> appearances = new HashSet<Appearance>(); 
-    searchAppearances(node, appearances);
+    searchAppearances(node, ignoreEdgeColorMaterial, appearances);
     Set<HomeMaterial> materials = new TreeSet<HomeMaterial>(new Comparator<HomeMaterial>() {
         public int compare(HomeMaterial m1, HomeMaterial m2) {
           String name1 = m1.getName();
@@ -1519,51 +1614,54 @@ public class ModelManager {
     for (Appearance appearance : appearances) {
       Integer color = null;
       Float   shininess = null;
-      Material material = appearance.getMaterial();
-      if (material != null) {
-        Color3f diffuseColor = new Color3f();
-        material.getDiffuseColor(diffuseColor);
-        color = 0xFF000000 
-            | ((int)(diffuseColor.x * 255) << 16) 
-            | ((int)(diffuseColor.y * 255) << 8)
-            | (int)(diffuseColor.z * 255); 
-        shininess = material.getShininess() / 128;          
-      }
-      Texture appearanceTexture = appearance.getTexture();
-      HomeTexture texture = null;
-      if (appearanceTexture != null) {
-        URL textureImageUrl = (URL)appearanceTexture.getUserData();
-        if (textureImageUrl != null) {
-          Content textureImage = new SimpleURLContent(textureImageUrl);
-          // Extract image name
-          String textureImageName = textureImageUrl.getFile();
-          textureImageName = textureImageName.substring(textureImageName.lastIndexOf('/') + 1);
-          int lastPoint = textureImageName.lastIndexOf('.');
-          if (lastPoint != -1) {
-            textureImageName = textureImageName.substring(0, lastPoint);
-          }
-          texture = new HomeTexture(new CatalogTexture(null, textureImageName, textureImage, -1, -1, creator));
-        }
-      }
-      try {
-        materials.add(new HomeMaterial(appearance.getName(), color, texture, shininess));
-      } catch (NoSuchMethodError ex) {
-        // Don't support HomeMaterial with Java 3D < 1.4 where getName was added
-        return new HomeMaterial [0];
+      //PJPJ what are these unnamed un-caps set appearances, not selection
+      if(appearance.getCapability(Appearance.ALLOW_MATERIAL_READ)) {       
+	      Material material = appearance.getMaterial();
+	      if (material != null) {
+	        Color3f diffuseColor = new Color3f();
+	        material.getDiffuseColor(diffuseColor);
+	        color = 0xFF000000 
+	            | ((int)(diffuseColor.x * 255) << 16) 
+	            | ((int)(diffuseColor.y * 255) << 8)
+	            | (int)(diffuseColor.z * 255); 
+	        shininess = material.getShininess() / 128;          
+	      }
+	      Texture appearanceTexture = appearance.getTexture();
+	      HomeTexture texture = null;
+	      if (appearanceTexture != null) {
+	        URL textureImageUrl = (URL)appearanceTexture.getUserData();
+	        if (textureImageUrl != null) {
+	          Content textureImage = new SimpleURLContent(textureImageUrl);
+	          // Extract image name
+	          String textureImageName = textureImageUrl.getFile();
+	          textureImageName = textureImageName.substring(textureImageName.lastIndexOf('/') + 1);
+	          int lastPoint = textureImageName.lastIndexOf('.');
+	          if (lastPoint != -1) {
+	            textureImageName = textureImageName.substring(0, lastPoint);
+	          }
+	          texture = new HomeTexture(new CatalogTexture(null, textureImageName, textureImage, -1, -1, creator));
+	        }
+	      }
+	      try {
+	        materials.add(new HomeMaterial(appearance.getName(), color, texture, shininess));
+	      } catch (NoSuchMethodError ex) {
+	        // Don't support HomeMaterial with Java 3D < 1.4 where getName was added
+	        return new HomeMaterial [0];
+	      }
       }
     }
     return materials.toArray(new HomeMaterial [materials.size()]);
   }
 
-  private void searchAppearances(Node node, Set<Appearance> appearances) {
+  private void searchAppearances(Node node, boolean ignoreEdgeColorMaterial, Set<Appearance> appearances) {
     if (node instanceof Group) {
       // Enumerate children
       Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasNext()) {
-        searchAppearances(enumeration.next(), appearances);
+        searchAppearances(enumeration.next(), ignoreEdgeColorMaterial, appearances);
       }
     } else if (node instanceof Link) {
-      searchAppearances(((Link)node).getSharedGroup(), appearances);
+      searchAppearances(((Link)node).getSharedGroup(), ignoreEdgeColorMaterial, appearances);
     } else if (node instanceof Shape3D) {
       Appearance appearance = ((Shape3D)node).getAppearance();
       if (appearance != null) {
@@ -2094,8 +2192,7 @@ public class ModelManager {
       if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
         if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
         	//PJPJPJ added support for nio style
-			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-			{
+			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0) {
 	          FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
 	          int vertexSize = vertexData.limit() / vertexCount;
 	          for (int index = 0, i = vertexSize - 3; index < vertices.length; i += vertexSize) {
@@ -2110,9 +2207,7 @@ public class ModelManager {
 	              vertices [index++] = vertex.y;
 	            }
 	          }
-			}
-			else
-			{
+			} else {
 	          float [] vertexData = geometryArray.getInterleavedVertices();
 	          int vertexSize = vertexData.length / vertexCount;
 	          // Store vertices coordinates 
@@ -2131,8 +2226,7 @@ public class ModelManager {
 			}
         } else {
 			//PJPJPJ added support for nio style
-			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-			{
+			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0) {
 				// Store vertices coordinates
 		          FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
 		          for (int index = 0, i = 0; index < vertices.length; i += 3) {
@@ -2147,9 +2241,7 @@ public class ModelManager {
 		              vertices [index++] = vertex.y;
 		            }
 		          }
-			}
-			else
-			{
+			} else {
 	          // Store vertices coordinates
 	          float [] vertexCoordinates = geometryArray.getCoordRefFloat();
 	          for (int index = 0, i = 0; index < vertices.length; i += 3) {
@@ -2404,8 +2496,7 @@ public class ModelManager {
             if ((geometryArray.getVertexFormat() & GeometryArray.BY_REFERENCE) != 0) {
               if ((geometryArray.getVertexFormat() & GeometryArray.INTERLEAVED) != 0) {
             	//PJPJPJ added support for nio style
-      			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-      			{
+      			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0) {
       				FloatBuffer vertexData = (FloatBuffer) geometryArray.getInterleavedVertexBuffer().getBuffer();
   		          int vertexSize = vertexData.limit() / vertexCount;
   		          for (int index = 0, j = vertexSize - 3; index < vertexCount; j += vertexSize, index++) {
@@ -2415,9 +2506,7 @@ public class ModelManager {
   		            parentTransformations.transform(vertex);
 	                  	vertices.add(new float [] {vertex.x, vertex.z});
   		          }
-      			}
-      			else
-      			{
+      			} else {
       				float [] vertexData = geometryArray.getInterleavedVertices();
 	                int vertexSize = vertexData.length / vertexCount;
 	                // Store vertices coordinates 
@@ -2431,8 +2520,7 @@ public class ModelManager {
       			}
               } else {
             	//PJPJPJ added support for nio style
-    			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0)
-    			{
+    			if ((geometryArray.getVertexFormat() & GeometryArray.USE_NIO_BUFFER) != 0) {
     				FloatBuffer vertexCoordinates = (FloatBuffer) geometryArray.getCoordRefBuffer().getBuffer();
     		        for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {
     		            vertex.x = vertexCoordinates.get(j);
@@ -2441,9 +2529,7 @@ public class ModelManager {
     		            parentTransformations.transform(vertex);
   	                  	vertices.add(new float [] {vertex.x, vertex.z});
     		          }
-    			}
-    			else
-    			{
+    			} else {
 	                // Store vertices coordinates
 	                float [] vertexCoordinates = geometryArray.getCoordRefFloat();
 	                for (int index = 0, j = 0; index < vertexCount; j += 3, index++) {

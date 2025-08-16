@@ -114,7 +114,7 @@ public class TexturesCatalog {
         
         if (category.getTexturesCount() == 0) {
           //  Make a copy of the list to avoid conflicts in the list returned by getCategories
-        //PJ to avoid concurrent mod exceptions
+          //PJ to avoid concurrent mod exceptions
           synchronized(this.categories) {
             this.categories = new ArrayList<TexturesCategory>(this.categories);
             this.categories.remove(category);

@@ -70,6 +70,7 @@ import com.eteks.sweethome3d.model.FurnitureCategory;
 import com.eteks.sweethome3d.model.LengthUnit;
 import com.eteks.sweethome3d.model.Library;
 import com.eteks.sweethome3d.model.PatternsCatalog;
+import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.RecorderException;
 import com.eteks.sweethome3d.model.Sash;
 import com.eteks.sweethome3d.model.TextureImage;
@@ -95,6 +96,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String DEFAULT_VALUE_ADDED_TAX_PERCENTAGE        = "defaultValueAddedTaxPercentage";
   private static final String FURNITURE_CATALOG_VIEWED_IN_TREE          = "furnitureCatalogViewedInTree";
   private static final String NAVIGATION_PANEL_VISIBLE                  = "navigationPanelVisible";
+  private static final String EDITING_IN_3D_VIEW_ENABLED                = "editingIn3DViewEnabled";
   private static final String AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED = "aerialViewCenteredOnSelectionEnabled";
   private static final String OBSERVER_CAMERA_SELECTED_AT_CHANGE        = "observerCameraSelectedAtChange";
   private static final String MAGNETISM_ENABLED                         = "magnetismEnabled";
@@ -125,6 +127,7 @@ public class FileUserPreferences extends UserPreferences {
   private static final String RECENT_TEXTURE_HEIGHT                     = "recentTextureHeight#";
   private static final String RECENT_HOMES                              = "recentHomes#";
   private static final String IGNORED_ACTION_TIP                        = "ignoredActionTip#";  
+  private static final String PHOTO_RENDERER                            = "photoRenderer";
 
   private static final String FURNITURE_NAME                            = "furnitureName#";
   private static final String FURNITURE_CREATOR                         = "furnitureCreator#";
@@ -138,11 +141,14 @@ public class FileUserPreferences extends UserPreferences {
   private static final String FURNITURE_DOOR_OR_WINDOW                  = "furnitureDoorOrWindow#";
   private static final String FURNITURE_ELEVATION                       = "furnitureElevation#";
   private static final String FURNITURE_COLOR                           = "furnitureColor#";
-  private static final String FURNITURE_MODEL_SIZE                      = "furnitureModelSize#";
   private static final String FURNITURE_MODEL_ROTATION                  = "furnitureModelRotation#";
+  private static final String FURNITURE_MODEL_FLAGS                     = "furnitureModelFlags#";
+  private static final String FURNITURE_MODEL_SIZE                      = "furnitureModelSize#";
   private static final String FURNITURE_STAIRCASE_CUT_OUT_SHAPE         = "furnitureStaircaseCutOutShape#"; 
   private static final String FURNITURE_BACK_FACE_SHOWN                 = "furnitureBackFaceShown#";
   private static final String FURNITURE_ICON_YAW                        = "furnitureIconYaw#";
+  private static final String FURNITURE_ICON_PITCH                      = "furnitureIconPitch#";
+  private static final String FURNITURE_ICON_SCALE                      = "furnitureIconScale#";
   private static final String FURNITURE_PROPORTIONAL                    = "furnitureProportional#";
 
   private static final String TEXTURE_NAME                              = "textureName#";
@@ -304,6 +310,8 @@ public class FileUserPreferences extends UserPreferences {
         defaultPreferences.isFurnitureCatalogViewedInTree()));
     setNavigationPanelVisible(preferences.getBoolean(NAVIGATION_PANEL_VISIBLE, 
         defaultPreferences.isNavigationPanelVisible()));
+    setEditingIn3DViewEnabled(preferences.getBoolean(EDITING_IN_3D_VIEW_ENABLED,
+        defaultPreferences.isEditingIn3DViewEnabled()));
     setAerialViewCenteredOnSelectionEnabled(preferences.getBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, 
         defaultPreferences.isAerialViewCenteredOnSelectionEnabled()));
     setObserverCameraSelectedAtChange(preferences.getBoolean(OBSERVER_CAMERA_SELECTED_AT_CHANGE, 
@@ -397,6 +405,7 @@ public class FileUserPreferences extends UserPreferences {
         break;
       }
     }
+    setPhotoRenderer(preferences.get(PHOTO_RENDERER,  defaultPreferences.getPhotoRenderer()));
     
     setHomeExamples(defaultPreferences.getHomeExamples());
     
@@ -777,21 +786,24 @@ public class FileUserPreferences extends UserPreferences {
         ? Integer.valueOf(colorString) : null; 
     float [][] modelRotation = getModelRotation(preferences, FURNITURE_MODEL_ROTATION + index);
     boolean backFaceShown = preferences.getBoolean(FURNITURE_BACK_FACE_SHOWN + index, false);
+    int modelFlags = preferences.getInt(FURNITURE_MODEL_FLAGS + index, backFaceShown ? PieceOfFurniture.SHOW_BACK_FACE : 0);
     String modelSizeString = preferences.get(FURNITURE_MODEL_SIZE + index, null);
     Long modelSize = modelSizeString != null
         ? Long.valueOf(modelSizeString) : model.getSize();
     String creator = preferences.get(FURNITURE_CREATOR + index, null);
     float iconYaw = preferences.getFloat(FURNITURE_ICON_YAW + index, 0);
+    float iconPitch = preferences.getFloat(FURNITURE_ICON_PITCH + index, (float)(-Math.PI / 16));
+    float iconScale = preferences.getFloat(FURNITURE_ICON_SCALE + index, 1);
     boolean proportional = preferences.getBoolean(FURNITURE_PROPORTIONAL + index, true);
 
     if (doorOrWindow) {
       return new CatalogDoorOrWindow(name, icon, model,
           width, depth, height, elevation, movable, 1, 0, new Sash [0],
-          color, modelRotation, backFaceShown, modelSize, creator, iconYaw, proportional);
+          color, modelRotation, modelFlags, modelSize, creator, iconYaw, iconPitch, iconScale, proportional);
     } else {
       return new CatalogPieceOfFurniture(name, icon, model,
           width, depth, height, elevation, movable, 
-          staircaseCutOutShape, color, modelRotation, backFaceShown, modelSize, creator, iconYaw, proportional);
+          staircaseCutOutShape, color, modelRotation, modelFlags, modelSize, creator, iconYaw, iconPitch, iconScale, proportional);
     }
   }
 
@@ -814,11 +826,11 @@ public class FileUserPreferences extends UserPreferences {
   private float [][] getModelRotation(Preferences preferences, String key) {
     String modelRotationString = preferences.get(key, null);
     if (modelRotationString == null) {
-      return new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+      return PieceOfFurniture.IDENTITY_ROTATION;
     } else {
       String [] values = modelRotationString.split(" ", 9);
       if (values.length != 9) {
-        return new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+        return PieceOfFurniture.IDENTITY_ROTATION;
       } else {
         try {
           return new float [][] {{Float.parseFloat(values [0]), 
@@ -831,7 +843,7 @@ public class FileUserPreferences extends UserPreferences {
                                   Float.parseFloat(values [7]), 
                                   Float.parseFloat(values [8])}};
         } catch (NumberFormatException ex) {
-          return new float [][] {{1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
+          return PieceOfFurniture.IDENTITY_ROTATION;
         }
       }
     }
@@ -958,6 +970,7 @@ public class FileUserPreferences extends UserPreferences {
     }
     preferences.putBoolean(FURNITURE_CATALOG_VIEWED_IN_TREE, isFurnitureCatalogViewedInTree());
     preferences.putBoolean(NAVIGATION_PANEL_VISIBLE, isNavigationPanelVisible());
+    preferences.putBoolean(EDITING_IN_3D_VIEW_ENABLED, isEditingIn3DViewEnabled());
     preferences.putBoolean(AERIAL_VIEW_CENTERED_ON_SELECTION_ENABLED, isAerialViewCenteredOnSelectionEnabled());
     preferences.putBoolean(OBSERVER_CAMERA_SELECTED_AT_CHANGE, isObserverCameraSelectedAtChange());
     preferences.putBoolean(MAGNETISM_ENABLED, isMagnetismEnabled());
@@ -1049,6 +1062,12 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(AUTO_COMPLETION_PROPERTY + i);
       preferences.remove(AUTO_COMPLETION_STRINGS + i);
     }
+    String photoRenderer = getPhotoRenderer();
+    if (photoRenderer != null) {
+      preferences.put(PHOTO_RENDERER, photoRenderer);
+    } else {
+      preferences.remove(PHOTO_RENDERER);
+    }
     
     try {
       // Write preferences 
@@ -1094,7 +1113,8 @@ public class FileUserPreferences extends UserPreferences {
               floatToString(modelRotation[0][0]) + " " + floatToString(modelRotation[0][1]) + " " + floatToString(modelRotation[0][2]) + " "
               + floatToString(modelRotation[1][0]) + " " + floatToString(modelRotation[1][1]) + " " + floatToString(modelRotation[1][2]) + " "
               + floatToString(modelRotation[2][0]) + " " + floatToString(modelRotation[2][1]) + " " + floatToString(modelRotation[2][2]));
-          preferences.putBoolean(FURNITURE_BACK_FACE_SHOWN + i, piece.isBackFaceShown());
+          preferences.put(FURNITURE_MODEL_FLAGS + i, String.valueOf(piece.getModelFlags()));
+          preferences.putBoolean(FURNITURE_BACK_FACE_SHOWN + i, piece.isBackFaceShown()); // For backward compatibility
           if (piece.getModelSize() != null) {
             preferences.putLong(FURNITURE_MODEL_SIZE + i, piece.getModelSize());
           } else {
@@ -1106,6 +1126,8 @@ public class FileUserPreferences extends UserPreferences {
             preferences.remove(FURNITURE_CREATOR + i);
           }
           preferences.putFloat(FURNITURE_ICON_YAW + i, piece.getIconYaw());
+          preferences.putFloat(FURNITURE_ICON_PITCH + i, piece.getIconPitch());
+          preferences.putFloat(FURNITURE_ICON_SCALE + i, piece.getIconScale());
           preferences.putBoolean(FURNITURE_PROPORTIONAL + i, piece.isProportional());
           i++;
         }
@@ -1126,10 +1148,13 @@ public class FileUserPreferences extends UserPreferences {
       preferences.remove(FURNITURE_STAIRCASE_CUT_OUT_SHAPE + i);
       preferences.remove(FURNITURE_COLOR + i);
       preferences.remove(FURNITURE_MODEL_ROTATION + i);
+      preferences.remove(FURNITURE_MODEL_FLAGS + i);
       preferences.remove(FURNITURE_BACK_FACE_SHOWN + i);
       preferences.remove(FURNITURE_MODEL_SIZE + i);
       preferences.remove(FURNITURE_CREATOR + i);
       preferences.remove(FURNITURE_ICON_YAW + i);
+      preferences.remove(FURNITURE_ICON_PITCH + i);
+      preferences.remove(FURNITURE_ICON_SCALE + i);
       preferences.remove(FURNITURE_PROPORTIONAL + i);
     }
     deleteObsoleteContent(furnitureContentURLs, FURNITURE_CONTENT_PREFIX);

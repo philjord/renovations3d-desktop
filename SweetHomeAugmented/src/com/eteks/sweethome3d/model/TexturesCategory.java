@@ -55,7 +55,6 @@ public class TexturesCategory implements Comparable<TexturesCategory> {
    * @return an unmodifiable list of furniture.
    */
   public List<CatalogTexture> getTextures() {
-    //return Collections.unmodifiableList(this.textures);
     // make it properly synched
     synchronized(this.textures) {
       return Collections.unmodifiableList(new ArrayList<CatalogTexture>(this.textures));

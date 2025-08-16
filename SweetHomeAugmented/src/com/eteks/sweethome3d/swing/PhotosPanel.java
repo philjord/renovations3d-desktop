@@ -88,7 +88,7 @@ import javax.swing.event.ChangeListener;
 import org.sunflow.system.UI;
 import org.sunflow.system.ui.ConsoleInterface;
 
-import com.eteks.sweethome3d.j3d.PhotoRenderer;
+import com.eteks.sweethome3d.j3d.AbstractPhotoRenderer;
 import com.eteks.sweethome3d.model.Camera;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Selectable;
@@ -648,10 +648,11 @@ public class PhotosPanel extends JPanel implements DialogView {
         home.setCamera(camera);
         if (quality >= 2) {
           // Use photo renderer
-          PhotoRenderer photoRenderer = new PhotoRenderer(home, this.object3dFactory,
+          AbstractPhotoRenderer photoRenderer = AbstractPhotoRenderer.createInstance(
+              camera.getRenderer(), home, this.object3dFactory,
             quality == 2 
-                ? PhotoRenderer.Quality.LOW 
-                : PhotoRenderer.Quality.HIGH);
+                  ? AbstractPhotoRenderer.Quality.LOW
+                  : AbstractPhotoRenderer.Quality.HIGH);
           int bestImageHeight;
           // Update ratio if lens is fisheye or spherical
           if (camera.getLens() == Camera.Lens.FISHEYE) {
@@ -696,8 +697,8 @@ public class PhotosPanel extends JPanel implements DialogView {
       showPhotosComputingError(ex);
     } catch (IllegalStateException ex) {
       showPhotosComputingError(ex);
-    } catch (IOException ex) {
-      showPhotosComputingError(ex);
+    //} catch (IOException ex) {
+    //  showPhotosComputingError(ex);
     } finally { 
       final boolean succeeded = success;
       EventQueue.invokeLater(new Runnable() {

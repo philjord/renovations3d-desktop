@@ -28,7 +28,7 @@ import java.util.List;
  * @author Emmanuel Puybaret
  */
 public class FurnitureCatalog {
-  private List<FurnitureCategory>       categories = new ArrayList<FurnitureCategory>();
+  private List<FurnitureCategory> categories = new ArrayList<FurnitureCategory>();
   private final CollectionChangeSupport<CatalogPieceOfFurniture> furnitureChangeSupport = 
                              new CollectionChangeSupport<CatalogPieceOfFurniture>(this);
 
@@ -37,9 +37,8 @@ public class FurnitureCatalog {
    * @return an unmodifiable list of categories.
    */
   public synchronized List<FurnitureCategory> getCategories() {
-  //PJ to avoid concurrent mod exceptions
-    synchronized(this.categories)
-    {
+    //PJ to avoid concurrent mod exceptions
+    synchronized(this.categories) {
       return Collections.unmodifiableList(new ArrayList<FurnitureCategory>(this.categories));
     }
   }
@@ -85,9 +84,8 @@ public class FurnitureCatalog {
     // If category doesn't exist yet, add it to categories
     if (index < 0) {
       category = new FurnitureCategory(category.getName());
-    //PJ to avoid concurrent mod exceptions
-      synchronized(this.categories)
-      {
+      //PJ to avoid concurrent mod exceptions
+      synchronized(this.categories) {
         this.categories.add(-index - 1, category);
       }
     } else {
@@ -118,9 +116,8 @@ public class FurnitureCatalog {
         
         if (category.getFurnitureCount() == 0) {
           //  Make a copy of the list to avoid conflicts in the list returned by getCategories
-        //PJ to avoid concurrent mod exceptions
-          synchronized(this.categories)
-          {
+          //PJ to avoid concurrent mod exceptions
+          synchronized(this.categories) {
             this.categories = new ArrayList<FurnitureCategory>(this.categories);
             this.categories.remove(category);
           }
@@ -132,5 +129,20 @@ public class FurnitureCatalog {
     }
 
     throw new IllegalArgumentException("catalog doesn't contain piece " + piece.getName());
+  }
+
+  /**
+   * Returns the piece of furniture with the given <code>id</code> if it exists.
+   * @since 7.2
+   */
+  public CatalogPieceOfFurniture getPieceOfFurnitureWithId(String id) {
+    for (FurnitureCategory category : this.categories) {
+      for (CatalogPieceOfFurniture piece : category.getFurniture()) {
+        if (id.equals(piece.getId())) {
+          return piece;
+        }
+      }
+    }
+    return null;
   }
 }

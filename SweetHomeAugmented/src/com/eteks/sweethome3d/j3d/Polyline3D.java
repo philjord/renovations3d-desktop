@@ -35,6 +35,8 @@ import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.Group;
+import org.jogamp.java3d.IndexedGeometryArray;
+import org.jogamp.java3d.IndexedLineStripArray;
 import org.jogamp.java3d.Node;
 import org.jogamp.java3d.PolygonAttributes;
 import org.jogamp.java3d.RenderingAttributes;
@@ -49,6 +51,8 @@ import org.jogamp.vecmath.Vector3f;
 
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.Polyline;
+import com.eteks.sweethome3d.model.UserPreferences;
+
  
 
 /**
@@ -67,8 +71,18 @@ public class Polyline3D extends Object3DBranch {
     ARROW.lineTo(-5, 2);
   }
 
+  /**
+   * Creates the 3D object matching the given <code>polyline</code>.
+   */
   public Polyline3D(Polyline polyline, Home home) {
-    setUserData(polyline);
+    this(polyline, home, null, home);
+  }
+
+  /**
+   * Creates the 3D object matching the given <code>polyline</code>.
+   */
+  public Polyline3D(Polyline polyline, Home home, UserPreferences preferences, Object context) {
+    super(polyline, home, preferences, context);
 
     // Allow branch to be removed from its parent
     setCapability(BranchGroup.ALLOW_DETACH);
@@ -78,10 +92,9 @@ public class Polyline3D extends Object3DBranch {
 
     update();
     
-    //TODO: poly lines aren't pickable, and some sort of box is needed
-    //selection
+    //PJPJ for picking
     setPickable(true);
-    setCapability(Node.ENABLE_PICK_REPORTING);
+    setCapability(Node.ENABLE_PICK_REPORTING);// this is the SGP I want returned from picking
   }
 
   @Override
@@ -129,119 +142,101 @@ public class Polyline3D extends Object3DBranch {
           polylineArea.add(new Area(shape));
         }
       }
-      List<Point3f> vertices = new ArrayList<Point3f>(4);
       List<float [][]> polylinePoints = getAreaPoints(polylineArea, 0.5f, false);
-      int [] stripCounts = new int [polylinePoints.size()];
-      int currentShapeStartIndex = 0;
+      int pointsCount = 0;
+      int indicesCount = 0;
       for (int i = 0; i < polylinePoints.size(); i++) {
-        for (float [] point : polylinePoints.get(i)) {
-          vertices.add(new Point3f(point [0], 0, point [1]));
+        int count = polylinePoints.get(i).length;
+        pointsCount += count;
+        indicesCount += count + 1;
+      }
+      Point3f [] vertices = new Point3f [pointsCount];
+      int [] indices = new int [indicesCount];
+      int [] stripCounts = new int [polylinePoints.size()];
+      int [] selectionStripCounts =  new int [polylinePoints.size()];
+      for (int i = 0, j = 0, k = 0; i < polylinePoints.size(); i++) {
+        float [][] points = polylinePoints.get(i);
+        for (float [] point : points) {
+          indices [k++] = j;
+          vertices [j++] = new Point3f(point [0], 0, point [1]);
         }
-        stripCounts [i] = vertices.size() - currentShapeStartIndex;
-        currentShapeStartIndex = vertices.size();
+        indices [k++] = j - points.length;
+        stripCounts [i] = points.length;
+        selectionStripCounts [i] = stripCounts [i] + 1;
       }
 
       GeometryInfo geometryInfo = new GeometryInfo(GeometryInfo.POLYGON_ARRAY);
-      geometryInfo.setCoordinates(vertices.toArray(new Point3f [vertices.size()]));
-      Vector3f [] normals = new Vector3f [vertices.size()];
+      geometryInfo.setCoordinates(vertices);
+      Vector3f [] normals = new Vector3f [vertices.length];
       Arrays.fill(normals, new Vector3f(0, 1, 0));
       geometryInfo.setNormals(normals);
       geometryInfo.setStripCounts(stripCounts);
-      GeometryArray geometryArray = geometryInfo.getIndexedGeometryArray(true, true, true, true, true);
-
+      GeometryArray geometry = geometryInfo.getIndexedGeometryArray(true, true, true, true, true);//PJPJ faster better
+      //PJPJ for picking
+      makePickable(geometry);
+      
+      IndexedLineStripArray selectionGeometry = new IndexedLineStripArray(vertices.length, IndexedGeometryArray.COORDINATES, indices.length, selectionStripCounts);
+      selectionGeometry.setCoordinates(0, vertices);
+      selectionGeometry.setCoordinateIndices(0, indices);
+      
+      TransformGroup transformGroup;
+      RenderingAttributes selectionRenderingAttributes;
       if (numChildren() == 0) {
         BranchGroup group = new BranchGroup();
         group.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-        group.setCapability(BranchGroup.ALLOW_DETACH);
-        
+        group.setCapability(BranchGroup.ALLOW_DETACH);        
         group.setPickable(true);
 
-        TransformGroup transformGroup = new TransformGroup();
+        transformGroup = new TransformGroup();
+        transformGroup.setPickable(true);
         // Allow the change of the transformation that sets polyline position and orientation
         transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
         transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
         group.addChild(transformGroup);
         
-        transformGroup.setPickable(true);
-
-        SimpleShaderAppearance appearance = new SimpleShaderAppearance();
+        SimpleShaderAppearance appearance = new SimpleShaderAppearance();        
         appearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_AMBIENT_COLOR, 0));
         appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
         appearance.setPolygonAttributes(DEFAULT_POLYGON_ATTRIBUTES);
-        appearance.setUpdatableCapabilities();
-
-        Shape3D shape = new Shape3D(geometryArray, appearance);
+        appearance.setUpdatableCapabilities();// allow shader rebuilding, after all the edits to the appearance above
+        
+        Shape3D shape = new Shape3D(geometry, appearance);
         shape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
         shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-
-        // base shape outlining
-        int outlineStencilMask = Object3DBranch.LABEL_STENCIL_MASK;
-        RenderingAttributes renderingAttributes = new RenderingAttributes();
-        renderingAttributes.setStencilEnable(false);
-        renderingAttributes.setStencilWriteMask(outlineStencilMask);
-        renderingAttributes.setStencilFunction(RenderingAttributes.ALWAYS, outlineStencilMask, outlineStencilMask);
-        renderingAttributes.setStencilOp(RenderingAttributes.STENCIL_REPLACE, //
-  				RenderingAttributes.STENCIL_REPLACE, //
-  				RenderingAttributes.STENCIL_REPLACE);     
-        renderingAttributes.setCapability(RenderingAttributes.ALLOW_STENCIL_ATTRIBUTES_WRITE);          
-        appearance.setRenderingAttributes(renderingAttributes);
-        appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+        transformGroup.addChild(shape);  
+        //PJPJ for picking
+        makePickable(shape);
         
-        //Outlining                    
-        RenderingAttributes olRenderingAttributes = new RenderingAttributes();          
-        SimpleShaderAppearance outlineAppearance = new SimpleShaderAppearance(Object3DBranch.OUTLINE_COLOR);// special non auto build version for outlining
-        outlineAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+        Shape3D selectionLinesShape = new Shape3D(selectionGeometry, getSelectionAppearance());
+        selectionLinesShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+        selectionLinesShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+        selectionLinesShape.setPickable(false);
+        selectionRenderingAttributes = selectionLinesShape.getAppearance().getRenderingAttributes();
+        transformGroup.addChild(selectionLinesShape); 
         
-        outlineAppearance.setColoringAttributes(Object3DBranch.OUTLINE_COLORING_ATTRIBUTES);
-        outlineAppearance.setPolygonAttributes(Object3DBranch.OUTLINE_POLYGON_ATTRIBUTES);
-        outlineAppearance.setLineAttributes(Object3DBranch.OUTLINE_LINE_ATTRIBUTES);
-        
-        outlineAppearance.setTransparencyAttributes(Label3D.DEFAULT_TRANSPARENCY_ATTRIBUTES);//put it in the transparent pass
-        olRenderingAttributes.setStencilEnable(true);
-        olRenderingAttributes.setStencilWriteMask(outlineStencilMask);
-        olRenderingAttributes.setStencilFunction(RenderingAttributes.NOT_EQUAL, outlineStencilMask, outlineStencilMask);
-        olRenderingAttributes.setStencilOp(RenderingAttributes.STENCIL_KEEP, //
-  				RenderingAttributes.STENCIL_KEEP, //
-  				RenderingAttributes.STENCIL_KEEP);
-  		//geoms often have colors in verts
-        olRenderingAttributes.setIgnoreVertexColors(true);
-  		// draw it even when hidden
-        olRenderingAttributes.setDepthBufferEnable(false);
-        olRenderingAttributes.setDepthTestFunction(RenderingAttributes.ALWAYS);	
-        olRenderingAttributes.setVisible(false);
-
-        olRenderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
-        outlineAppearance.setRenderingAttributes(olRenderingAttributes);
-        
-        Shape3D olShape = new Shape3D();
-        olShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-        olShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
-        olShape.setAppearance(outlineAppearance);
-        olShape.setGeometry(geometryArray);              
-
-        transformGroup.addChild(shape);    
-        transformGroup.addChild(olShape); // outline is child 1
         addChild(group);
       } else {
-        Shape3D shape = (Shape3D)((TransformGroup)(((Group)getChild(0)).getChild(0))).getChild(0);
-        shape.setGeometry(geometryArray);
+    	transformGroup = (TransformGroup)((Group)((Group)getChild(0)).getChild(0));
+    	Shape3D shape = (Shape3D)transformGroup.getChild(0);
+        shape.setGeometry(geometry);
         
-        TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
-        ((Shape3D)transformGroup.getChild(1)).setGeometry(geometryArray);
+        Shape3D selectionLinesShape = (Shape3D)transformGroup.getChild(1);
+        selectionLinesShape.setGeometry(selectionGeometry);
+        selectionRenderingAttributes = selectionLinesShape.getAppearance().getRenderingAttributes();
       }
 
-      TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
       // Apply elevation
       Transform3D transform = new Transform3D();
       transform.setTranslation(new Vector3d(0, polyline.getGroundElevation() + (polyline.getElevation() < 0.05f ? 0.05f : 0), 0));
       transformGroup.setTransform(transform);
       ((Shape3D)transformGroup.getChild(0)).getAppearance().setMaterial(getMaterial(polyline.getColor(), polyline.getColor(), 0));
+
+      selectionRenderingAttributes.setVisible(getUserPreferences() != null
+          && getUserPreferences().isEditingIn3DViewEnabled()
+          && getHome().isItemSelected(polyline));
     } else {
       removeAllChildren();
-    }
-    
-    showOutline(isShowOutline);
-    
+    }    
   }
 
   /**
@@ -277,23 +272,4 @@ public class Polyline3D extends Object3DBranch {
     }
     return null;
   }
-  
-  @Override
-	public void showOutline(boolean isSelected)
-	{
-		isShowOutline = isSelected;
-		// only if we haven't been cleared
-		if (numChildren() > 0)
-		{
-	  		 TransformGroup transformGroup = (TransformGroup)(((Group)getChild(0)).getChild(0));
-	         ((Shape3D)transformGroup.getChild(1)).getAppearance().getRenderingAttributes().setVisible(isSelected);
-	         ((Shape3D)transformGroup.getChild(0)).getAppearance().getRenderingAttributes().setStencilEnable(isSelected);
-	  	}
-	}
-	private boolean isShowOutline = false;
-	@Override
-	public boolean isShowOutline()
-	{
-		return isShowOutline;
-	}
 }

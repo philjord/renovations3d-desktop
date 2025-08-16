@@ -63,7 +63,9 @@ import com.eteks.sweethome3d.model.HomePieceOfFurniture;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Level;
 import com.eteks.sweethome3d.model.Room;
+import com.eteks.sweethome3d.model.UserPreferences;
 import com.eteks.sweethome3d.model.Wall;
+
 
 /**
  * Root of a the 3D ground.
@@ -93,14 +95,28 @@ public class Ground3D extends Object3DBranch {
                   float width,
                   float depth, 
                   boolean waitTextureLoadingEnd) {
-    setUserData(home);
+    this(home, null, home, originX, originY, width, depth, waitTextureLoadingEnd);
+  }
+
+  /**
+   * Creates a 3D ground for the given <code>home</code>.
+   */
+  public Ground3D(Home home,
+                  UserPreferences preferences,
+                  Object context,
+                  float originX,
+                  float originY,
+                  float width,
+                  float depth,
+                  boolean waitTextureLoadingEnd) {
+    super(home, home, preferences, context);
     this.originX = originX;
     this.originY = originY;
     this.width = width;
     this.depth = depth;
 
     SimpleShaderAppearance groundAppearance = new SimpleShaderAppearance();
-    groundAppearance.setUpdatableCapabilities(); // allow updatable shader building
+
     groundAppearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_WRITE);
     groundAppearance.setCapability(Appearance.ALLOW_TEXTURE_ATTRIBUTES_WRITE);
@@ -108,7 +124,7 @@ public class Ground3D extends Object3DBranch {
     TransparencyAttributes transparencyAttributes = new TransparencyAttributes();
     transparencyAttributes.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
     groundAppearance.setTransparencyAttributes(transparencyAttributes);
-    
+    groundAppearance.setUpdatableCapabilities();// allow shader rebuilding, after all the edits to the appearance above
     final Shape3D groundShape = new Shape3D();
     groundShape.setAppearance(groundAppearance);
     groundShape.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
@@ -117,6 +133,7 @@ public class Ground3D extends Object3DBranch {
     addChild(groundShape);
     
     SimpleShaderAppearance backgroundImageAppearance = new SimpleShaderAppearance();
+    
     backgroundImageAppearance.setMaterial(getMaterial(DEFAULT_COLOR, DEFAULT_COLOR, 0));
     backgroundImageAppearance.setTextureAttributes(MODULATE_TEXTURE_ATTRIBUTES);
     backgroundImageAppearance.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
@@ -126,14 +143,14 @@ public class Ground3D extends Object3DBranch {
     renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);    
     backgroundImageAppearance.setRenderingAttributes(renderingAttributes);
     backgroundImageAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
-    backgroundImageAppearance.setUpdatableCapabilities();
-    
+    backgroundImageAppearance.setUpdatableCapabilities();// allow shader rebuilding, after all the edits to the appearance above
     TransformGroup transformGroup = new TransformGroup();
     // Allow the change of the transformation that sets background image size and position
     transformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
     transformGroup.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
 
-    Box box = new Box(0.5f, 0f, 0.5f, backgroundImageAppearance);
+    // Do not share box geometry or cleaning up the universe after an offscreen rendering may cause some bugs
+    Box box = new Box(0.5f, 0f, 0.5f, Box.GEOMETRY_NOT_SHARED | Box.GENERATE_NORMALS, backgroundImageAppearance);
     Shape3D backgroundImageShape = box.getShape(Box.TOP);
     backgroundImageShape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
     box.removeChild(backgroundImageShape);
@@ -202,7 +219,7 @@ public class Ground3D extends Object3DBranch {
                   backgroundImageTransform.setScale(new Vector3d(imageWidth, 1, imageHeight));
                   backgroundImageTransform.setTranslation(new Vector3d(imageWidth / 2 - displayedBackgroundImage.getXOrigin(), 0f,
                       imageHeight / 2 - displayedBackgroundImage.getYOrigin()));
-                  backgroundImageAppearance.setTexture(getHomeTextureClone(texture, home));
+                  backgroundImageAppearance.setTexture(getContextTexture(texture, getContext()));
                   backgroundImageGroup.setTransform(backgroundImageTransform);
                   updateGround(waitTextureLoadingEnd,
                       new Rectangle2D.Float(-displayedBackgroundImage.getXOrigin(), -displayedBackgroundImage.getYOrigin(), imageWidth, imageHeight));
@@ -238,7 +255,7 @@ public class Ground3D extends Object3DBranch {
       textureManager.loadTexture(groundTexture.getImage(), waitTextureLoadingEnd,
           new TextureManager.TextureObserver() {
               public void textureUpdated(Texture texture) {
-                groundAppearance.setTexture(getHomeTextureClone(texture, home));
+                groundAppearance.setTexture(getContextTexture(texture, getContext()));
                 TransparencyAttributes transparencyAttributes = groundAppearance.getTransparencyAttributes();
                 // If texture isn't transparent, turn off transparency  
                 transparencyAttributes.setTransparencyMode(TextureManager.getInstance().isTextureTransparent(texture) 
@@ -304,7 +321,14 @@ public class Ground3D extends Object3DBranch {
     // Sort underground areas in the reverse order of level elevation
     Collections.sort(undergroundAreas, new Comparator<LevelAreas>() {
         public int compare(LevelAreas levelAreas1, LevelAreas levelAreas2) {
-          return -Float.compare(levelAreas1.getLevel().getElevation(), levelAreas2.getLevel().getElevation());
+          Level level1 = levelAreas1.getLevel();
+          Level level2 = levelAreas2.getLevel();
+          int elevationComparison = -Float.compare(level1.getElevation(), level2.getElevation());
+          if (elevationComparison != 0) {
+            return elevationComparison;
+          } else {
+            return level1.getElevationIndex() - level2.getElevationIndex();
+          }
         }
       });
     for (LevelAreas levelAreas : undergroundAreas) {
@@ -587,17 +611,5 @@ public class Ground3D extends Object3DBranch {
       return this.upperLevelArea;
     }    
   }
-  
-  	@Override
-	public void showOutline(boolean isSelected)
-	{
-		//Never bad idea indeed
-	}
-  	
-  	@Override
-	public boolean isShowOutline()
-  	{
-  		return false;
-  	}
 }
 

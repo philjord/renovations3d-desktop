@@ -46,22 +46,25 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private static final double STRAIGHT_WALL_ANGLE_MARGIN  = Math.toRadians(1);
   private static final double ROUND_WALL_ANGLE_MARGIN     = Math.toRadians(10);
   
+  protected static final String [] EMPTY_PROPERTY_ARRAY = {};
+
   /**
    * The properties of a piece of furniture that may change. <code>PropertyChangeListener</code>s added 
    * to a piece of furniture will be notified under a property name equal to the string value of one these properties.
    */
   public enum Property {CATALOG_ID, NAME, NAME_VISIBLE, NAME_X_OFFSET, NAME_Y_OFFSET, NAME_STYLE, NAME_ANGLE,
-      DESCRIPTION, INFORMATION, PRICE, VALUE_ADDED_TAX_PERCENTAGE, CURRENCY, ICON, PLAN_ICON, MODEL,
+      DESCRIPTION, INFORMATION, CREATOR, LICENSE, PRICE, VALUE_ADDED_TAX_PERCENTAGE, CURRENCY, ICON, PLAN_ICON, MODEL,
       WIDTH, WIDTH_IN_PLAN, DEPTH, DEPTH_IN_PLAN, HEIGHT, HEIGHT_IN_PLAN,
       COLOR, TEXTURE, MODEL_MATERIALS, MODEL_TRANSFORMATIONS,
-      STAIRCASE_CUT_OUT_SHAPE, CREATOR, SHININESS, VISIBLE,
-      X, Y, ELEVATION, ANGLE, PITCH, ROLL, MODEL_ROTATION, MODEL_MIRRORED, BACK_FACE_SHOWN, MOVABLE, LEVEL};
+      STAIRCASE_CUT_OUT_SHAPE, SHININESS, VISIBLE,
+      X, Y, ELEVATION, ANGLE, PITCH, ROLL, MODEL_ROTATION, MODEL_FLAGS, MODEL_MIRRORED,
+      /** @deprecated */ BACK_FACE_SHOWN, MOVABLE, LEVEL};
   
   /** 
    * The properties on which home furniture may be sorted.  
    */
-  public enum SortableProperty {CATALOG_ID, NAME, WIDTH, DEPTH, HEIGHT, MOVABLE, 
-                                DOOR_OR_WINDOW, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_SIZE, CREATOR, 
+  public enum SortableProperty {CATALOG_ID, NAME, DESCRIPTION, CREATOR, LICENSE, WIDTH, DEPTH, HEIGHT, MOVABLE,
+                                DOOR_OR_WINDOW, COLOR, TEXTURE, VISIBLE, X, Y, ELEVATION, ANGLE, MODEL_SIZE,
                                 PRICE, VALUE_ADDED_TAX, VALUE_ADDED_TAX_PERCENTAGE, PRICE_VALUE_ADDED_TAX_INCLUDED, LEVEL};
   private static final Map<SortableProperty, Comparator<HomePieceOfFurniture>> SORTABLE_PROPERTY_COMPARATORS;
   
@@ -92,6 +95,45 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
             return 1; 
           } else {
             return collator.compare(piece1.name, piece2.name);
+          }
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.DESCRIPTION, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          if (piece1.description == piece2.description) {
+            return 0;
+          } else if (piece1.description == null) {
+            return -1;
+          } else if (piece2.description == null) {
+            return 1;
+          } else {
+            return collator.compare(piece1.description, piece2.description);
+          }
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.CREATOR, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          if (piece1.creator == piece2.creator) {
+            return 0;
+          } else if (piece1.creator == null) {
+            return -1;
+          } else if (piece2.creator == null) {
+            return 1;
+          } else {
+            return collator.compare(piece1.creator, piece2.creator);
+          }
+        }
+      });
+    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.LICENSE, new Comparator<HomePieceOfFurniture>() {
+        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
+          if (piece1.license == piece2.license) {
+            return 0;
+          } else if (piece1.license == null) {
+            return -1;
+          } else if (piece2.license == null) {
+            return 1;
+          } else {
+            return collator.compare(piece1.license, piece2.license);
           }
         }
       });
@@ -188,19 +230,6 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
           }
         }
       });
-    SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.CREATOR, new Comparator<HomePieceOfFurniture>() {
-        public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
-          if (piece1.creator == piece2.creator) {
-            return 0;
-          } else if (piece1.creator == null) {
-            return -1;
-          } else if (piece2.creator == null) {
-            return 1; 
-          } else {
-            return collator.compare(piece1.creator, piece2.creator);
-          }
-        }
-      });
     SORTABLE_PROPERTY_COMPARATORS.put(SortableProperty.LEVEL, new Comparator<HomePieceOfFurniture>() {
         public int compare(HomePieceOfFurniture piece1, HomePieceOfFurniture piece2) {
           return HomePieceOfFurniture.compare(piece1.getLevel(), piece2.getLevel());
@@ -258,7 +287,12 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     } else if (level2 == null) {
       return 1; 
     } else {
-      return Float.compare(level1.getElevation(), level2.getElevation());
+      int elevationComparison = Float.compare(level1.getElevation(), level2.getElevation());
+      if (elevationComparison != 0) {
+        return elevationComparison;
+      } else {
+        return level1.getElevationIndex() - level2.getElevationIndex();
+      }
     }
   }
   
@@ -288,6 +322,8 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private float                  nameAngle;
   private String                 description;
   private String                 information;
+  private String                 creator;
+  private String                 license;
   private Content                icon;
   private Content                planIcon;
   private Content                model;
@@ -307,11 +343,11 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   private HomeTexture            texture;
   private Float                  shininess;
   private float [][]             modelRotation;
+  private int                    modelFlags;
   private boolean                modelCenteredAtOrigin;
   private Transformation []      modelTransformations;
   private String                 staircaseCutOutShape;
-  private String                 creator;
-  private boolean                backFaceShown;
+  private boolean                backFaceShown; // Used only for backward compatibility from version 7.0
   private boolean                resizable;
   private boolean                deformable;
   private boolean                texturable;
@@ -333,23 +369,50 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
 
   /**
    * Creates a home piece of furniture from an existing piece.
+   * No additional properties will be copied.
    * @param piece the piece from which data are copied
    */
   public HomePieceOfFurniture(PieceOfFurniture piece) {
-    this(createId("pieceOfFurniture"), piece);
+    this(piece, EMPTY_PROPERTY_ARRAY);
+  }
+
+  /**
+   * Creates a home piece of furniture from an existing piece.
+   * @param piece the piece from which data are copied
+   * @param copiedProperties the names of the additional properties which should be copied from the existing piece
+   *                         or <code>null</code> if all properties should be copied.
+   * @since 7.2
+   */
+  public HomePieceOfFurniture(PieceOfFurniture piece, String [] copiedProperties) {
+    this(createId("pieceOfFurniture"), piece, copiedProperties);
+  }
+
+  /**
+   * Creates a home piece of furniture from an existing piece.
+   * No additional properties will be copied.
+   * @param id    the ID of the piece
+   * @param piece the piece from which data are copied
+   * @since 6.4
+   */
+  public HomePieceOfFurniture(String id, PieceOfFurniture piece) {
+    this(id, piece, EMPTY_PROPERTY_ARRAY);
   }
 
   /**
    * Creates a home piece of furniture from an existing piece.
    * @param id    the ID of the piece
    * @param piece the piece from which data are copied
-   * @since 6.4
+   * @param copiedProperties the names of the additional properties which should be copied from the existing piece
+   *                         or <code>null</code> if all properties should be copied.
+   * @since 7.2
    */
-  public HomePieceOfFurniture(String id, PieceOfFurniture piece) {
+  public HomePieceOfFurniture(String id, PieceOfFurniture piece, String [] copiedProperties) {
     super(id);
     this.name = piece.getName();
     this.description = piece.getDescription();
     this.information = piece.getInformation();
+    this.creator = piece.getCreator();
+    this.license = piece.getLicense();
     this.icon = piece.getIcon();
     this.planIcon = piece.getPlanIcon();
     this.model = piece.getModel();
@@ -364,8 +427,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     this.color = piece.getColor();
     this.modelRotation = piece.getModelRotation();
     this.staircaseCutOutShape = piece.getStaircaseCutOutShape();
-    this.creator = piece.getCreator();
-    this.backFaceShown = piece.isBackFaceShown();
+    this.modelFlags = piece.getModelFlags();
     this.resizable = piece.isResizable();
     this.deformable = piece.isDeformable();
     this.texturable = piece.isTexturable();
@@ -396,9 +458,26 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       this.texture = homePiece.getTexture();
       this.shininess = homePiece.getShininess();
       this.modelMaterials = homePiece.getModelMaterials();
+      for (String property : copiedProperties != null ? Arrays.asList(copiedProperties) : homePiece.getPropertyNames()) {
+        Object value = homePiece.isContentProperty(property)
+            ? homePiece.getContentProperty(property)
+            : homePiece.getProperty(property);
+        if (value != null) {
+          setProperty(property, value);
+        }
+      }
     } else {
       if (piece instanceof CatalogPieceOfFurniture) {
-        this.catalogId = ((CatalogPieceOfFurniture)piece).getId();
+        CatalogPieceOfFurniture catalogPiece = (CatalogPieceOfFurniture)piece;
+        this.catalogId = catalogPiece.getId();
+        for (String property : copiedProperties != null ? Arrays.asList(copiedProperties) : catalogPiece.getPropertyNames()) {
+          Object value = catalogPiece.isContentProperty(property)
+              ? catalogPiece.getContentProperty(property)
+              : catalogPiece.getProperty(property);
+          if (value != null) {
+            setProperty(property, value);
+          }
+        }
       }      
       this.visible = true;
       this.widthInPlan = this.width;
@@ -441,6 +520,9 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
     if (!this.modelCenteredAtOrigin) {
       // Keep default value to false only if model rotation matrix isn't identity
       this.modelCenteredAtOrigin = Arrays.deepEquals(IDENTITY_ROTATION, this.modelRotation);
+    }
+    if (this.backFaceShown) {
+      this.modelFlags |= SHOW_BACK_FACE;
     }
   }
 
@@ -624,6 +706,50 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       String oldInformation = this.information;
       this.information = information;
       firePropertyChange(Property.INFORMATION.name(), oldInformation, information);
+    }
+  }
+
+  /**
+   * Returns the creator of this piece.
+   * @since 4.2
+   */
+  public String getCreator() {
+    return this.creator;
+  }
+
+  /**
+   * Sets the creator of this piece. Once this piece is updated, listeners added to this piece
+   * will receive a change notification.
+   * @since 6.5
+   */
+  public void setCreator(String creator) {
+    if (creator != this.creator
+        && (creator == null || !creator.equals(this.creator))) {
+      String oldCreator = this.creator;
+      this.creator = creator;
+      firePropertyChange(Property.CREATOR.name(), oldCreator, creator);
+    }
+  }
+
+  /**
+   * Returns the license of this piece, or <code>null</code>.
+   * @since 7.2
+   */
+  public String getLicense() {
+    return this.license;
+  }
+
+  /**
+   * Sets the the license of this piece . Once this piece is updated,
+   * listeners added to this piece will receive a change notification.
+   * @since 7.2
+   */
+  public void setLicense(String license) {
+    if (license != this.license
+        && (license == null || !license.equals(this.license))) {
+      String oldLicense = this.license;
+      this.license = license;
+      firePropertyChange(Property.LICENSE.name(), oldLicense, license);
     }
   }
 
@@ -1389,19 +1515,39 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
    * model should be displayed.
    */
   public boolean isBackFaceShown() {
-    return this.backFaceShown;
+    return (this.modelFlags & SHOW_BACK_FACE) == SHOW_BACK_FACE;
   }
   
   /**
    * Sets whether the back face of the piece of furniture model should be displayed.
    * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @deprecated Prefer use {@link #setModelFlags} with {@link #SHOW_BACK_FACE} flag.
    * @since 6.5
    */
   public void setBackFaceShown(boolean backFaceShown) {
-    if (backFaceShown != this.backFaceShown) {
-      this.backFaceShown = backFaceShown;
-      firePropertyChange(Property.BACK_FACE_SHOWN.name(),
-          !backFaceShown, backFaceShown);
+    setModelFlags((getModelFlags() & ~PieceOfFurniture.SHOW_BACK_FACE)
+        | (backFaceShown ? PieceOfFurniture.SHOW_BACK_FACE : 0));
+  }
+
+  /**
+   * Returns the flags applied to the piece of furniture model.
+   * @since 7.0
+   */
+  public int getModelFlags() {
+    return this.modelFlags;
+  }
+
+  /**
+   * Sets the flags applied to the piece of furniture model.
+   * Once this piece is updated, listeners added to this piece will receive a change notification.
+   * @since 7.0
+   */
+  public void setModelFlags(int modelFlags) {
+    if (modelFlags != this.modelFlags) {
+      int oldModelFlags = this.modelFlags;
+      this.modelFlags = modelFlags;
+      this.backFaceShown = (modelFlags & SHOW_BACK_FACE) == SHOW_BACK_FACE; // For backward compatibility
+      firePropertyChange(Property.MODEL_FLAGS.name(), oldModelFlags, modelFlags);
      }
   }
 
@@ -1456,28 +1602,6 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
       String oldCutOutShape = this.staircaseCutOutShape;
       this.staircaseCutOutShape = staircaseCutOutShape;
       firePropertyChange(Property.STAIRCASE_CUT_OUT_SHAPE.name(), oldCutOutShape, staircaseCutOutShape);
-    }
-  }
-
-  /**
-   * Returns the creator of this piece.
-   * @since 4.2
-   */
-  public String getCreator() {
-    return this.creator;
-  }
-
-  /**
-   * Sets the creator of this piece. Once this piece is updated, listeners added to this piece
-   * will receive a change notification.
-   * @since 6.5
-   */
-  public void setCreator(String creator) {
-    if (creator != this.creator
-        && (creator == null || !creator.equals(this.creator))) {
-      String oldCreator = this.creator;
-      this.creator = creator;
-      firePropertyChange(Property.CREATOR.name(), oldCreator, creator);
     }
   }
 
@@ -1717,7 +1841,7 @@ public class HomePieceOfFurniture extends HomeObject implements PieceOfFurniture
   }
 
   /**
-   * Returns a comparator that compares furniture on a given <code>property</code> in ascending order.
+   * Returns a comparator which compares furniture on a given <code>property</code> in ascending order.
    */
   public static Comparator<HomePieceOfFurniture> getFurnitureComparator(SortableProperty property) {
     return SORTABLE_PROPERTY_COMPARATORS.get(property);    

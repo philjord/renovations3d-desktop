@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import org.jogamp.java3d.Appearance;
 import org.jogamp.java3d.BranchGroup;
 import org.jogamp.java3d.ColoringAttributes;
 import org.jogamp.java3d.Geometry;
@@ -38,11 +39,15 @@ import org.jogamp.java3d.GeometryArray;
 import org.jogamp.java3d.IndexedGeometryArray;
 import org.jogamp.java3d.LineAttributes;
 import org.jogamp.java3d.Material;
+import org.jogamp.java3d.Node;
 import org.jogamp.java3d.PolygonAttributes;
+import org.jogamp.java3d.RenderingAttributes;
 import org.jogamp.java3d.Shape3D;
 import org.jogamp.java3d.Texture;
 import org.jogamp.java3d.TextureAttributes;
 import org.jogamp.java3d.Transform3D;
+import org.jogamp.java3d.TransparencyAttributes;
+import org.jogamp.java3d.utils.shader.SimpleShaderAppearance;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Vector3d;
 import org.jogamp.vecmath.Vector3f;
@@ -50,35 +55,58 @@ import org.jogamp.vecmath.Vector3f;
 import com.eteks.sweethome3d.model.Home;
 import com.eteks.sweethome3d.model.HomeTexture;
 import com.eteks.sweethome3d.model.Room;
+import com.eteks.sweethome3d.model.UserPreferences;
 
 /**
  * Root of a branch that matches a home object. 
  */
 public abstract class Object3DBranch extends BranchGroup {
-	public static final int WALL_STENCIL_MASK = 1<<1;
-	public static final int FURN_STENCIL_MASK = 1<<2;
-	public static final int ROOM_STENCIL_MASK = 1<<3;
-	public static final int LABEL_STENCIL_MASK = 1<<4;
-	
-	public static int OUTLINE_WIDTH = 10;
-	public static Color3f OUTLINE_COLOR = new Color3f(0.0f,84f/255f,150f/255f); //PJ match plan new Color3f(1f,0.9f,0f);
-  // The coloring attributes used for drawing outline 
-  protected static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES = 
-      new ColoringAttributes(OUTLINE_COLOR, ColoringAttributes.FASTEST);
-  protected static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES = 
-      new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_NONE, 0.1f, true, 0.1f);
-  protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
-      new LineAttributes(OUTLINE_WIDTH, LineAttributes.PATTERN_SOLID, true);
+  private static float screenScaleFactor = 1;//TODO: one day I should get a screen scale factor
 
+/*  static {
+    try {
+      if (OperatingSystem.isMacOSX()
+          && OperatingSystem.isJavaVersionGreaterOrEqual("1.9")) {
+        // Use a thicker line width for Retina screens
+        GraphicsDevice screenDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        Number scaleFactor = (Number)screenDevice.getClass().getDeclaredMethod("getScaleFactor").invoke(screenDevice);
+        if (scaleFactor instanceof Number && scaleFactor.floatValue() > 1f) {
+          screenScaleFactor = scaleFactor.floatValue();
+        }
+      }
+    } catch (Exception ex) {
+      // Ignore environments without getScaleFactor
+    }
+  }*/
+	
+  protected static final float LINE_WIDTH_SCALE_FACTOR = screenScaleFactor; 
+  private static Color3f SELECTION_OUTLINE_COLOR = new Color3f(0, 0, 0.7102f);  
+  
+  // The attributes used for drawing outline
+  protected static final ColoringAttributes OUTLINE_COLORING_ATTRIBUTES = 
+      new ColoringAttributes(new Color3f(0.16f, 0.16f, 0.16f), ColoringAttributes.FASTEST);
+  protected static final PolygonAttributes OUTLINE_POLYGON_ATTRIBUTES = 
+      new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_NONE, 0);
+  protected static final LineAttributes OUTLINE_LINE_ATTRIBUTES = 
+      new LineAttributes(0.5f * LINE_WIDTH_SCALE_FACTOR, LineAttributes.PATTERN_SOLID, true);
+      
+  // The attributes used for drawing selection 
+  protected static final ColoringAttributes SELECTION_COLORING_ATTRIBUTES =
+      new ColoringAttributes(new Color3f(0, 0, 0.7102f), ColoringAttributes.SHADE_FLAT);
+  protected static final PolygonAttributes  SELECTION_POLYGON_ATTRIBUTES =
+	      new PolygonAttributes(PolygonAttributes.POLYGON_LINE, PolygonAttributes.CULL_NONE, 0);
+  protected static final LineAttributes     SELECTION_LINE_ATTRIBUTES =
+      new LineAttributes(LINE_WIDTH_SCALE_FACTOR * 3.5f, LineAttributes.PATTERN_SOLID, true);
+  protected static final TransparencyAttributes SELECTION_TRANSPARENCY_ATTRIBUTES =
+      new TransparencyAttributes(TransparencyAttributes.NICEST, 0.6f);    
+   
   protected static final Integer  DEFAULT_COLOR         = 0xFFFFFF;
   protected static final Integer  DEFAULT_AMBIENT_COLOR = 0x333333;
   protected static final Material DEFAULT_MATERIAL      = new Material();
 
   private static final Map<Long, Material>              materials = new HashMap<Long, Material>();
   private static final Map<TextureKey, TextureAttributes> textureAttributes = new HashMap<TextureKey, TextureAttributes>();
-  private static final Map<Home, Map<Texture, Texture>> homesTextures = new WeakHashMap<Home, Map<Texture, Texture>>();
-
-
+  private static final Map<Object, Map<Texture, Texture>> contextTextures = new WeakHashMap<Object, Map<Texture, Texture>>();
   
   static {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
@@ -86,6 +114,44 @@ public abstract class Object3DBranch extends BranchGroup {
     DEFAULT_MATERIAL.setSpecularColor(0, 0, 0);
   }
   
+  private final Home home;
+  private final UserPreferences preferences;
+  private final Object context;
+
+  public Object3DBranch() {
+    this.home = null;
+    this.preferences = null;
+    this.context = null;
+  }
+
+  public Object3DBranch(Object item, Home home, UserPreferences preferences, Object context) {
+    this.context = context;
+    setUserData(item);
+    this.home = home;
+    this.preferences = preferences;
+  }
+
+  /**
+   * Returns home instance or <code>null</code>.
+   */
+  public Home getHome() {
+    return this.home;
+  }
+
+  /**
+   * Returns user preferences.
+   */
+  public UserPreferences getUserPreferences() {
+    return this.preferences;
+  }
+
+  /**
+   * Returns the context in which this object is used.
+   */
+  public Object getContext() {
+    return this.context;
+  }
+
   /**
    * Updates this branch from the home object.
    */
@@ -96,20 +162,32 @@ public abstract class Object3DBranch extends BranchGroup {
    * the texture itself if <code>home</code> is <code>null</code>.
    * As sharing textures across universes might cause some problems, 
    * it's safer to handle a copy of textures for a given home. 
+   * @deprecated Use {@link #getContextTexture(Texture, Object)} which context
+   *    parameter may be equal to different contexts for a given home
    */
   protected Texture getHomeTextureClone(Texture texture, Home home) {
-    if (home == null || texture == null) {
+    return getContextTexture(texture, home);
+  }
+
+  /**
+   * Returns a cloned instance of texture shared per <code>context</code> or
+   * the texture itself if <code>context</code> is <code>null</code>.
+   * As sharing textures across universes might cause some problems,
+   * it's safer to handle a copy of textures for a given context.
+   */
+  protected Texture getContextTexture(Texture texture, Object context) {
+    if (context == null || texture == null) {
       return texture;
     } else {
-      Map<Texture, Texture> homeTextures = homesTextures.get(home);
-      if (homeTextures == null) {
-        homeTextures = new WeakHashMap<Texture, Texture>();
-        homesTextures.put(home, homeTextures);
+      Map<Texture, Texture> contextTextures = Object3DBranch.contextTextures.get(context);
+      if (contextTextures == null) {
+        contextTextures = new WeakHashMap<Texture, Texture>();
+        Object3DBranch.contextTextures.put(context, contextTextures);
       }
-      Texture clonedTexture = homeTextures.get(texture);
+      Texture clonedTexture = contextTextures.get(texture);
       if (clonedTexture == null) {
         clonedTexture = (Texture)texture.cloneNodeComponent(false);
-        homeTextures.put(texture, clonedTexture);
+        contextTextures.put(texture, clonedTexture);
       }
       return clonedTexture;
     }
@@ -202,6 +280,36 @@ public abstract class Object3DBranch extends BranchGroup {
   }
   
   /**
+   * Returns texture attributes with a transformation scaled to fit the surface matching <code>areaPoints</code>.
+   */
+  protected TextureAttributes getTextureAttributesFittingArea(HomeTexture texture, float [][] areaPoints, boolean invertY) {
+    float minX = Float.POSITIVE_INFINITY;
+    float minY = Float.POSITIVE_INFINITY;
+    float maxX = Float.NEGATIVE_INFINITY;
+    float maxY = Float.NEGATIVE_INFINITY;
+    for (int i = 0; i < areaPoints.length; i++) {
+      minX = Math.min(minX, areaPoints [i][0]);
+      minY = Math.min(minY, areaPoints [i][1]);
+      maxX = Math.max(maxX, areaPoints [i][0]);
+      maxY = Math.max(maxY, areaPoints [i][1]);
+    }
+    if (maxX - minX <= 0 || maxY - minY <= 0) {
+      return getTextureAttributes(texture, true);
+    }
+
+    TextureAttributes textureAttributes = new TextureAttributes();
+    textureAttributes.setTextureMode(TextureAttributes.MODULATE);
+    Transform3D translation = new Transform3D();
+    translation.setTranslation(new Vector3f(-minX, invertY ? minY : -minY, 0));
+    Transform3D transform = new Transform3D();
+    transform.setScale(new Vector3d(1 / (maxX - minX),  1 / (maxY - minY), 1));
+    transform.mul(translation);
+    textureAttributes.setTextureTransform(transform);
+    textureAttributes.setCapability(TextureAttributes.ALLOW_TRANSFORM_READ);
+    return textureAttributes;
+  }
+
+  /**
    * Key used to share texture attributes instances.
    */
   private static class TextureKey {
@@ -241,6 +349,25 @@ public abstract class Object3DBranch extends BranchGroup {
           + Float.floatToIntBits(this.angle) * 31
           + Float.floatToIntBits(this.scale);
     }
+  }
+
+  /**
+   * Returns an appearance for selection shapes.
+   */
+  protected Appearance getSelectionAppearance() { 
+    SimpleShaderAppearance selectionAppearance = new SimpleShaderAppearance(SELECTION_OUTLINE_COLOR);// special non auto build version for outlining
+    selectionAppearance.setColoringAttributes(SELECTION_COLORING_ATTRIBUTES);
+    selectionAppearance.setPolygonAttributes(SELECTION_POLYGON_ATTRIBUTES);
+    selectionAppearance.setLineAttributes(SELECTION_LINE_ATTRIBUTES);
+    selectionAppearance.setTransparencyAttributes(SELECTION_TRANSPARENCY_ATTRIBUTES);//put it in the transparent pass
+    RenderingAttributes renderingAttributes = new RenderingAttributes();
+    renderingAttributes.setCapability(RenderingAttributes.ALLOW_VISIBLE_WRITE);
+    selectionAppearance.setRenderingAttributes(renderingAttributes);
+    selectionAppearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+    
+    //PJPJ It's in the transparent pass and I like to be able to find selected items on the android system
+    renderingAttributes.setDepthBufferEnable(false);    
+    return selectionAppearance;
   }
 
   /**
@@ -430,19 +557,13 @@ public abstract class Object3DBranch extends BranchGroup {
     
     return areaPointsWithoutHoles;
   }
-
-  //PJPJPJPJ for outlining
-  public abstract void showOutline(boolean isSelected);
-  public abstract boolean isShowOutline();
   
   
-	public static Geometry makePickable(Geometry geometry)
-	{
-		if (geometry != null)
-		{
+  	//PJPJ my pickable requires more allows to be set on java3d_and
+	public static Geometry makePickable(Geometry geometry) {
+		if (geometry != null) {
 			// set up for geometry picking
-			if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)
-			{
+			if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray) {
 				geometry.setCapability(GeometryArray.ALLOW_FORMAT_READ);
 				geometry.setCapability(GeometryArray.ALLOW_COUNT_READ);
 				geometry.setCapability(GeometryArray.ALLOW_REF_DATA_READ);
@@ -451,35 +572,28 @@ public abstract class Object3DBranch extends BranchGroup {
 					geometry.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
 
 				geometry.setCapability(Geometry.ALLOW_INTERSECT);
-			}
-			else
-			{
-				System.out.println("makePickable(Geometry geometry) failed if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)");
-				System.out.println("geometry instanceof GeometryArray " +(geometry instanceof GeometryArray));
-				System.out.println("geometry.isLive() " +geometry.isLive());
+			} else {
+				System.out.println("makePickable(Geometry geometry) failed on if (!geometry.isLive() && !geometry.isCompiled() && geometry instanceof GeometryArray)");
+				System.out.println("geometry instanceof GeometryArray " + (geometry instanceof GeometryArray));
+				System.out.println("geometry.isLive() " + geometry.isLive());
 			}
 		}
 		return geometry;
 	}
 
-	public static Shape3D makePickable(Shape3D shape3D)
-	{
-		// Note do NOT set Shape3D.ENABLE_PICK_REPORTING; or mouse over will not find the user data of the parent
-		if (shape3D != null)
-		{
+	public static Shape3D makePickable(Shape3D shape3D) {
+		// only ENABLE_PICK_REPORTING on the object that is the subclass of Object3DBranch, not any Groups below, 
+		// but setPickable on everything top to bottom
+		if (shape3D != null) {
 			// set up for geometry picking
-			if (!shape3D.isLive() && !shape3D.isCompiled())
-			{
+			if (!shape3D.isLive() && !shape3D.isCompiled()) {
 				shape3D.setPickable(true);
-
 				shape3D.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
 
 				for (int i = 0; i < shape3D.numGeometries(); i++)
 					makePickable(shape3D.getGeometry(i));
-			}
-			else
-			{
-				System.out.println(" makePickable(Shape3D shape3D) failed if (!shape3D.isLive() && !shape3D.isCompiled())");
+			} else {
+				System.out.println(" makePickable(Shape3D shape3D) failed on if (!shape3D.isLive() && !shape3D.isCompiled())");
 			}
 		}
 		return shape3D;

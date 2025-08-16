@@ -25,6 +25,8 @@ import javaawt.geom.Ellipse2D;
 import javaawt.geom.GeneralPath;
 import javaawt.geom.PathIterator;
 import javaawt.geom.Rectangle2D;
+import java.io.IOException;
+import java.io.ObjectInputStream;
 
 /**
  * Observer camera characteristics in home.
@@ -42,6 +44,7 @@ public class ObserverCamera extends Camera implements Selectable {
 
   private boolean fixedSize;
   
+  private transient float planScale = 1;
   private transient Shape shapeCache;
   private transient Shape rectangleShapeCache;
 
@@ -58,6 +61,15 @@ public class ObserverCamera extends Camera implements Selectable {
    */
   public ObserverCamera(String id, float x, float y, float z, float yaw, float pitch, float fieldOfView) {
     super(id, x, y, z, yaw, pitch, fieldOfView);
+  }
+
+  /**
+   * Initializes new camera transient fields
+   * and reads its properties from <code>in</code> stream with default reading method.
+   */
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    this.planScale = 1;
+    in.defaultReadObject();
   }
 
   /**
@@ -87,6 +99,33 @@ public class ObserverCamera extends Camera implements Selectable {
     return this.fixedSize;
   }
   
+  /**
+   * Sets the scale used to paint this camera and will notify listeners
+   * bound to size properties of the size change.
+   * @since 7.0
+   */
+  public void setPlanScale(float scale) {
+    if (this.planScale != scale) {
+      float oldWidth = getWidth();
+      float oldDepth = getDepth();
+      float oldHeight = getHeight();
+      this.planScale = scale;
+      this.shapeCache = null;
+      this.rectangleShapeCache = null;
+      firePropertyChange(Property.WIDTH.name(), oldWidth, getWidth());
+      firePropertyChange(Property.DEPTH.name(), oldDepth, getDepth());
+      firePropertyChange(Property.HEIGHT.name(), oldHeight, getHeight());
+    }
+  }
+
+  /**
+   * Returns the scale used to paint this camera in the plan.
+   * @since 7.0
+   */
+  public float getPlanScale() {
+    return this.planScale;
+  }
+
   /**
    * Sets the yaw angle in radians of this camera.
    */
@@ -134,12 +173,12 @@ public class ObserverCamera extends Camera implements Selectable {
    * human proportions with an eyes elevation at z. 
    */
   public float getWidth() {
-    if (this.fixedSize) {
-      return 46.6f;
+    if (this.fixedSize || this.planScale > 1) {
+      return 46.6f * this.planScale;
     } else {
       // Adult width is 4 times the distance between head and eyes location    
       float width = getZ() * 4 / 14;
-      return Math.min(Math.max(width, 20), 62.5f);
+      return Math.min(Math.max(width, 20), 62.5f) * this.planScale;
     }
   }
   
@@ -148,12 +187,12 @@ public class ObserverCamera extends Camera implements Selectable {
    * human proportions with an eyes elevation at z. 
    */
   public float getDepth() {
-    if (this.fixedSize) {
-      return 18.6f;
+    if (this.fixedSize || this.planScale > 1) {
+      return 18.6f * this.planScale;
     } else {
       // Adult depth is equal to the 2 / 5 of its width 
       float depth = getZ() * 8 / 70;
-      return Math.min(Math.max(depth, 8), 25);
+      return Math.min(Math.max(depth, 8), 25) * this.planScale;
     }
   }
   
@@ -162,11 +201,11 @@ public class ObserverCamera extends Camera implements Selectable {
    * human proportions with an eyes elevation at z. 
    */
   public float getHeight() {
-    if (this.fixedSize) {
-      return 175f;
+    if (this.fixedSize || this.planScale > 1) {
+      return 175f * this.planScale;
     } else {
       // Eyes are 14 / 15 of an adult height
-      return getZ() * 15 / 14;
+      return getZ() * 15 / 14 * this.planScale;
     }
   }
   
@@ -214,6 +253,7 @@ public class ObserverCamera extends Camera implements Selectable {
    */
   private Shape getShape() {
     if (this.shapeCache == null) {
+      if (this.planScale <= 1) {
       // Create the ellipse that matches piece bounds
       Ellipse2D cameraEllipse = new Ellipse2D.Float(
           getX() - getWidth() / 2, getY() - getDepth() / 2,
@@ -225,6 +265,9 @@ public class ObserverCamera extends Camera implements Selectable {
       pieceShape.append(it, false);
       // Cache shape
       this.shapeCache = pieceShape;
+      } else {
+        this.shapeCache = getRectangleShape();
+      }
     }
     return this.shapeCache;
   }

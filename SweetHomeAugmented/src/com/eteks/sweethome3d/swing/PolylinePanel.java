@@ -52,6 +52,7 @@ import javax.swing.KeyStroke;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+//PJPJ must use my copy as too many variations exist import com.eteks.sweethome3d.j3d.ShapeTools;
 import com.eteks.sweethome3d.model.Polyline;
 import com.eteks.sweethome3d.model.Polyline.ArrowStyle;
 import com.eteks.sweethome3d.model.UserPreferences;
@@ -329,6 +330,7 @@ public class PolylinePanel extends JPanel implements DialogView {
                   g2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                   g2D.setColor(list.getForeground());
                   float dashOffset = controller.getDashOffset() != null ? controller.getDashOffset().floatValue() : 0;
+                  //PJPJ must use my copy as too many variations exist
                   g2D.setStroke(PlanComponent.ShapeTools.getStroke(2, Polyline.CapStyle.BUTT, Polyline.JoinStyle.MITER,
                       dashStyle != Polyline.DashStyle.CUSTOMIZED ? dashStyle.getDashPattern() : controller.getDashPattern(), dashOffset));
                   g2D.drawLine(4, 8, getIconWidth() - 4, 8);

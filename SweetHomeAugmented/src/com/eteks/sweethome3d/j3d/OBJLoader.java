@@ -1140,7 +1140,6 @@ public class OBJLoader extends LoaderBase implements Loader {
 	}
 
 	/**
-	 * PJPJPJ optimized all similar geometry faces are placed in a single Shape3D
 	 * Returns a new scene created from the parsed objects. 
 	 */
 	private SceneBase createScene() {
@@ -1153,116 +1152,45 @@ public class OBJLoader extends LoaderBase implements Loader {
 		BranchGroup sceneRoot = new BranchGroup();
 		sceneRoot.setName("sceneRoot " + name);
 		scene.setSceneGroup(sceneRoot);
+		for (Group group : this.groups.values()) {
+			List<Geometry> geometries = group.getGeometries();
+			if (geometries != null
+				&& !geometries.isEmpty()) {
+			int i = 0;
+			while (i < geometries.size()) {
+				Geometry firstGeometry = geometries.get(i);
+			  boolean firstGeometryHasTextureCoordinateIndices = firstGeometry.hasTextureCoordinateIndices();
+			  boolean firstFaceHasNormalIndices = (firstGeometry instanceof Face) && ((Face) firstGeometry).hasNormalIndices();
+			  boolean firstFaceIsSmooth = (firstGeometry instanceof Face) && ((Face) firstGeometry).isSmooth();
 
-		HashMap<String, ArrayList<Geometry>> groupedGeoms = new HashMap<String, ArrayList<Geometry>>();
-		int unique = 0;
+			  String firstGeometryMaterial = firstGeometry.getMaterial();
+			  Appearance appearance = getAppearance(firstGeometryMaterial);
 
-		// get all similar geoms into a groupings for processing into shapes
-		// but keep windows and mirrors apart
-		for (Group group : this.groups.values())
-		{
-			// special group names used by  ModelManager.updateShapeNamesAndWindowPanesTransparency(Scene scene)			
-			if (group.name.startsWith(ModelManager.WINDOW_PANE_SHAPE_PREFIX) 
-					|| group.name.startsWith(ModelManager.MIRROR_SHAPE_PREFIX)
-					|| group.name.startsWith(ModelManager.LIGHT_SHAPE_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_ABDOMEN_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_CHEST_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_PELVIS_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_NECK_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_HEAD_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_SHOULDER_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_ARM_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_ELBOW_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_FOREARM_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_WRIST_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_HAND_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_HIP_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_THIGH_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_KNEE_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_LEG_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_ANKLE_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_LEFT_FOOT_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_SHOULDER_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_ARM_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_ELBOW_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_FOREARM_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_WRIST_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_HAND_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_HIP_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_THIGH_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_KNEE_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_LEG_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_ANKLE_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_RIGHT_FOOT_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_ABDOMEN_CHEST_PREFIX)
-					|| group.name.startsWith(ModelManager.MANNEQUIN_ABDOMEN_PELVIS_PREFIX)
-					|| group.name.startsWith(ModelManager.BALL_PREFIX)
-					|| group.name.startsWith(ModelManager.ARM_ON_BALL_PREFIX)
-					|| group.name.startsWith(ModelManager.HINGE_PREFIX)
-					|| group.name.startsWith(ModelManager.OPENING_ON_HINGE_PREFIX)
-					|| group.name.startsWith(ModelManager.WINDOW_PANE_ON_HINGE_PREFIX)
-					|| group.name.startsWith(ModelManager.UNIQUE_RAIL_PREFIX)
-					|| group.name.startsWith(ModelManager.RAIL_PREFIX)
-					|| group.name.startsWith(ModelManager.OPENING_ON_RAIL_PREFIX)
-					|| group.name.startsWith(ModelManager.WINDOW_PANE_ON_RAIL_PREFIX)
-					|| group.name.endsWith(ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX))
-			{
-				String c = group.name + unique++;
-
-				ArrayList<Geometry> gg = groupedGeoms.get(c);
-				if (gg == null)
-				{
-					gg = new ArrayList<Geometry>();
-					groupedGeoms.put(c, gg);
-				}
-
-				gg.addAll(group.getGeometries());
-			}
-			else
-			{
-				List<Geometry> geometries = group.getGeometries();
-				if (geometries != null && !geometries.isEmpty())
-				{
-					for (Geometry geom : geometries)
-					{
-						String c = geom.getClassifier();
-
-						ArrayList<Geometry> gg = groupedGeoms.get(c);
-						if (gg == null)
-						{
-							gg = new ArrayList<Geometry>();
-							groupedGeoms.put(c, gg);
-						}
-
-						gg.add(geom);
-					}
-				}
-			}
-		}
-
-		for (String groupClassifier : groupedGeoms.keySet())
-		{
-			ArrayList<Geometry> geometries = groupedGeoms.get(groupClassifier);
-			Geometry firstGeometry = geometries.get(0);
-			boolean firstGeometryHasTextureCoordinateIndices = firstGeometry.hasTextureCoordinateIndices();
-			boolean firstFaceHasNormalIndices = (firstGeometry instanceof Face) && ((Face) firstGeometry).hasNormalIndices();
-			boolean firstFaceIsSmooth = (firstGeometry instanceof Face) && ((Face) firstGeometry).isSmooth();
-
-			String firstGeometryMaterial = firstGeometry.getMaterial();
-			Appearance appearance = getAppearance(firstGeometryMaterial);
+		      // Search how many geometries share the same characteristics
+		      int max = i;
+		      while (++max < geometries.size()) {
+		        Geometry geometry = geometries.get(max);
+		        String material = geometry.getMaterial();
+		        if (geometry.getClass() != firstGeometry.getClass()
+		          || material == null && firstGeometryMaterial != null
+		          || material != null && getAppearance(material) != appearance
+		          || (firstFaceIsSmooth ^ ((geometry instanceof Face) && ((Face)geometry).isSmooth()))
+		          || (firstGeometryHasTextureCoordinateIndices ^ geometry.hasTextureCoordinateIndices())
+		          || (firstFaceHasNormalIndices ^ ((geometry instanceof Face) && ((Face)geometry).hasNormalIndices()))) {
+		          break;
+		        }
+		      }
 
 			// Create indices arrays for the geometries with an index between i and max
-			int geometryCount = geometries.size();
+            int geometryCount = max - i;
 			int indexCount = 0;
-			for (int j = 0; j < geometryCount; j++)
-			{
-				indexCount += geometries.get(j).getVertexIndices().length;
+            for (int j = 0; j < geometryCount; j++) {
+            	indexCount += geometries.get(i + j).getVertexIndices().length;
 			}
 			int[] coordinatesIndices = new int[indexCount];
 			int[] stripCounts = new int[geometryCount];
-			for (int j = 0, destIndex = 0; j < geometryCount; j++)
-			{
-				int[] geometryVertexIndices = geometries.get(j).getVertexIndices();
+            for (int j = 0, destIndex = 0; j < geometryCount; j++) {
+            	int [] geometryVertexIndices = geometries.get(i + j).getVertexIndices();
 				System.arraycopy(geometryVertexIndices, 0, coordinatesIndices, destIndex, geometryVertexIndices.length);
 				stripCounts[j] = geometryVertexIndices.length;
 				destIndex += geometryVertexIndices.length;
@@ -1272,7 +1200,7 @@ public class OBJLoader extends LoaderBase implements Loader {
 			if (firstGeometryHasTextureCoordinateIndices) {
 				textureCoordinateIndices = new int[indexCount];
 				for (int j = 0, destIndex = 0; j < geometryCount; j++) {
-					int[] geometryTextureCoordinateIndices = geometries.get(j).getTextureCoordinateIndices();
+					int [] geometryTextureCoordinateIndices = geometries.get(i + j).getTextureCoordinateIndices();
 					System.arraycopy(geometryTextureCoordinateIndices, 0, textureCoordinateIndices, destIndex, geometryTextureCoordinateIndices.length);
 					destIndex += geometryTextureCoordinateIndices.length;
 				}
@@ -1294,7 +1222,7 @@ public class OBJLoader extends LoaderBase implements Loader {
 				if (firstFaceHasNormalIndices) {
 					int[] normalIndices = new int[indexCount];
 					for (int j = 0, destIndex = 0; j < geometryCount; j++) {
-						int [] faceNormalIndices = ((Face)geometries.get(j)).getNormalIndices();
+						int [] faceNormalIndices = ((Face)geometries.get(i + j)).getNormalIndices();
 						System.arraycopy(faceNormalIndices, 0, normalIndices, destIndex, faceNormalIndices.length);
 						destIndex += faceNormalIndices.length;
 					}
@@ -1307,9 +1235,7 @@ public class OBJLoader extends LoaderBase implements Loader {
 					}
 					normalGenerator.generateNormals(geometryInfo);
 				}
-
 				//PJPJPJ make it byref  nio
-				//new Stripifier().stripify(geometryInfo);
 				geometryArray = geometryInfo.getIndexedGeometryArray(true,true,true,true,true);
 			} else { // Line
 				int format = IndexedGeometryArray.COORDINATES;
@@ -1341,8 +1267,11 @@ public class OBJLoader extends LoaderBase implements Loader {
 			}
 			Shape3D shape = new Shape3D(geometryArray, appearance);
 			sceneRoot.addChild(shape);
-
-			scene.addNamedObject(groupClassifier, shape);
+	          scene.addNamedObject(group.getName() + (i == 0 ? "" : "_" + String.valueOf(i)), shape);
+	
+	          i = max;
+	        }
+	      }
 		}
 
 		return scene;
@@ -1552,7 +1481,7 @@ public class OBJLoader extends LoaderBase implements Loader {
 			int usemtlToken = tokenizer.nextToken();
 			tokenizer.whitespaceChars(' ', ' ');
 			if (usemtlToken == StreamTokenizer.TT_WORD) {
-				this.currentMaterial = tokenizer.sval;
+        		this.currentMaterial = tokenizer.sval.trim();
 			} else {
 				throw new IncorrectFormatException("Expected material name at line " + tokenizer.lineno());
 			}
@@ -1986,14 +1915,6 @@ public class OBJLoader extends LoaderBase implements Loader {
 		public String getMaterial() {
 			return this.material;
 		}
-
-		public String getClassifier()
-		{
-			String ret = this.getClass().getName() + "_" + material + "_" + (vertexIndices.length > 0 ? 1 : 0) + "_" + "_"
-					+ (hasTextureCoordinateIndices() ? 1 : 0);
-			return ret;
-
-		}
 	}
 
 	/**
@@ -2040,13 +1961,6 @@ public class OBJLoader extends LoaderBase implements Loader {
 		public boolean hasNormalIndices() {
 			return this.normalIndices != null 
 				&& this.normalIndices.length > 0;
-		}
-
-		@Override
-		public String getClassifier()
-		{
-			String ret = super.getClassifier() + "_" + (smooth ? 1 : 0) + "_" + (hasNormalIndices() ? 1 : 0);
-			return ret;
 		}
 	}
 

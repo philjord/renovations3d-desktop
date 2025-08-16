@@ -91,6 +91,7 @@ import org.jogamp.java3d.utils.universe.Viewer;
 import org.jogamp.java3d.utils.universe.ViewingPlatform;
 import org.jogamp.vecmath.Color3f;
 import org.jogamp.vecmath.Matrix3f;
+import org.jogamp.vecmath.Matrix4f;
 import org.jogamp.vecmath.Point2d;
 import org.jogamp.vecmath.Point3d;
 import org.jogamp.vecmath.Point3f;
@@ -104,6 +105,7 @@ import com.eteks.sweethome3d.model.CatalogPieceOfFurniture;
 import com.eteks.sweethome3d.model.Content;
 import com.eteks.sweethome3d.model.HomeMaterial;
 import com.eteks.sweethome3d.model.HomePieceOfFurniture;
+import com.eteks.sweethome3d.model.PieceOfFurniture;
 import com.eteks.sweethome3d.model.Transformation;
 import com.eteks.sweethome3d.tools.OperatingSystem;
 import com.eteks.sweethome3d.tools.TemporaryURLContent;
@@ -129,6 +131,7 @@ public class ModelPreviewComponent extends JComponent {
   private boolean                 parallelProjection;
   private Object                  iconImageLock;
   private HomePieceOfFurniture    previewedPiece;
+  private HomeMaterial            pickedMaterial;
   private boolean                 internalRotationAndSize;
   private Map<Texture, Texture>   pieceTextures = new HashMap<Texture, Texture>();
 
@@ -450,10 +453,12 @@ public class ModelPreviewComponent extends JComponent {
           this.pickedTransformGroup = null;
           this.pivotCenterPixel = null;
           this.boundedPitch = true;
-          if (transformationsChangeSupported
-              && getModelNode() != null) {
+          pickedMaterial = null;
+          if (getModelNode() != null) {
             ModelManager modelManager = ModelManager.getInstance();
-            this.boundedPitch = !modelManager.containsDeformableNode(getModelNode());
+            if (transformationsChangeSupported) {
+              this.boundedPitch = !modelManager.containsDeformableNode(getModelNode());
+            }
             Canvas3D canvas = getCanvas3D();
             PickCanvas pickCanvas = new PickCanvas(canvas, getModelNode());
             pickCanvas.setTolerance(0.0f); // make sure it's a ray not a cone
@@ -462,9 +467,15 @@ public class ModelPreviewComponent extends JComponent {
             pickCanvas.setShapeLocation(mouseLocation.x, mouseLocation.y);
             PickInfo pi = pickCanvas.pickClosest();
             if (pi != null) {
-              PickResult result = new PickResult(pi.getSceneGraphPath(), pickCanvas.getPickShape());            
+              PickResult result = new PickResult(pi.getSceneGraphPath(), pickCanvas.getPickShape());
+              Shape3D shape = (Shape3D)result.getNode(PickResult.SHAPE3D);
+              HomeMaterial [] materials = modelManager.getMaterials(shape);
+              if (materials.length > 0) {
+                pickedMaterial = materials [0];
+              }
               this.pickedTransformGroup = (TransformGroup)result.getNode(PickResult.TRANSFORM_GROUP);
-              if (this.pickedTransformGroup != null) {
+              if (transformationsChangeSupported
+                  && this.pickedTransformGroup != null) {
                 // The pivot node is the first sibling node which is not a transform group
                 Group group = (Group)this.pickedTransformGroup.getParent();
                 int i = group.indexOfChild(this.pickedTransformGroup) - 1;
@@ -475,7 +486,7 @@ public class ModelPreviewComponent extends JComponent {
                   Node referenceNode = group.getChild(i);
                   Point3f nodeCenter = modelManager.getCenter(referenceNode);
                   Point3f nodeCenterAtScreen = new Point3f(nodeCenter);
-                  Transform3D pivotTransform = getTransformBetweenNodes(referenceNode.getParent(), sceneTree);
+                  Transform3D pivotTransform = getTransformBetweenNodes(referenceNode.getParent(), sceneTree, false);
                   pivotTransform.transform(nodeCenterAtScreen);
                   Transform3D transformToCanvas = new Transform3D();
                   canvas.getVworldToImagePlate(transformToCanvas);
@@ -486,10 +497,6 @@ public class ModelPreviewComponent extends JComponent {
                   String transformationName = (String)this.pickedTransformGroup.getUserData();
                   this.translationFromOrigin = new Transform3D();
                   this.translationFromOrigin.setTranslation(new Vector3d(nodeCenter));
-                  Transform3D transformBetweenNodes = getTransformBetweenNodes(referenceNode.getParent(), getModelNode());
-                  transformBetweenNodes.setTranslation(new Vector3d());
-                  transformBetweenNodes.invert();
-                  this.translationFromOrigin.mul(transformBetweenNodes);
 
                   Transform3D pitchRotation = new Transform3D();
                   pitchRotation.rotX(viewPitch);
@@ -500,7 +507,9 @@ public class ModelPreviewComponent extends JComponent {
                       || transformationName.startsWith(ModelManager.RAIL_PREFIX)) {
                     Transform3D rotation = new Transform3D();
                     Vector3f nodeSize = modelManager.getSize(referenceNode);
-                    getTransformBetweenNodes(getModelRoot(referenceNode), getModelNode()).transform(nodeSize);
+                    BranchGroup modelRoot = getModelRoot(referenceNode);
+                    Transform3D transformBetweenRootAndModelNode = getTransformBetweenNodes(modelRoot, getModelNode(), true);
+                    transformBetweenRootAndModelNode.transform(nodeSize);
                     nodeSize.absolute();
 
                     Transform3D modelRotationAtScreen = new Transform3D(yawRotation);
@@ -538,9 +547,12 @@ public class ModelPreviewComponent extends JComponent {
                         rotation.rotY(Math.PI / 2);
                       }
                     }
+
+                    this.translationFromOrigin.mulInverse(transformBetweenRootAndModelNode);
                     this.translationFromOrigin.mul(rotation);
                   } else {
                     // Set rotation in the screen plan for mannequin or ball handling
+                    this.translationFromOrigin.mulInverse(getTransformBetweenNodes(referenceNode.getParent(), getModelNode(), true));
                     this.translationFromOrigin.mul(yawRotation);
                     this.translationFromOrigin.mul(pitchRotation);
                   }
@@ -555,15 +567,21 @@ public class ModelPreviewComponent extends JComponent {
           }
         }
 
-        private Transform3D getTransformBetweenNodes(Node node, Node parent) {
+        private Transform3D getTransformBetweenNodes(Node node, Node parent, boolean ignoreTranslation) {
           Transform3D transform = new Transform3D();
           if (node instanceof TransformGroup) {
             ((TransformGroup)node).getTransform(transform);
+            if (ignoreTranslation) {
+              transform.setTranslation(new Vector3f());
+            }
           }
-          if (node != parent ) {        	  
+          if (node != parent ) {  
             Node nodeParent = node.getParent();
+          
             if (nodeParent instanceof Group) {
-              transform.mul(getTransformBetweenNodes(nodeParent, parent), transform);
+
+              transform.mul(getTransformBetweenNodes(nodeParent, parent, ignoreTranslation), transform);
+            	
             } else {
               throw new IllegalStateException("Can't retrieve node transform");
             }
@@ -674,7 +692,7 @@ public class ModelPreviewComponent extends JComponent {
       };
 
       canvas3D.getGLWindow().addMouseListener(mouseListener);
-      //canvas3D.getGLWindow().addMouseListener(mouseListener);
+      //PJPJ both listeners in one interface
     
     if (scaleChangeSupported) {
     	canvas3D.getGLWindow().addMouseListener(new MouseAdapter() {
@@ -682,8 +700,7 @@ public class ModelPreviewComponent extends JComponent {
             // Mouse move along Y axis with Alt down changes scale
         	  //TODO: seems to always be 1
             setViewScale(Math.max(0.5f, Math.min(1.3f, getViewScale() * (float)Math.exp(ev.getRotation()[0] * ZOOM_FACTOR))));
-          }
-		
+          }		
         });
     }
     
@@ -721,9 +738,7 @@ public class ModelPreviewComponent extends JComponent {
           
           public void mouseClicked(MouseEvent ev) {
             l.mouseClicked(ev);
-          }
-
-		 
+          }		 
         });
     }
   }
@@ -1026,6 +1041,14 @@ public class ModelPreviewComponent extends JComponent {
    */
   void setModel(final Content model, final boolean backFaceShown, final float [][] modelRotation,
                 final float width, final float depth, final float height) {
+    setModel(model, backFaceShown ? PieceOfFurniture.SHOW_BACK_FACE : 0, modelRotation, width, depth, height);
+  }
+
+  /**
+   * Sets the 3D model content displayed by this component.
+   */
+  void setModel(final Content model, final int modelFlags, final float [][] modelRotation,
+                final float width, final float depth, final float height) {
     final TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
     modelTransformGroup.removeAllChildren();
     this.previewedPiece = null;
@@ -1043,7 +1066,9 @@ public class ModelPreviewComponent extends JComponent {
                 internalRotationAndSize = modelRotation != null;
                 previewedPiece = new HomePieceOfFurniture(
                     new CatalogPieceOfFurniture(null, null, model, 
-                        size.x, size.z, size.y, 0, false, null, modelRotation, backFaceShown, 0, false));
+                        size.x, size.z, size.y,
+                        0, false, null, null,
+                        modelRotation, modelFlags, null, null, 0, 0, 1, false));
                 previewedPiece.setX(0);
                 previewedPiece.setY(0);
                 previewedPiece.setElevation(-previewedPiece.getHeight() / 2);
@@ -1053,9 +1078,8 @@ public class ModelPreviewComponent extends JComponent {
                 modelTransformGroup.setTransform(modelTransform);
 
                 HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(previewedPiece, null, true, true);
-                if (OperatingSystem.isMacOSX()) {
-                  cloneTextures(piece3D, pieceTextures); 
-                }
+                //PJJPJ cloneTextures(piece3D, pieceTextures); 
+
                 modelTransformGroup.addChild(piece3D);
               } catch (IllegalArgumentException ex) {
                 // Model is empty
@@ -1079,28 +1103,28 @@ public class ModelPreviewComponent extends JComponent {
    */
   protected void setBackFaceShown(boolean backFaceShown) {
     if (this.previewedPiece != null) {
-      // Create a new piece from the existing one with an updated backFaceShown flag 
-      this.previewedPiece = new HomePieceOfFurniture(
-          new CatalogPieceOfFurniture(null, null, this.previewedPiece.getModel(), 
-              this.previewedPiece.getWidth(), 
-              this.previewedPiece.getDepth(),
-              this.previewedPiece.getHeight(),
-              0, false, this.previewedPiece.getColor(), 
-              this.previewedPiece.getModelRotation(), backFaceShown, 0, false));
-      this.previewedPiece.setX(0);
-      this.previewedPiece.setY(0);
-      this.previewedPiece.setElevation(-previewedPiece.getHeight() / 2);
+      setModelFlags((this.previewedPiece.getModelFlags() & ~PieceOfFurniture.SHOW_BACK_FACE)
+          | (backFaceShown ? PieceOfFurniture.SHOW_BACK_FACE : 0));
+    }
+  }
     
-      TransformGroup modelTransformGroup = (TransformGroup)this.sceneTree.getChild(0);
-      HomePieceOfFurniture3D piece3D = new HomePieceOfFurniture3D(previewedPiece, null, true, true);
-      if (OperatingSystem.isMacOSX()) {
-        this.pieceTextures.clear();
-        cloneTextures(piece3D, this.pieceTextures); 
+  /**
+   * Sets the visibility of edge color materials of the children nodes of the displayed 3D model.
+   */
+  protected void setEdgeColorMaterialHidden(boolean edgeColorMaterialHidden) {
+    if (this.previewedPiece != null) {
+      setModelFlags((this.previewedPiece.getModelFlags() & ~PieceOfFurniture.HIDE_EDGE_COLOR_MATERIAL)
+          | (edgeColorMaterialHidden ? PieceOfFurniture.HIDE_EDGE_COLOR_MATERIAL : 0));
       }
-      modelTransformGroup.addChild(piece3D);
-      if (modelTransformGroup.numChildren() > 1) {
-        modelTransformGroup.removeChild(0);
       }
+
+  /**
+   * Sets the model flags of the preview piece.
+   */
+  public void setModelFlags(int modelFlags) {
+    if (this.previewedPiece != null) {
+      this.previewedPiece.setModelFlags(modelFlags);
+      getModelNode().update();
     }
   }
 
@@ -1205,14 +1229,14 @@ public class ModelPreviewComponent extends JComponent {
   /**
    * Sets the transformations applied to 3D model.
    */
-  public void setModelTranformations(Transformation [] transformations) {
+  public void setModelTransformations(Transformation [] transformations) {
     if (this.previewedPiece != null) {
       this.previewedPiece.setModelTransformations(transformations);
       getModelNode().update();
     }
   }
 
-  void resetModelTranformations() {
+  void setPresetModelTransformations(Transformation [] transformations) {
     if (this.previewedPiece != null) {
       ModelManager modelManager = ModelManager.getInstance();
       BoundingBox oldBounds = modelManager.getBounds(getModelNode());
@@ -1221,33 +1245,53 @@ public class ModelPreviewComponent extends JComponent {
       Point3d oldUpper = new Point3d();
       oldBounds.getUpper(oldUpper);
 
-      resetTranformations(getModelNode());
+      setNodeTransformations(getModelNode(), transformations);
 
       BoundingBox newBounds = modelManager.getBounds(getModelNode());
       Point3d newLower = new Point3d();
       newBounds.getLower(newLower);
       Point3d newUpper = new Point3d();
       newBounds.getUpper(newUpper);
-      previewedPiece.setX(previewedPiece.getX() + (float)(newUpper.x + newLower.x) / 2 - (float)(oldUpper.x + oldLower.x) / 2);
-      previewedPiece.setY(previewedPiece.getY() + (float)(newUpper.z + newLower.z) / 2 - (float)(oldUpper.z + oldLower.z) / 2);
-      previewedPiece.setElevation(previewedPiece.getElevation() + (float)(newLower.y - oldLower.y));
+      this.previewedPiece.setX(this.previewedPiece.getX() + (float)(newUpper.x + newLower.x) / 2 - (float)(oldUpper.x + oldLower.x) / 2);
+      this.previewedPiece.setY(this.previewedPiece.getY() + (float)(newUpper.z + newLower.z) / 2 - (float)(oldUpper.z + oldLower.z) / 2);
+      this.previewedPiece.setElevation(this.previewedPiece.getElevation() + (float)(newLower.y - oldLower.y));
       this.previewedPiece.setWidth((float)(newUpper.x - newLower.x));
       this.previewedPiece.setDepth((float)(newUpper.z - newLower.z));
       this.previewedPiece.setHeight((float)(newUpper.y - newLower.y));
-      this.previewedPiece.setModelTransformations(null);
+      this.previewedPiece.setModelTransformations(transformations);
     }
+    }
+
+  void resetModelTransformations() {
+    setPresetModelTransformations(null);
   }
 
-  private void resetTranformations(Node node) {
+  private void setNodeTransformations(Node node, Transformation [] transformations) {
     if (node instanceof Group) {
       if (node instanceof TransformGroup
           && node.getUserData() instanceof String
           && ((String)node.getUserData()).endsWith(ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX)) {
-        ((TransformGroup)node).setTransform(new Transform3D());     
+        TransformGroup transformGroup = (TransformGroup)node;
+        transformGroup.setTransform(new Transform3D());
+        if (transformations != null) {
+          String transformationName = (String)node.getUserData();
+          transformationName = transformationName.substring(0, transformationName.length() - ModelManager.DEFORMABLE_TRANSFORM_GROUP_SUFFIX.length());
+          for (Transformation transformation : transformations) {
+            if (transformationName.equals(transformation.getName())) {
+              float [][] matrix = transformation.getMatrix();
+              Matrix4f transformMatrix = new Matrix4f();
+              transformMatrix.setRow(0, matrix[0]);
+              transformMatrix.setRow(1, matrix[1]);
+              transformMatrix.setRow(2, matrix[2]);
+              transformMatrix.setRow(3, new float [] {0, 0, 0, 1});
+              transformGroup.setTransform(new Transform3D(transformMatrix));
+            }
+          }
+        }
       }
-      Iterator<Node> enumeration = ((Group)node).getAllChildren();
+      Iterator<Node> enumeration = ((Group)node).getAllChildren(); 
       while (enumeration.hasNext()) {
-        resetTranformations(enumeration.next());
+        setNodeTransformations((Node)enumeration.next(), transformations);
       }
     }
   }
@@ -1303,6 +1347,13 @@ public class ModelPreviewComponent extends JComponent {
    */
   float getModelHeight() {
     return this.previewedPiece.getHeight();
+  }
+
+  /**
+   * Returns the material of the shape last picked by the user.
+   */
+  public HomeMaterial getPickedMaterial() {
+    return this.pickedMaterial;
   }
 
   /**
@@ -1374,10 +1425,6 @@ public class ModelPreviewComponent extends JComponent {
           setBackground(Color.BLACK);
           try {
             this.iconImageLock.wait(maxWaitingDelay / 2);
-            if (OperatingSystem.isMacOSX()) {
-              // Under Mac OS X, sleep an additional time to ensure the screen got refreshed
-              Thread.sleep(30);
-            }
           } catch (InterruptedException ex) {
             ex.printStackTrace();
           }
