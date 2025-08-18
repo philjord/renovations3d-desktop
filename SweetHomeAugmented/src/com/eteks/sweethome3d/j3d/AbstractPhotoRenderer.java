@@ -403,14 +403,27 @@ public abstract class AbstractPhotoRenderer {
       verticesIndices [index + 1] = coordinateIndex2;
       verticesIndices [index + 2] = coordinateIndex3;
       if (normalsIndices != null) {
-        normalsIndices [index] = geometryArray.getNormalIndex(vertexIndex1);
-        normalsIndices [index + 1] = geometryArray.getNormalIndex(vertexIndex2);
-        normalsIndices [index + 2] = geometryArray.getNormalIndex(vertexIndex3);
+    	  //PJPJ handle my faster vertex format
+    	  if((geometryArray.getVertexFormat() & GeometryArray.USE_COORD_INDEX_ONLY) == 0) {
+	        normalsIndices [index] = geometryArray.getNormalIndex(vertexIndex1);
+	        normalsIndices [index + 1] = geometryArray.getNormalIndex(vertexIndex2);
+	        normalsIndices [index + 2] = geometryArray.getNormalIndex(vertexIndex3);
+    	  } else {
+    		normalsIndices [index] = coordinateIndex1;
+    	    normalsIndices [index + 1] = coordinateIndex2;
+    	    normalsIndices [index + 2] = coordinateIndex3;
+    	  }
       }
       if (textureCoordinatesIndices != null) {
-        textureCoordinatesIndices [index] = geometryArray.getTextureCoordinateIndex(0, vertexIndex1);
-        textureCoordinatesIndices [index + 1] = geometryArray.getTextureCoordinateIndex(0, vertexIndex2);
-        textureCoordinatesIndices [index + 2] = geometryArray.getTextureCoordinateIndex(0, vertexIndex3);
+    	  if((geometryArray.getVertexFormat() & GeometryArray.USE_COORD_INDEX_ONLY) == 0) {
+		      textureCoordinatesIndices [index] = geometryArray.getTextureCoordinateIndex(0, vertexIndex1);
+		      textureCoordinatesIndices [index + 1] = geometryArray.getTextureCoordinateIndex(0, vertexIndex2);
+		      textureCoordinatesIndices [index + 2] = geometryArray.getTextureCoordinateIndex(0, vertexIndex3);
+    	  } else {
+    		  textureCoordinatesIndices [index] = coordinateIndex1;
+    		  textureCoordinatesIndices [index + 1] = coordinateIndex2;
+    		  textureCoordinatesIndices [index + 2] = coordinateIndex3;
+      	  }
       }
       return index + 3;
     }

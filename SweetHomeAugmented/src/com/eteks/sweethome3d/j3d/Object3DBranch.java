@@ -112,6 +112,10 @@ public abstract class Object3DBranch extends BranchGroup {
     DEFAULT_MATERIAL.setCapability(Material.ALLOW_COMPONENT_READ);
     DEFAULT_MATERIAL.setShininess(1);
     DEFAULT_MATERIAL.setSpecularColor(0, 0, 0);
+    
+    //PJPJ obviously not sensible, but the PhotoRenderer doesn't check selection early enough
+    //TODO: remove selection from photos scenegraph earlier
+    SELECTION_TRANSPARENCY_ATTRIBUTES.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
   }
   
   private final Home home;
