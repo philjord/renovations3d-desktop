@@ -14,14 +14,14 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/SweetHome3D"/>
-	<classpathentry kind="lib" path="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-core-and/1.7.2/java3d-core-and-1.7.2.jar" sourcepath="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-core/1.7.2/java3d-core-1.7.2-sources.jar">
+	<classpathentry kind="lib" path="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-core-and/1.7.2/java3d-core-and-1.7.2.jar" sourcepath="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-core-and/1.7.2/java3d-core-and-1.7.2-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-core/1.7.2/java3d-core-1.7.2-javadoc.jar!/"/>
+			<attribute name="javadoc_location" value="jar:file:/C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-core-and/1.7.2/java3d-core-and-1.7.2-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-utils-and/1.7.2/java3d-utils-and-1.7.2.jar" sourcepath="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-utils/1.7.2/java3d-utils-1.7.2-sources.jar">
+	<classpathentry kind="lib" path="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-utils-and/1.7.2/java3d-utils-and-1.7.2.jar" sourcepath="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-utils-and/1.7.2/java3d-utils-and-1.7.2-sources.jar">
 		<attributes>
-			<attribute name="javadoc_location" value="jar:file:/C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-utils/1.7.2/java3d-utils-1.7.2-javadoc.jar!/"/>
+			<attribute name="javadoc_location" value="jar:file:/C:/Users/pjnz/.m2/repository/org/jogamp/java3d/java3d-utils-and/1.7.2/java3d-utils-and-1.7.2-javadoc.jar!/"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/vecmath/1.7.2/vecmath-1.7.2.jar" sourcepath="C:/Users/pjnz/.m2/repository/org/jogamp/java3d/vecmath/1.7.2/vecmath-1.7.2-sources.jar">
